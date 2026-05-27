@@ -43,3 +43,14 @@ export async function createAssignment(
     data: { teamId, legId, teamMemberId, targetPaceSecPerMile },
   })
 }
+
+export async function createLegResult(
+  teamId: string,
+  legId: string,
+  startedAt = new Date(),
+  finishedAt: Date | null = null
+) {
+  return prisma.legResult.create({
+    data: { teamId, legId, startedAt, finishedAt },
+  })
+}
