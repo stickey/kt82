@@ -26,6 +26,8 @@ model Leg {
   handoff       Handoff?
   assignments   LegAssignment[]
   results       LegResult[]
+
+  @@unique([raceId, legNumber])
 }
 
 model Handoff {
