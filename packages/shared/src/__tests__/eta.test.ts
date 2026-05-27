@@ -44,4 +44,9 @@ describe('calculateETA', () => {
 
     expect(eta.status).toBe('ahead')
   })
+
+  it('throws on invalid startedAt', () => {
+    const result: LegResult = { id: 'r1', teamId: 't1', legId: 'leg1', startedAt: 'not-a-date', finishedAt: null }
+    expect(() => calculateETA(assignment, result, leg)).toThrow('invalid startedAt')
+  })
 })

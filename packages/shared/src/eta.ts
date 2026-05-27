@@ -6,8 +6,12 @@ export function calculateETA(
   leg: Leg,
   now: Date = new Date()
 ): ETAResult {
+  const start = new Date(result.startedAt)
+  if (isNaN(start.getTime())) {
+    throw new Error(`calculateETA: invalid startedAt value "${result.startedAt}"`)
+  }
   const projectedTotalSeconds = assignment.targetPaceSecPerMile * leg.distanceMiles
-  const elapsedSeconds = (now.getTime() - new Date(result.startedAt).getTime()) / 1000
+  const elapsedSeconds = (now.getTime() - start.getTime()) / 1000
   const secondsRemaining = projectedTotalSeconds - elapsedSeconds
   const eta = new Date(now.getTime() + secondsRemaining * 1000)
 

@@ -11,9 +11,13 @@ export function createApiClient(
   getHeaders: () => HeadersInit
 ): ApiClient {
   async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+    const headers: Record<string, string> = { ...getHeaders() as Record<string, string> }
+    if (body !== undefined) {
+      headers['Content-Type'] = 'application/json'
+    }
     const res = await fetch(`${baseUrl}${path}`, {
       method,
-      headers: { 'Content-Type': 'application/json', ...getHeaders() },
+      headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
     })
     if (!res.ok) {
