@@ -10,6 +10,8 @@ const router = Router()
 // Manager: list teams
 router.get('/races/:id/teams', adminAuth, async (req, res, next) => {
   try {
+    const race = await prisma.race.findUnique({ where: { id: req.params.id } })
+    if (!race) return res.status(404).json({ error: 'Race not found' })
     const teams = await prisma.team.findMany({
       where: { raceId: req.params.id },
       select: { id: true, raceId: true, name: true, locked: true },
@@ -22,7 +24,8 @@ router.get('/races/:id/teams', adminAuth, async (req, res, next) => {
 router.post('/races/:id/teams', adminAuth, async (req, res, next) => {
   try {
     const { name, pin } = req.body
-    if (!name || !pin) return res.status(400).json({ error: 'name and pin are required' })
+    if (!name || !name.trim()) return res.status(400).json({ error: 'name is required' })
+    if (!pin) return res.status(400).json({ error: 'pin is required' })
     const captainPinHash = await bcrypt.hash(String(pin), 10)
     const team = await prisma.team.create({
       data: { raceId: req.params.id, name, captainPinHash },
@@ -35,7 +38,7 @@ router.post('/races/:id/teams', adminAuth, async (req, res, next) => {
 router.put('/teams/:id', adminAuth, async (req, res, next) => {
   try {
     const { name } = req.body
-    if (!name) return res.status(400).json({ error: 'name is required' })
+    if (!name || !name.trim()) return res.status(400).json({ error: 'name is required' })
     const team = await prisma.team.update({ where: { id: req.params.id }, data: { name } })
     res.json({ id: team.id, raceId: team.raceId, name: team.name, locked: team.locked })
   } catch (err) {
@@ -46,10 +49,13 @@ router.put('/teams/:id', adminAuth, async (req, res, next) => {
 // Manager: reset team (unlock + clear assignments)
 router.post('/teams/:id/reset', adminAuth, async (req, res, next) => {
   try {
-    await prisma.legAssignment.deleteMany({ where: { teamId: req.params.id } })
-    const team = await prisma.team.update({
-      where: { id: req.params.id },
-      data: { locked: false },
+    const team = await prisma.$transaction(async (tx) => {
+      await tx.legResult.deleteMany({ where: { teamId: req.params.id } })
+      await tx.legAssignment.deleteMany({ where: { teamId: req.params.id } })
+      return tx.team.update({
+        where: { id: req.params.id },
+        data: { locked: false },
+      })
     })
     res.json({ id: team.id, raceId: team.raceId, name: team.name, locked: team.locked })
   } catch (err) {
