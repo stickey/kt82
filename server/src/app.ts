@@ -5,6 +5,7 @@ import authRouter from './routes/auth'
 import racesRouter from './routes/races'
 import legsRouter from './routes/legs'
 import handoffsRouter from './routes/handoffs'
+import teamsRouter from './routes/teams'
 
 export const app = express()
 
@@ -19,5 +20,6 @@ app.use('/api', authRouter)
 app.use('/api', racesRouter)
 app.use('/api', legsRouter)
 app.use('/api', handoffsRouter)
+app.use('/api', teamsRouter)
 
 app.use(errorHandler)
