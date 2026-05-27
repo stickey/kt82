@@ -11,7 +11,7 @@ router.post('/teams/:id/members', teamAuth, async (req, res, next) => {
     const { name } = req.body
     if (!name || !name.trim()) return res.status(400).json({ error: 'name is required' })
     const member = await prisma.teamMember.create({
-      data: { teamId: req.params.id, name },
+      data: { teamId: req.params.id, name: name.trim() },
     })
     res.status(201).json(member)
   } catch (err) {
@@ -32,7 +32,7 @@ router.put('/members/:id', async (req, res, next) => {
     const pin = req.headers['x-team-pin']
     if (!pin || typeof pin !== 'string') return res.status(401).json({ error: 'X-Team-Pin required' })
     if (!await verifyTeamPin(teamId, pin)) return res.status(401).json({ error: 'Invalid PIN' })
-    const member = await prisma.teamMember.update({ where: { id: req.params.id }, data: { name } })
+    const member = await prisma.teamMember.update({ where: { id: req.params.id, teamId }, data: { name: name.trim() } })
     res.json(member)
   } catch (err) {
     if (!handlePrismaError(err, res)) next(err)
@@ -46,7 +46,10 @@ router.delete('/members/:id', async (req, res, next) => {
     const pin = req.headers['x-team-pin']
     if (!pin || typeof pin !== 'string') return res.status(401).json({ error: 'X-Team-Pin required' })
     if (!await verifyTeamPin(teamId, pin)) return res.status(401).json({ error: 'Invalid PIN' })
-    await prisma.teamMember.delete({ where: { id: req.params.id } })
+    await prisma.$transaction(async (tx) => {
+      await tx.legAssignment.deleteMany({ where: { teamMemberId: req.params.id } })
+      await tx.teamMember.delete({ where: { id: req.params.id, teamId } })
+    })
     res.status(204).send()
   } catch (err) {
     if (!handlePrismaError(err, res)) next(err)

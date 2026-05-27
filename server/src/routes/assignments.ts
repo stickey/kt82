@@ -12,6 +12,10 @@ router.post('/teams/:id/assignments', teamAuth, async (req, res, next) => {
     if (!legId || !teamMemberId || targetPaceSecPerMile == null) {
       return res.status(400).json({ error: 'legId, teamMemberId, and targetPaceSecPerMile are required' })
     }
+    const memberBelongsToTeam = await prisma.teamMember.findFirst({
+      where: { id: teamMemberId, teamId: req.params.id },
+    })
+    if (!memberBelongsToTeam) return res.status(400).json({ error: 'Member does not belong to this team' })
     const assignment = await prisma.legAssignment.create({
       data: { teamId: req.params.id, legId, teamMemberId, targetPaceSecPerMile },
     })
@@ -30,11 +34,18 @@ async function verifyTeamPin(teamId: string, pin: string): Promise<boolean> {
 router.put('/assignments/:id', async (req, res, next) => {
   try {
     const { teamId, targetPaceSecPerMile, teamMemberId } = req.body
+    if (!teamId) return res.status(400).json({ error: 'teamId is required' })
     const pin = req.headers['x-team-pin']
-    if (!teamId || !pin || typeof pin !== 'string') return res.status(400).json({ error: 'teamId and X-Team-Pin required' })
+    if (!pin || typeof pin !== 'string') return res.status(401).json({ error: 'X-Team-Pin required' })
     if (!await verifyTeamPin(teamId, pin)) return res.status(401).json({ error: 'Invalid PIN' })
+    if (teamMemberId != null) {
+      const memberBelongsToTeam = await prisma.teamMember.findFirst({
+        where: { id: teamMemberId, teamId },
+      })
+      if (!memberBelongsToTeam) return res.status(400).json({ error: 'Member does not belong to this team' })
+    }
     const assignment = await prisma.legAssignment.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id, teamId },
       data: {
         ...(targetPaceSecPerMile != null && { targetPaceSecPerMile }),
         ...(teamMemberId != null && { teamMemberId }),
@@ -49,10 +60,11 @@ router.put('/assignments/:id', async (req, res, next) => {
 router.delete('/assignments/:id', async (req, res, next) => {
   try {
     const { teamId } = req.body
+    if (!teamId) return res.status(400).json({ error: 'teamId is required' })
     const pin = req.headers['x-team-pin']
-    if (!teamId || !pin || typeof pin !== 'string') return res.status(400).json({ error: 'teamId and X-Team-Pin required' })
+    if (!pin || typeof pin !== 'string') return res.status(401).json({ error: 'X-Team-Pin required' })
     if (!await verifyTeamPin(teamId, pin)) return res.status(401).json({ error: 'Invalid PIN' })
-    await prisma.legAssignment.delete({ where: { id: req.params.id } })
+    await prisma.legAssignment.delete({ where: { id: req.params.id, teamId } })
     res.status(204).send()
   } catch (err) {
     if (!handlePrismaError(err, res)) next(err)
