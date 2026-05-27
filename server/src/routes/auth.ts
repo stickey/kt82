@@ -24,9 +24,10 @@ router.post('/auth/team', async (req, res, next) => {
   try {
     const { pin } = req.body
     if (!pin) return res.status(400).json({ error: 'pin is required' })
+    if (typeof pin !== 'string') return res.status(400).json({ error: 'pin must be a string' })
     const teams = await prisma.team.findMany()
     for (const team of teams) {
-      const valid = await bcrypt.compare(String(pin), team.captainPinHash)
+      const valid = await bcrypt.compare(pin, team.captainPinHash)
       if (valid) return res.json({ teamId: team.id })
     }
     res.status(401).json({ error: 'Invalid PIN' })

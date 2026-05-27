@@ -18,6 +18,10 @@ export async function teamAuth(
 ): Promise<void> {
   const pin = req.headers['x-team-pin']
   const teamId = req.params.id ?? req.params.teamId
+  if (!teamId) {
+    res.status(400).json({ error: 'Team ID required' })
+    return
+  }
   if (!pin || typeof pin !== 'string') {
     res.status(401).json({ error: 'X-Team-Pin header required' })
     return

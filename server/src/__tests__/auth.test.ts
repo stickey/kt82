@@ -46,4 +46,9 @@ describe('POST /api/auth/team', () => {
       .send({ pin: '0000' })
     expect(res.status).toBe(401)
   })
+
+  it('returns 400 when pin is missing', async () => {
+    const res = await request(app).post('/api/auth/team').send({})
+    expect(res.status).toBe(400)
+  })
 })
