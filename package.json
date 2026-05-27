@@ -1,6 +1,9 @@
 {
   "name": "kt82",
   "private": true,
+  "pnpm": {
+    "onlyBuiltDependencies": ["@prisma/client", "@prisma/engines", "bcrypt", "esbuild", "prisma"]
+  },
   "scripts": {
     "dev:server": "pnpm --filter server dev",
     "dev:tracker": "pnpm --filter tracker dev",

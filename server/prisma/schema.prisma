@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Race {
+  id        String   @id @default(cuid())
+  name      String
+  date      DateTime
+  legs      Leg[]
+  teams     Team[]
+  createdAt DateTime @default(now())
+}
+
+model Leg {
+  id            String          @id @default(cuid())
+  raceId        String
+  race          Race            @relation(fields: [raceId], references: [id])
+  legNumber     Int
+  name          String
+  distanceMiles Float
+  handoff       Handoff?
+  assignments   LegAssignment[]
+  results       LegResult[]
+}
+
+model Handoff {
+  id      String  @id @default(cuid())
+  legId   String  @unique
+  leg     Leg     @relation(fields: [legId], references: [id])
+  name    String
+  address String?
+  lat     Float?
+  lng     Float?
+}
+
+model Team {
+  id             String          @id @default(cuid())
+  raceId         String
+  race           Race            @relation(fields: [raceId], references: [id])
+  name           String
+  captainPinHash String
+  locked         Boolean         @default(false)
+  members        TeamMember[]
+  assignments    LegAssignment[]
+  results        LegResult[]
+}
+
+model TeamMember {
+  id          String          @id @default(cuid())
+  teamId      String
+  team        Team            @relation(fields: [teamId], references: [id])
+  name        String
+  assignments LegAssignment[]
+}
+
+model LegAssignment {
+  id                   String     @id @default(cuid())
+  teamId               String
+  team                 Team       @relation(fields: [teamId], references: [id])
+  legId                String
+  leg                  Leg        @relation(fields: [legId], references: [id])
+  teamMemberId         String
+  teamMember           TeamMember @relation(fields: [teamMemberId], references: [id])
+  targetPaceSecPerMile Int
+
+  @@unique([teamId, legId])
+}
+
+model LegResult {
+  id         String    @id @default(cuid())
+  teamId     String
+  team       Team      @relation(fields: [teamId], references: [id])
+  legId      String
+  leg        Leg       @relation(fields: [legId], references: [id])
+  startedAt  DateTime
+  finishedAt DateTime?
+
+  @@unique([teamId, legId])
+}
