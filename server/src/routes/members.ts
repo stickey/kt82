@@ -14,7 +14,9 @@ router.post('/teams/:id/members', teamAuth, async (req, res, next) => {
       data: { teamId: req.params.id, name },
     })
     res.status(201).json(member)
-  } catch (err) { next(err) }
+  } catch (err) {
+    if (!handlePrismaError(err, res)) next(err)
+  }
 })
 
 async function verifyTeamPin(teamId: string, pin: string): Promise<boolean> {
