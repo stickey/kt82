@@ -8,5 +8,6 @@ export default defineConfig({
       DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/kt82_test',
     },
     pool: 'forks',
+    fileParallelism: false,
   },
 })

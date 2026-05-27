@@ -2,6 +2,9 @@ import express from 'express'
 import cors from 'cors'
 import { errorHandler } from './middleware/errorHandler'
 import authRouter from './routes/auth'
+import racesRouter from './routes/races'
+import legsRouter from './routes/legs'
+import handoffsRouter from './routes/handoffs'
 
 export const app = express()
 
@@ -13,5 +16,8 @@ app.get('/api/health', (_req, res) => {
 })
 
 app.use('/api', authRouter)
+app.use('/api', racesRouter)
+app.use('/api', legsRouter)
+app.use('/api', handoffsRouter)
 
 app.use(errorHandler)
