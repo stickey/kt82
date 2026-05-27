@@ -1,0 +1,13 @@
+{
+  "name": "kt82",
+  "private": true,
+  "scripts": {
+    "dev:server": "pnpm --filter server dev",
+    "dev:tracker": "pnpm --filter tracker dev",
+    "dev:captain": "pnpm --filter captain dev",
+    "dev:manager": "pnpm --filter manager dev",
+    "dev:driver": "pnpm --filter driver dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test"
+  }
+}
