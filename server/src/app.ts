@@ -9,6 +9,7 @@ import teamsRouter from './routes/teams'
 import membersRouter from './routes/members'
 import assignmentsRouter from './routes/assignments'
 import resultsRouter from './routes/results'
+import trackerRouter from './routes/tracker'
 
 export const app = express()
 
@@ -27,5 +28,6 @@ app.use('/api', teamsRouter)
 app.use('/api', membersRouter)
 app.use('/api', assignmentsRouter)
 app.use('/api', resultsRouter)
+app.use('/api', trackerRouter)
 
 app.use(errorHandler)
