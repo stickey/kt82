@@ -1,3 +1,4 @@
+import path from 'path'
 import express from 'express'
 import cors from 'cors'
 import { errorHandler } from './middleware/errorHandler'
@@ -15,6 +16,18 @@ export const app = express()
 
 app.use(cors()) // TODO: restrict origins before production
 app.use(express.json())
+
+if (process.env.NODE_ENV === 'production') {
+  const appsDir = path.resolve(__dirname, '../../apps')
+  const apps = ['tracker', 'captain', 'manager', 'driver']
+  for (const appName of apps) {
+    const distPath = path.join(appsDir, appName, 'dist')
+    app.use(`/${appName}`, express.static(distPath))
+    app.get(`/${appName}/*`, (_req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'))
+    })
+  }
+}
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true })
