@@ -4,6 +4,23 @@ import { app } from '../app'
 import { prisma } from '../lib/prisma'
 import { createRace, createTeam, createLeg, createMember, createAssignment } from './helpers'
 
+describe('GET /api/races/active (no auth)', () => {
+  it('returns the most recent race by date', async () => {
+    await createRace({ name: 'Old Race', date: new Date('2025-06-01') })
+    const recent = await createRace({ name: 'KT82 2026', date: new Date('2026-06-01') })
+
+    const res = await request(app).get('/api/races/active')
+    expect(res.status).toBe(200)
+    expect(res.body.id).toBe(recent.id)
+    expect(res.body.name).toBe('KT82 2026')
+  })
+
+  it('returns 404 when no races exist', async () => {
+    const res = await request(app).get('/api/races/active')
+    expect(res.status).toBe(404)
+  })
+})
+
 describe('GET /api/races/:id/status (no auth)', () => {
   it('returns all teams with not-started status before race begins', async () => {
     const race = await createRace()

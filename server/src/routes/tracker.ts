@@ -4,6 +4,14 @@ import { calculateETA } from '@kt82/shared'
 
 const router = Router()
 
+router.get('/races/active', async (req, res, next) => {
+  try {
+    const race = await prisma.race.findFirst({ orderBy: { date: 'desc' } })
+    if (!race) return res.status(404).json({ error: 'No active race' })
+    res.json(race)
+  } catch (err) { next(err) }
+})
+
 router.get('/races/:id/status', async (req, res, next) => {
   try {
     const race = await prisma.race.findUnique({ where: { id: req.params.id } })
