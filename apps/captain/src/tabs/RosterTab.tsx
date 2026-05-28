@@ -103,7 +103,7 @@ export function RosterTab({ onTeamLoad, on401 }: Props) {
         </p>
         <button
           onClick={() => { setNameForm(''); setFormError(''); setModal({ type: 'add' }) }}
-          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg px-3 py-1.5 transition-colors min-h-[36px]"
+          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg px-3 py-1.5 transition-colors min-h-[44px]"
         >
           + Add Runner
         </button>
