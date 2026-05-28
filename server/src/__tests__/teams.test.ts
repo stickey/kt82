@@ -94,3 +94,30 @@ describe('POST /api/teams/:id/reset with existing results', () => {
     expect(assignments).toHaveLength(0)
   })
 })
+
+describe('GET /api/teams/:id/legs', () => {
+  it('returns legs in legNumber order for the team race', async () => {
+    const race = await createRace()
+    const team = await createTeam(race.id, '1234')
+    await createLeg(race.id, 2)
+    await createLeg(race.id, 1)
+
+    const res = await request(app)
+      .get(`/api/teams/${team.id}/legs`)
+      .set('X-Team-Pin', '1234')
+    expect(res.status).toBe(200)
+    expect(res.body).toHaveLength(2)
+    expect(res.body[0].legNumber).toBe(1)
+    expect(res.body[1].legNumber).toBe(2)
+  })
+
+  it('returns 401 with wrong PIN', async () => {
+    const race = await createRace()
+    const team = await createTeam(race.id, '1234')
+
+    const res = await request(app)
+      .get(`/api/teams/${team.id}/legs`)
+      .set('X-Team-Pin', '9999')
+    expect(res.status).toBe(401)
+  })
+})

@@ -88,6 +88,20 @@ router.get('/teams/:id', teamAuth, async (req, res, next) => {
   } catch (err) { next(err) }
 })
 
+// Captain: get legs for team's race
+router.get('/teams/:id/legs', teamAuth, async (req, res, next) => {
+  try {
+    const team = await prisma.team.findUnique({ where: { id: req.params.id } })
+    if (!team) return res.status(404).json({ error: 'Team not found' })
+    const legs = await prisma.leg.findMany({
+      where: { raceId: team.raceId },
+      orderBy: { legNumber: 'asc' },
+      include: { handoff: true },
+    })
+    res.json(legs)
+  } catch (err) { next(err) }
+})
+
 // Captain: lock assignments
 router.post('/teams/:id/lock', teamAuth, async (req, res, next) => {
   try {
