@@ -14,6 +14,10 @@ export function storePin(teamId: string, pin: string): void {
 }
 
 export const api = createApiClient('/api', () => {
-  const pw = localStorage.getItem(PASSWORD_KEY) ?? ''
-  return pw ? { 'X-Admin-Password': pw } : {}
+  const pw = localStorage.getItem(PASSWORD_KEY)
+  const headers: Record<string, string> = {}
+  if (pw) {
+    headers['X-Admin-Password'] = pw
+  }
+  return headers
 })
