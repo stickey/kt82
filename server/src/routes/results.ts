@@ -108,28 +108,42 @@ router.patch('/results/:id', async (req, res, next) => {
     const valid = await bcrypt.compare(pin, team.captainPinHash)
     if (!valid) return res.status(401).json({ error: 'Invalid PIN' })
 
-    const updated = await prisma.legResult.update({
-      where: { id: req.params.id },
-      data: { finishedAt: parsedFinish },
-    })
-
     if (action === 'stop') {
+      const updated = await prisma.legResult.update({
+        where: { id: req.params.id },
+        data: { finishedAt: parsedFinish },
+      })
       return res.json({ current: serializeResult(updated), next: null })
     }
 
-    // action === 'lap': find next assignment and create next result
+    // action === 'lap': find next assignment and atomically finish current + start next
     const currentLeg = await prisma.leg.findUnique({ where: { id: existing.legId } })
+    if (!currentLeg) return res.status(404).json({ error: 'Leg not found' })
+
     const nextAssignment = await prisma.legAssignment.findFirst({
-      where: { teamId: existing.teamId, leg: { legNumber: { gt: currentLeg!.legNumber } } },
+      where: { teamId: existing.teamId, leg: { legNumber: { gt: currentLeg.legNumber } } },
       orderBy: { leg: { legNumber: 'asc' } },
     })
 
     if (!nextAssignment) {
+      const updated = await prisma.legResult.update({
+        where: { id: req.params.id },
+        data: { finishedAt: parsedFinish },
+      })
       return res.json({ current: serializeResult(updated), next: null })
     }
 
-    const nextResult = await prisma.legResult.create({
-      data: { teamId: existing.teamId, legId: nextAssignment.legId, startedAt: parsedFinish },
+    const [updated, nextResult] = await prisma.$transaction(async (tx) => {
+      const u = await tx.legResult.update({
+        where: { id: req.params.id },
+        data: { finishedAt: parsedFinish },
+      })
+      const n = await tx.legResult.upsert({
+        where: { teamId_legId: { teamId: existing.teamId, legId: nextAssignment.legId } },
+        create: { teamId: existing.teamId, legId: nextAssignment.legId, startedAt: parsedFinish },
+        update: {},
+      })
+      return [u, n]
     })
 
     res.json({ current: serializeResult(updated), next: serializeResult(nextResult) })

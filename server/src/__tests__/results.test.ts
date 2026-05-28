@@ -108,3 +108,48 @@ describe('PATCH /api/results/:id (STOP)', () => {
     expect(res.body.next).toBeNull()
   })
 })
+
+describe('PATCH /api/results/:id (negative paths)', () => {
+  it('returns 401 when no PIN provided', async () => {
+    const race = await createRace()
+    const team = await createTeam(race.id)
+    const leg = await createLeg(race.id, 1, 5)
+    const result = await prisma.legResult.create({
+      data: { teamId: team.id, legId: leg.id, startedAt: new Date() },
+    })
+
+    const res = await request(app)
+      .patch(`/api/results/${result.id}`)
+      .send({ finishedAt: new Date().toISOString(), action: 'stop' })
+    expect(res.status).toBe(401)
+  })
+
+  it('returns 404 for non-existent result', async () => {
+    const res = await request(app)
+      .patch('/api/results/nonexistent-id')
+      .set('X-Team-Pin', '1234')
+      .send({ finishedAt: new Date().toISOString(), action: 'stop' })
+    expect(res.status).toBe(404)
+  })
+
+  it('LAP with no next assignment returns next: null', async () => {
+    const race = await createRace()
+    const team = await createTeam(race.id)
+    const leg = await createLeg(race.id, 1, 5)
+    const member = await createMember(team.id)
+    await createAssignment(team.id, leg.id, member.id)
+
+    const result = await prisma.legResult.create({
+      data: { teamId: team.id, legId: leg.id, startedAt: new Date(Date.now() - 40 * 60 * 1000) },
+    })
+
+    const finishedAt = new Date().toISOString()
+    const res = await request(app)
+      .patch(`/api/results/${result.id}`)
+      .set('X-Team-Pin', '1234')
+      .send({ finishedAt, action: 'lap' })
+    expect(res.status).toBe(200)
+    expect(res.body.current.finishedAt).toBe(finishedAt)
+    expect(res.body.next).toBeNull()
+  })
+})
