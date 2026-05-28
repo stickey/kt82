@@ -86,7 +86,8 @@ export function RosterTab({ onTeamLoad, on401 }: Props) {
       await load()
     } catch (err: any) {
       if (err.message?.includes('→ 401')) { on401(); return }
-      setFormError('Failed to delete — check your connection')
+      setModal(null)
+      setLoadError('Failed to delete — check your connection')
     } finally {
       setSaving(false)
     }
