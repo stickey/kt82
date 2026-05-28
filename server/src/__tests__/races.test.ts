@@ -45,3 +45,23 @@ describe('POST /api/races', () => {
     expect(res.status).toBe(400)
   })
 })
+
+describe('PUT /api/races/:id', () => {
+  it('PUT /api/races/:id updates name and date', async () => {
+    const race = await createRace({ name: 'Old Name' })
+    const res = await request(app)
+      .put(`/api/races/${race.id}`)
+      .set('X-Admin-Password', 'testadmin')
+      .send({ name: 'KT82 2026', date: '2026-09-06T00:00:00.000Z' })
+    expect(res.status).toBe(200)
+    expect(res.body.name).toBe('KT82 2026')
+  })
+
+  it('PUT /api/races/:id returns 404 for missing race', async () => {
+    const res = await request(app)
+      .put('/api/races/nonexistent')
+      .set('X-Admin-Password', 'testadmin')
+      .send({ name: 'X' })
+    expect(res.status).toBe(404)
+  })
+})
