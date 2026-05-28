@@ -69,10 +69,10 @@ export function TeamGrid({ race, onTeamClick }: Props) {
               className="bg-gray-800 rounded-xl p-3 text-left min-h-[80px] hover:bg-gray-700 active:bg-gray-600 transition-colors w-full"
             >
               <div className="font-semibold text-sm text-white mb-1 leading-tight">{s.team.name}</div>
-              {s.status === 'in-progress' && s.currentLeg && s.currentRunner ? (
+              {s.status === 'in-progress' && s.currentLeg ? (
                 <>
                   <div className="text-xs text-gray-400 mb-1">
-                    Leg {s.currentLeg.legNumber} · {s.currentRunner.name}
+                    Leg {s.currentLeg.legNumber}{s.currentRunner ? ` · ${s.currentRunner.name}` : ''}
                   </div>
                   {s.eta && (
                     <>
