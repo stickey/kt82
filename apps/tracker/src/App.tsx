@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { api } from './api'
-import type { Race } from './api'
+import type { Race, TeamStatus } from './api'
 import { TeamGrid } from './components/TeamGrid'
 import { TeamDetail } from './components/TeamDetail'
 
@@ -28,6 +28,16 @@ export default function App() {
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
+
+  useEffect(() => {
+    if (!race || !teamId || teamName) return
+    api.get<TeamStatus[]>(`/races/${race.id}/status`)
+      .then(statuses => {
+        const found = statuses.find(s => s.team.id === teamId)
+        if (found) setTeamName(found.team.name)
+      })
+      .catch(() => {})
+  }, [race, teamId, teamName])
 
   function navigateToTeam(id: string, name: string) {
     window.location.hash = `team/${id}`

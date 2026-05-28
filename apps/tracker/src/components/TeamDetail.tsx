@@ -14,9 +14,11 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
   const [notFound, setNotFound] = useState(false)
   const [secondsSinceUpdate, setSecondsSinceUpdate] = useState<number | null>(null)
   const lastUpdatedRef = useRef<Date | null>(null)
+  const notFoundRef = useRef(false)
 
   useEffect(() => {
     async function poll() {
+      if (notFoundRef.current) return
       try {
         const data = await api.get<LegTimelineItem[]>(`/teams/${teamId}/timeline`)
         setTimeline(data)
@@ -26,6 +28,7 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : ''
         if (msg.includes('→ 404')) {
+          notFoundRef.current = true
           setNotFound(true)
         } else {
           setPollError(true)
@@ -60,7 +63,7 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
     return (
       <div className="min-h-screen bg-gray-950 text-white flex flex-col">
         <div className="p-4">
-          <button onClick={onBack} className="text-gray-400 text-sm hover:text-white">
+          <button onClick={onBack} className="text-gray-400 text-sm hover:text-white min-h-[44px] flex items-center">
             ← All Teams
           </button>
         </div>
