@@ -4,7 +4,16 @@ A suite of four mobile-first web applications supporting participants, spectator
 
 ## Background
 
-The KT82 is a multi-leg road relay race held in rural Missouri. Teams of runners each cover one or more legs of the course, with a support vehicle transporting the team between handoff points. Because the race runs through areas with poor GPS and cellular coverage, **all arrival time predictions are pace-based, not GPS-based**. The apps must function well on mobile devices and tolerate spotty connectivity.
+The KT82 is an 82-mile multi-leg road relay race held in rural Missouri. Teams of runners each cover one or more legs of the course, with a support vehicle transporting the team between handoff points. Because the race runs through areas with poor GPS and cellular coverage, **all arrival time predictions are pace-based, not GPS-based**. The apps must function well on mobile devices and tolerate spotty connectivity.
+
+### Race Format
+
+- **Total distance:** ~82 miles across many legs (leg count and lengths vary by year)
+- **Typical team:** 6 runners, each running approximately 3 legs = ~18 legs per team
+- **Leg lengths:** Vary; each leg has a defined distance in miles
+- **Support vehicle:** Drives team members between handoff points while one runner is on course
+- **Handoff points:** Fixed locations along the route with a name and optionally an address or GPS coordinates (lat/lng) for navigation
+- The race format is flexible — leg count and runner assignments are configured per race by the Manager app
 
 ---
 
