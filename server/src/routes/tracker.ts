@@ -6,44 +6,59 @@ const router = Router()
 
 router.get('/races/:id/status', async (req, res, next) => {
   try {
+    const race = await prisma.race.findUnique({ where: { id: req.params.id } })
+    if (!race) return res.status(404).json({ error: 'Race not found' })
+
     const teams = await prisma.team.findMany({ where: { raceId: req.params.id } })
+    if (teams.length === 0) return res.json([])
+
+    const teamIds = teams.map((t) => t.id)
     const now = new Date()
 
-    const statuses = await Promise.all(
-      teams.map(async (team) => {
-        const activeResult = await prisma.legResult.findFirst({
-          where: { teamId: team.id, finishedAt: null },
-          include: { leg: { include: { handoff: true } } },
-        })
+    const activeResults = await prisma.legResult.findMany({
+      where: { teamId: { in: teamIds }, finishedAt: null },
+      include: { leg: { include: { handoff: true } } },
+    })
+    const activeResultByTeam = Object.fromEntries(activeResults.map((r) => [r.teamId, r]))
 
-        if (!activeResult) {
-          return { team: { id: team.id, name: team.name }, status: 'not-started', currentRunner: null, eta: null }
-        }
-
-        const assignment = await prisma.legAssignment.findFirst({
-          where: { teamId: team.id, legId: activeResult.legId },
+    const activeLegIds = activeResults.map((r) => r.legId)
+    const assignments = activeLegIds.length > 0
+      ? await prisma.legAssignment.findMany({
+          where: { teamId: { in: teamIds }, legId: { in: activeLegIds } },
           include: { teamMember: true },
         })
-
-        const eta = assignment
-          ? calculateETA(
-              { id: assignment.id, teamId: team.id, legId: assignment.legId, teamMemberId: assignment.teamMemberId, targetPaceSecPerMile: assignment.targetPaceSecPerMile },
-              { id: activeResult.id, teamId: team.id, legId: activeResult.legId, startedAt: activeResult.startedAt.toISOString(), finishedAt: null },
-              { id: activeResult.leg.id, raceId: activeResult.leg.raceId, legNumber: activeResult.leg.legNumber, name: activeResult.leg.name, distanceMiles: activeResult.leg.distanceMiles },
-              now
-            )
-          : null
-
-        return {
-          team: { id: team.id, name: team.name },
-          status: 'in-progress',
-          currentLeg: { id: activeResult.leg.id, legNumber: activeResult.leg.legNumber, name: activeResult.leg.name, distanceMiles: activeResult.leg.distanceMiles },
-          currentRunner: assignment?.teamMember ?? null,
-          nextHandoff: activeResult.leg.handoff,
-          eta,
-        }
-      })
+      : []
+    const assignmentByTeamLeg = Object.fromEntries(
+      assignments.map((a) => [`${a.teamId}:${a.legId}`, a])
     )
+
+    const statuses = teams.map((team) => {
+      const activeResult = activeResultByTeam[team.id]
+
+      if (!activeResult) {
+        return { team: { id: team.id, name: team.name }, status: 'not-started', currentRunner: null, eta: null }
+      }
+
+      const assignment = assignmentByTeamLeg[`${team.id}:${activeResult.legId}`]
+
+      const eta = assignment
+        ? calculateETA(
+            { id: assignment.id, teamId: team.id, legId: assignment.legId, teamMemberId: assignment.teamMemberId, targetPaceSecPerMile: assignment.targetPaceSecPerMile },
+            { id: activeResult.id, teamId: team.id, legId: activeResult.legId, startedAt: activeResult.startedAt.toISOString(), finishedAt: null },
+            { id: activeResult.leg.id, raceId: activeResult.leg.raceId, legNumber: activeResult.leg.legNumber, name: activeResult.leg.name, distanceMiles: activeResult.leg.distanceMiles },
+            now
+          )
+        : null
+
+      return {
+        team: { id: team.id, name: team.name },
+        status: 'in-progress',
+        currentLeg: { id: activeResult.leg.id, legNumber: activeResult.leg.legNumber, name: activeResult.leg.name, distanceMiles: activeResult.leg.distanceMiles },
+        currentRunner: assignment?.teamMember ?? null,
+        nextHandoff: activeResult.leg.handoff,
+        eta,
+      }
+    })
 
     res.json(statuses)
   } catch (err) { next(err) }
@@ -52,6 +67,9 @@ router.get('/races/:id/status', async (req, res, next) => {
 router.get('/teams/:id/timeline', async (req, res, next) => {
   try {
     const teamId = req.params.id
+    const team = await prisma.team.findUnique({ where: { id: teamId } })
+    if (!team) return res.status(404).json({ error: 'Team not found' })
+
     const assignments = await prisma.legAssignment.findMany({
       where: { teamId },
       orderBy: { leg: { legNumber: 'asc' } },

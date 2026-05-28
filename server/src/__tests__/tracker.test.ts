@@ -34,6 +34,18 @@ describe('GET /api/races/:id/status (no auth)', () => {
   })
 })
 
+describe('404 cases', () => {
+  it('returns 404 for non-existent race in status endpoint', async () => {
+    const res = await request(app).get('/api/races/nonexistent-id/status')
+    expect(res.status).toBe(404)
+  })
+
+  it('returns 404 for non-existent team in timeline endpoint', async () => {
+    const res = await request(app).get('/api/teams/nonexistent-id/timeline')
+    expect(res.status).toBe(404)
+  })
+})
+
 describe('GET /api/teams/:id/timeline (no auth)', () => {
   it('returns all legs with assignment, runner, and status', async () => {
     const race = await createRace()
