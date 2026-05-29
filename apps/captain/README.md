@@ -1,50 +1,44 @@
-# React + TypeScript + Vite
+# Captain App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Team setup dashboard for team captains to configure their roster and leg assignments before the race.
 
-Currently, two official plugins are available:
+## What It Does
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Roster tab:** Add, rename, and remove team members
+- **Assignments tab:** Assign a runner to each leg with a target pace (min/mile); unassigned legs are skipped in ETA calculations
 
-## Expanding the ESLint configuration
+## Running
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+The API server must be running first:
+```bash
+cd server && PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH" pnpm dev
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+```bash
+# From repo root
+PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH" pnpm --filter captain dev
+```
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+Opens at **http://localhost:5174**
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+## Auth
+
+Login with your team PIN. PINs are created by the race director in the Manager app.
+
+Dev credential: `1234` (after creating a team in Manager or via the test suite).
+
+## File Structure
+
+```
+src/
+  api.ts              — PIN-bearing API client factory
+  App.tsx             — login gate, tab routing
+  components/
+    LoginScreen.tsx   — PIN entry
+    TabNav.tsx        — tab bar (Roster / Assignments)
+    Modal.tsx         — reusable modal wrapper
+    ConfirmDialog.tsx — reusable confirm/cancel dialog
+  tabs/
+    RosterTab.tsx     — add/rename/remove team members
+    AssignmentsTab.tsx — assign runners to legs with target pace
 ```

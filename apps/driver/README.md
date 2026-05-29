@@ -1,50 +1,50 @@
-# React + TypeScript + Vite
+# Driver App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Race-day timing app used by the driver/timekeeper in the support vehicle to start legs, record handoffs, and track ETA.
 
-Currently, two official plugins are available:
+## What It Does
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Authenticates with a team PIN, then detects whether the race has started
+- **Start screen:** Displays the first leg info; hold the START button (~500ms) to begin the race
+- **Timing screen:** Ticking elapsed clock + server-polled ETA side by side; navigate to the next handoff point; hold LAP (~1500ms) to record a handoff and advance to the next leg; hold "End race early" (~1500ms) to stop
+- **Complete screen:** Total race time + per-leg splits for all completed legs
+- All timing buttons use long-press (hold-to-activate) to prevent accidental taps in a moving vehicle
+- Timestamps are captured client-side at the moment of button activation
 
-## Expanding the ESLint configuration
+## Running
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+The API server must be running first:
+```bash
+cd server && PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH" pnpm dev
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
-
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+```bash
+# From repo root
+PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH" pnpm --filter driver dev
 ```
+
+Opens at **http://localhost:5176**
+
+## Auth
+
+Login with your team PIN. PINs are created by the race director in the Manager app.
+
+Dev credential: `1234` (after creating a team in Manager or via the test suite).
+
+## File Structure
+
+```
+src/
+  api.ts              — PIN-bearing API client factory, format helpers (formatElapsed, formatTime, formatDuration, buildNavUrl)
+  App.tsx             — discriminated union state machine (loading → auth → start → racing → complete)
+  components/
+    LongPressButton.tsx — reusable hold-to-activate button with rAF fill animation
+    AuthScreen.tsx    — team selection dropdown + PIN entry
+    StartScreen.tsx   — first leg info + START long-press
+    TimingScreen.tsx  — elapsed clock, ETA poll, navigation link, LAP/STOP
+    CompleteScreen.tsx — total time + leg-by-leg splits
+```
+
+## Navigation Deep Links
+
+When a handoff point has coordinates set (in Manager), the navigation link opens Apple Maps directly to those coordinates. If only an address is set, it opens an address search. The link is hidden when no handoff point is configured.
