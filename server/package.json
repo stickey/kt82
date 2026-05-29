@@ -7,7 +7,8 @@
     "start": "node dist/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "seed:legs": "tsx src/seed/legs.ts"
+    "seed:legs": "tsx src/seed/legs.ts",
+    "seed:roster": "tsx src/seed/roster.ts"
   },
   "dependencies": {
     "@kt82/shared": "workspace:*",

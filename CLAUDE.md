@@ -33,6 +33,13 @@ cd server && PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH" pnpm test src/__
 cd server && PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH" pnpm seed:legs <raceId>
 # Guards against double-seeding. To re-seed, wipe via Manager → Danger tab first.
 
+# Seed a team roster from a CSV file (must have a "name" column)
+# 1. Create a team in the Manager app, copy its ID from the DB
+# 2. Run (csvFile path relative to server/ dir or absolute):
+cd server && PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH" pnpm seed:roster <teamId> <csvFile>
+# Example: pnpm seed:roster clx123abc ../resources/team.rungmc.csv
+# Guards against double-seeding. Remove members first via the Captain app.
+
 # Install dependencies after package.json changes (from repo root)
 PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH" pnpm install
 
