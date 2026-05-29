@@ -53,4 +53,21 @@ router.delete('/races/:id/results', adminAuth, async (req, res, next) => {
   } catch (err) { next(err) }
 })
 
+router.delete('/races/:id', adminAuth, async (req, res, next) => {
+  try {
+    const race = await prisma.race.findUnique({ where: { id: req.params.id } })
+    if (!race) return res.status(404).json({ error: 'Race not found' })
+    await prisma.$transaction(async (tx) => {
+      await tx.legResult.deleteMany({ where: { leg: { raceId: req.params.id } } })
+      await tx.legAssignment.deleteMany({ where: { leg: { raceId: req.params.id } } })
+      await tx.teamMember.deleteMany({ where: { team: { raceId: req.params.id } } })
+      await tx.team.deleteMany({ where: { raceId: req.params.id } })
+      await tx.handoff.deleteMany({ where: { leg: { raceId: req.params.id } } })
+      await tx.leg.deleteMany({ where: { raceId: req.params.id } })
+      await tx.race.delete({ where: { id: req.params.id } })
+    })
+    res.json({ ok: true })
+  } catch (err) { next(err) }
+})
+
 export default router
