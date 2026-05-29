@@ -63,6 +63,21 @@ router.post('/teams/:id/reset', adminAuth, async (req, res, next) => {
   }
 })
 
+// Manager: delete team (cascades members, assignments, results)
+router.delete('/teams/:id', adminAuth, async (req, res, next) => {
+  try {
+    const team = await prisma.team.findUnique({ where: { id: req.params.id } })
+    if (!team) return res.status(404).json({ error: 'Team not found' })
+    await prisma.$transaction(async (tx) => {
+      await tx.legResult.deleteMany({ where: { teamId: req.params.id } })
+      await tx.legAssignment.deleteMany({ where: { teamId: req.params.id } })
+      await tx.teamMember.deleteMany({ where: { teamId: req.params.id } })
+      await tx.team.delete({ where: { id: req.params.id } })
+    })
+    res.json({ ok: true })
+  } catch (err) { next(err) }
+})
+
 // Captain: get team detail (members + assignments + results)
 router.get('/teams/:id', teamAuth, async (req, res, next) => {
   try {

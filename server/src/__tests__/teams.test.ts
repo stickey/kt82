@@ -121,3 +121,45 @@ describe('GET /api/teams/:id/legs', () => {
     expect(res.status).toBe(401)
   })
 })
+
+describe('DELETE /api/teams/:id', () => {
+  const ADMIN = { 'X-Admin-Password': 'testadmin' }
+
+  it('returns 401 without admin password', async () => {
+    const race = await createRace()
+    const team = await createTeam(race.id)
+    const res = await request(app).delete(`/api/teams/${team.id}`)
+    expect(res.status).toBe(401)
+  })
+
+  it('returns 404 for unknown team', async () => {
+    const res = await request(app)
+      .delete('/api/teams/nonexistent')
+      .set(ADMIN)
+    expect(res.status).toBe(404)
+  })
+
+  it('deletes team and all dependent data, leaving race and legs intact', async () => {
+    const race = await createRace()
+    const leg = await createLeg(race.id, 1)
+    const team = await createTeam(race.id)
+    const member = await createMember(team.id)
+    await createAssignment(team.id, leg.id, member.id)
+    await createLegResult(team.id, leg.id)
+
+    const res = await request(app)
+      .delete(`/api/teams/${team.id}`)
+      .set(ADMIN)
+    expect(res.status).toBe(200)
+
+    // Team and its data are gone
+    expect(await prisma.team.count()).toBe(0)
+    expect(await prisma.teamMember.count()).toBe(0)
+    expect(await prisma.legAssignment.count()).toBe(0)
+    expect(await prisma.legResult.count()).toBe(0)
+
+    // Race and legs are untouched
+    expect(await prisma.race.count()).toBe(1)
+    expect(await prisma.leg.count()).toBe(1)
+  })
+})
