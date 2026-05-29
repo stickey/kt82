@@ -234,7 +234,7 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={e => e.stopPropagation()}
-                          className="text-xs mt-1.5 inline-block"
+                          className="text-xs mt-1 py-2 inline-block min-h-[44px] flex items-center"
                           style={{color:'var(--blue)'}}
                         >
                           ↗ Navigate to {item.leg.handoff.name}
