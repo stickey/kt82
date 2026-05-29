@@ -27,6 +27,12 @@ cd server && PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH" pnpm test
 # Run a single test file
 cd server && PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH" pnpm test src/__tests__/results.test.ts
 
+# Seed all 18 legs + handoffs from resources/KT82legs.csv into a race
+# 1. Create a race in the Manager app, copy its ID from the URL or DB
+# 2. Run:
+cd server && PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH" pnpm seed:legs <raceId>
+# Guards against double-seeding. To re-seed, wipe via Manager → Danger tab first.
+
 # Install dependencies after package.json changes (from repo root)
 PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH" pnpm install
 
