@@ -4,10 +4,11 @@ import { TabNav } from './components/TabNav'
 import { RaceTab } from './tabs/RaceTab'
 import { LegsTab } from './tabs/LegsTab'
 import { TeamsTab } from './tabs/TeamsTab'
+import { DangerTab } from './tabs/DangerTab'
 import { PASSWORD_KEY } from './api'
 import type { Race } from '@kt82/shared'
 
-type Tab = 'race' | 'legs' | 'teams'
+type Tab = 'race' | 'legs' | 'teams' | 'danger'
 
 export default function App() {
   const [authed, setAuthed] = useState(() => !!localStorage.getItem(PASSWORD_KEY))
@@ -17,11 +18,18 @@ export default function App() {
   function handle401() {
     localStorage.removeItem(PASSWORD_KEY)
     setAuthed(false)
+    setRace(null)
   }
 
   function handleSignOut() {
     localStorage.removeItem(PASSWORD_KEY)
     setAuthed(false)
+    setRace(null)
+  }
+
+  function handleRaceWipe() {
+    setRace(null)
+    setTab('race')
   }
 
   if (!authed) return <LoginScreen onSuccess={() => setAuthed(true)} />
@@ -33,6 +41,7 @@ export default function App() {
         {tab === 'race' && <RaceTab onRaceChange={setRace} on401={handle401} />}
         {tab === 'legs' && <LegsTab race={race} on401={handle401} />}
         {tab === 'teams' && <TeamsTab race={race} on401={handle401} />}
+        {tab === 'danger' && <DangerTab race={race} on401={handle401} onRaceWipe={handleRaceWipe} />}
       </div>
     </div>
   )

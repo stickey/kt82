@@ -1,4 +1,4 @@
-type Tab = 'race' | 'legs' | 'teams'
+type Tab = 'race' | 'legs' | 'teams' | 'danger'
 
 interface Props {
   tab: Tab
@@ -10,6 +10,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'race', label: 'Race' },
   { id: 'legs', label: 'Legs' },
   { id: 'teams', label: 'Teams' },
+  { id: 'danger', label: 'Danger' },
 ]
 
 export function TabNav({ tab, onTab, onSignOut }: Props) {
@@ -32,7 +33,9 @@ export function TabNav({ tab, onTab, onSignOut }: Props) {
             onClick={() => onTab(t.id)}
             className={`flex-1 md:flex-none py-3 px-5 text-sm font-medium border-b-2 transition-colors min-h-[44px] ${
               tab === t.id
-                ? 'border-blue-500 text-blue-400'
+                ? t.id === 'danger'
+                  ? 'border-red-500 text-red-400'
+                  : 'border-blue-500 text-blue-400'
                 : 'border-transparent text-gray-400 hover:text-white'
             }`}
           >
