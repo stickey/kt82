@@ -60,6 +60,7 @@ export function TimingScreen({ race, team, pin, resultId, leg, startedAt, nextHa
         onComplete()
       } else {
         const state = await api.get<CurrentStateInProgress>(`/teams/${team.id}/current`)
+        setActing(false)
         onLap(state)
       }
     } catch (err: unknown) {
