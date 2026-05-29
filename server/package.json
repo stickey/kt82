@@ -6,13 +6,15 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "seed:legs": "tsx src/seed/legs.ts"
   },
   "dependencies": {
     "@kt82/shared": "workspace:*",
     "@prisma/client": "^5.14.0",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
+    "csv-parse": "^6.2.1",
     "express": "^4.19.0"
   },
   "devDependencies": {

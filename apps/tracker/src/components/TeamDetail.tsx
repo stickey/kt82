@@ -118,7 +118,7 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
               {activeItem.runner.name} · Leg {activeItem.leg.legNumber} · {activeItem.leg.name}
             </div>
             <div className="text-sm text-gray-300 mb-2">{activeItem.leg.distanceMiles} mi</div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 mb-2">
               <span className={`text-xl font-bold ${
                 activeItem.eta.status === 'overdue' ? 'text-amber-400' : 'text-green-400'
               }`}>
@@ -134,6 +134,22 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
                   : 'on pace'}
               </span>
             </div>
+            {activeItem.leg.handoff && (
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-gray-400">→ {activeItem.leg.handoff.name}</span>
+                {activeItem.leg.handoff.lat != null && activeItem.leg.handoff.lng != null && (
+                  <a
+                    href={`https://maps.apple.com/?daddr=${activeItem.leg.handoff.lat},${activeItem.leg.handoff.lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:text-blue-300 underline underline-offset-2"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    Meet here ↗
+                  </a>
+                )}
+              </div>
+            )}
           </div>
         )}
 
