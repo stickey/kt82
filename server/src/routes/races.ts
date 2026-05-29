@@ -44,4 +44,13 @@ router.put('/races/:id', adminAuth, async (req, res, next) => {
   }
 })
 
+router.delete('/races/:id/results', adminAuth, async (req, res, next) => {
+  try {
+    const race = await prisma.race.findUnique({ where: { id: req.params.id } })
+    if (!race) return res.status(404).json({ error: 'Race not found' })
+    await prisma.legResult.deleteMany({ where: { leg: { raceId: req.params.id } } })
+    res.json({ ok: true })
+  } catch (err) { next(err) }
+})
+
 export default router

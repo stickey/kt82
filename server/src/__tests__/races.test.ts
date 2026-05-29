@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest'
 import request from 'supertest'
 import { app } from '../app'
 import { createRace } from './helpers'
+import { prisma } from '../lib/prisma'
+import { createLeg, createHandoff, createTeam, createMember, createAssignment, createLegResult } from './helpers'
 
 const ADMIN = { 'X-Admin-Password': 'testadmin' }
 
@@ -63,5 +65,39 @@ describe('PUT /api/races/:id', () => {
       .set('X-Admin-Password', 'testadmin')
       .send({ name: 'X' })
     expect(res.status).toBe(404)
+  })
+})
+
+describe('DELETE /api/races/:id/results', () => {
+  it('returns 401 without admin password', async () => {
+    const race = await createRace()
+    const res = await request(app).delete(`/api/races/${race.id}/results`)
+    expect(res.status).toBe(401)
+  })
+
+  it('returns 404 for unknown race', async () => {
+    const res = await request(app)
+      .delete('/api/races/nonexistent/results')
+      .set(ADMIN)
+    expect(res.status).toBe(404)
+  })
+
+  it('deletes all leg results, leaving legs and teams intact', async () => {
+    const race = await createRace()
+    const leg = await createLeg(race.id, 1)
+    const team = await createTeam(race.id)
+    await createLegResult(team.id, leg.id)
+
+    const res = await request(app)
+      .delete(`/api/races/${race.id}/results`)
+      .set(ADMIN)
+    expect(res.status).toBe(200)
+
+    const legCount = await prisma.leg.count({ where: { raceId: race.id } })
+    const teamCount = await prisma.team.count({ where: { raceId: race.id } })
+    const resultCount = await prisma.legResult.count({ where: { leg: { raceId: race.id } } })
+    expect(legCount).toBe(1)
+    expect(teamCount).toBe(1)
+    expect(resultCount).toBe(0)
   })
 })
