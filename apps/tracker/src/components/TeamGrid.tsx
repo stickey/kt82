@@ -46,53 +46,93 @@ export function TeamGrid({ race, onTeamClick }: Props) {
 
   return (
     <div className="p-4 max-w-3xl mx-auto">
-      <div className="mb-5">
-        <h1 className="text-xl font-bold">{race.name}</h1>
-        <p className="text-sm text-gray-400">{raceDate}</p>
-        <p className="text-xs text-gray-500 mt-1">
-          {pollError
-            ? 'Unable to refresh — check connection'
-            : secondsSinceUpdate !== null
-              ? `Updated ${secondsSinceUpdate}s ago`
-              : 'Loading...'}
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="font-display text-4xl font-bold tracking-tight" style={{color:'var(--text)'}}>
+          {race.name}
+        </h1>
+        <p className="text-sm mt-1" style={{color:'var(--muted)'}}>
+          {raceDate}
         </p>
+        <div className="flex items-center gap-1.5 mt-2">
+          {pollError ? (
+            <span className="text-xs" style={{color:'var(--amber)'}}>⚠ Unable to refresh</span>
+          ) : (
+            <>
+              <span className="live-dot w-1.5 h-1.5 rounded-full inline-block flex-shrink-0" style={{background:'var(--green)'}} />
+              <span className="text-xs" style={{color:'var(--muted)'}}>
+                {secondsSinceUpdate === 0 ? 'live' : `${secondsSinceUpdate}s ago`}
+              </span>
+            </>
+          )}
+        </div>
       </div>
 
+      {/* Grid */}
       {statuses.length === 0 && !pollError ? (
-        <p className="text-gray-500 text-sm">No teams yet.</p>
+        <p className="text-sm" style={{color:'var(--muted)'}}>No teams yet.</p>
       ) : (
-        <div className="grid grid-cols-2 gap-3">
-          {statuses.map(s => (
-            <button
-              key={s.team.id}
-              onClick={() => onTeamClick(s.team.id, s.team.name)}
-              className="bg-gray-800 rounded-xl p-3 text-left min-h-[80px] hover:bg-gray-700 active:bg-gray-600 transition-colors w-full"
-            >
-              <div className="font-semibold text-sm text-white mb-1 leading-tight">{s.team.name}</div>
-              {s.status === 'in-progress' && s.currentLeg ? (
-                <>
-                  <div className="text-xs text-gray-400 mb-1">
-                    Leg {s.currentLeg.legNumber}{s.currentRunner ? ` · ${s.currentRunner.name}` : ''}
-                  </div>
-                  {s.eta && (
-                    <>
-                      <div className={`text-sm font-bold ${s.eta.status === 'overdue' ? 'text-amber-400' : 'text-green-400'}`}>
-                        {formatTime(s.eta.eta)}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {statuses.map(s => {
+            const isActive = s.status === 'in-progress'
+            const isOverdue = s.eta?.status === 'overdue'
+            return (
+              <button
+                key={s.team.id}
+                onClick={() => onTeamClick(s.team.id, s.team.name)}
+                className="card-hover rounded-xl p-4 text-left w-full"
+                style={{
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  minHeight: isActive ? 'auto' : '80px',
+                }}
+              >
+                {/* Team name */}
+                <div
+                  className="font-display text-lg font-bold leading-tight mb-2"
+                  style={{color: isActive ? 'var(--text)' : 'var(--faint)'}}
+                >
+                  {s.team.name}
+                </div>
+
+                {isActive && s.currentLeg ? (
+                  <>
+                    {/* Leg + runner */}
+                    <div className="text-xs mb-2" style={{color:'var(--muted)'}}>
+                      Leg {s.currentLeg.legNumber}{s.currentRunner ? ` · ${s.currentRunner.name}` : ''}
+                    </div>
+
+                    {/* ETA */}
+                    {s.eta && (
+                      <>
+                        <div
+                          className="font-display text-2xl font-bold leading-none"
+                          style={{color: isOverdue ? 'var(--amber)' : 'var(--green)'}}
+                        >
+                          {formatTime(s.eta.eta)}
+                        </div>
+                        <div
+                          className="font-display text-xs font-semibold uppercase tracking-wider mt-0.5"
+                          style={{color: isOverdue ? 'var(--amber)' : 'var(--green)'}}
+                        >
+                          {isOverdue ? 'overdue' : s.eta.status === 'ahead' ? 'ahead' : 'on pace'}
+                        </div>
+                      </>
+                    )}
+
+                    {/* Next handoff */}
+                    {s.nextHandoff && (
+                      <div className="text-xs mt-2 truncate" style={{color:'var(--faint)'}}>
+                        → {s.nextHandoff.name}
                       </div>
-                      <div className={`text-xs ${s.eta.status === 'overdue' ? 'text-amber-500' : 'text-green-600'}`}>
-                        {s.eta.status === 'overdue' ? 'overdue' : s.eta.status === 'ahead' ? 'ahead' : 'on pace'}
-                      </div>
-                    </>
-                  )}
-                  {s.nextHandoff && (
-                    <div className="text-xs text-gray-500 mt-1 truncate">→ {s.nextHandoff.name}</div>
-                  )}
-                </>
-              ) : (
-                <div className="text-xs text-gray-500">Not started</div>
-              )}
-            </button>
-          ))}
+                    )}
+                  </>
+                ) : (
+                  <div className="text-xs" style={{color:'var(--faint)'}}>Not started</div>
+                )}
+              </button>
+            )
+          })}
         </div>
       )}
     </div>
