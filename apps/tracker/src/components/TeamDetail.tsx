@@ -76,6 +76,21 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
 
   const activeItem = timeline.find(t => t.status === 'in-progress')
 
+  const projectedTimes = new Map<string, Date>()
+  if (activeItem?.eta?.eta) {
+    let anchor = new Date(String(activeItem.eta.eta))
+    const notStarted = timeline
+      .filter(t => t.status === 'not-started')
+      .sort((a, b) => a.leg.legNumber - b.leg.legNumber)
+    for (const item of notStarted) {
+      if (!item.assignment) continue
+      const durationMs = item.assignment.targetPaceSecPerMile * item.leg.distanceMiles * 1000
+      const arrival = new Date(anchor.getTime() + durationMs)
+      projectedTimes.set(item.leg.id, arrival)
+      anchor = arrival
+    }
+  }
+
   return (
     <div className="min-h-screen" style={{background:'var(--bg)', color:'var(--text)'}}>
       {/* Header */}
@@ -205,12 +220,26 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
                             ? formatTime(item.result.finishedAt)
                             : isActive && item.eta
                               ? formatTime(String(item.eta.eta))
-                              : '—'}
+                              : projectedTimes.has(item.leg.id)
+                                ? `~${formatTime(projectedTimes.get(item.leg.id)!.toISOString())}`
+                                : '—'}
                         </span>
                       </div>
                       <div className="text-xs mt-0.5" style={{color:'var(--faint)'}}>
                         Leg {item.leg.legNumber} · {item.leg.distanceMiles} mi
                       </div>
+                      {!isDone && !isActive && item.leg.handoff?.lat != null && item.leg.handoff?.lng != null && (
+                        <a
+                          href={`https://maps.apple.com/?daddr=${item.leg.handoff.lat},${item.leg.handoff.lng}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={e => e.stopPropagation()}
+                          className="text-xs mt-1.5 inline-block"
+                          style={{color:'var(--blue)'}}
+                        >
+                          ↗ Navigate to {item.leg.handoff.name}
+                        </a>
+                      )}
                     </div>
                   </div>
                 )
