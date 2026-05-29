@@ -61,14 +61,14 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
 
   if (notFound) {
     return (
-      <div className="min-h-screen bg-gray-950 text-white flex flex-col">
+      <div className="min-h-screen flex flex-col" style={{background:'var(--bg)', color:'var(--text)'}}>
         <div className="p-4">
-          <button onClick={onBack} className="text-gray-400 text-sm hover:text-white min-h-[44px] flex items-center">
+          <button onClick={onBack} className="text-sm min-h-[44px] flex items-center" style={{color:'var(--muted)'}}>
             ← All Teams
           </button>
         </div>
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-gray-400">Team not found.</p>
+          <p style={{color:'var(--muted)'}}>Team not found.</p>
         </div>
       </div>
     )
@@ -77,25 +77,21 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
   const activeItem = timeline.find(t => t.status === 'in-progress')
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      <div className="flex items-center gap-3 p-4 border-b border-gray-800">
-        <button
-          onClick={onBack}
-          className="text-gray-400 text-sm hover:text-white min-h-[44px] flex items-center"
-        >
+    <div className="min-h-screen" style={{background:'var(--bg)', color:'var(--text)'}}>
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3" style={{borderBottom:'1px solid var(--border)'}}>
+        <button onClick={onBack} className="text-sm min-h-[44px] flex items-center" style={{color:'var(--muted)'}}>
           ← All Teams
         </button>
-        <h1 className="flex-1 text-center font-bold text-base">{teamName}</h1>
-        <button
-          onClick={handleShare}
-          className="text-sm text-gray-400 hover:text-white min-h-[44px] flex items-center justify-end"
-        >
+        <span className="font-display text-xl font-bold">{teamName}</span>
+        <button onClick={handleShare} className="text-sm min-h-[44px] flex items-center" style={{color:'var(--muted)'}}>
           Share
         </button>
       </div>
 
       <div className="p-4 max-w-3xl mx-auto">
-        <p className="text-xs text-gray-500 mb-4">
+        {/* Staleness */}
+        <p className="text-xs mb-5" style={{color:'var(--faint)'}}>
           {pollError
             ? 'Unable to refresh — check connection'
             : secondsSinceUpdate !== null
@@ -103,47 +99,52 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
               : 'Loading...'}
         </p>
 
+        {/* Hero card */}
         {activeItem && activeItem.runner && activeItem.eta && (
-          <div className={`rounded-xl p-4 mb-5 border ${
-            activeItem.eta.status === 'overdue'
-              ? 'bg-amber-950 border-amber-500'
-              : 'bg-green-950 border-green-500'
-          }`}>
-            <div className={`text-xs font-semibold uppercase tracking-wide mb-1 ${
-              activeItem.eta.status === 'overdue' ? 'text-amber-400' : 'text-green-400'
-            }`}>
+          <div
+            className={`rounded-2xl p-5 mb-6 ${activeItem.eta.status === 'overdue' ? 'glow-amber' : 'glow-green'}`}
+            style={{
+              background: activeItem.eta.status === 'overdue' ? 'var(--amber-bg)' : 'var(--green-bg)',
+              border: `1px solid ${activeItem.eta.status === 'overdue' ? 'var(--amber-dim)' : 'var(--green-dim)'}`,
+            }}
+          >
+            <div className="font-display text-xs font-semibold uppercase tracking-widest mb-3"
+              style={{color: activeItem.eta.status === 'overdue' ? 'var(--amber)' : 'var(--green)'}}>
               Now on course
             </div>
-            <div className="text-base font-bold text-white">
-              {activeItem.runner.name} · Leg {activeItem.leg.legNumber} · {activeItem.leg.name}
+            <div className="font-display text-3xl font-bold leading-none mb-1" style={{color:'var(--text)'}}>
+              {activeItem.runner.name}
             </div>
-            <div className="text-sm text-gray-300 mb-2">{activeItem.leg.distanceMiles} mi</div>
-            <div className="flex items-center gap-3 mb-2">
-              <span className={`text-xl font-bold ${
-                activeItem.eta.status === 'overdue' ? 'text-amber-400' : 'text-green-400'
-              }`}>
+            <div className="text-sm mb-4" style={{color:'var(--muted)'}}>
+              Leg {activeItem.leg.legNumber} · {activeItem.leg.name} · {activeItem.leg.distanceMiles} mi
+            </div>
+            <div className="flex items-end gap-3 mb-4">
+              <span className="font-display text-5xl font-bold leading-none"
+                style={{color: activeItem.eta.status === 'overdue' ? 'var(--amber)' : 'var(--green)'}}>
                 {formatTime(String(activeItem.eta.eta))}
               </span>
-              <span className={`text-sm px-2 py-0.5 rounded-full ${
-                activeItem.eta.status === 'overdue'
-                  ? 'bg-amber-900 text-amber-300'
-                  : 'bg-green-900 text-green-300'
-              }`}>
-                {activeItem.eta.status === 'overdue' ? 'overdue'
-                  : activeItem.eta.status === 'ahead' ? 'ahead'
-                  : 'on pace'}
+              <span className="font-display text-sm font-semibold uppercase tracking-wide mb-1 px-2 py-0.5 rounded"
+                style={{
+                  background: activeItem.eta.status === 'overdue' ? 'rgba(245,158,11,0.15)' : 'rgba(34,197,94,0.15)',
+                  color: activeItem.eta.status === 'overdue' ? 'var(--amber)' : 'var(--green)',
+                }}>
+                {activeItem.eta.status === 'overdue' ? 'Overdue' : activeItem.eta.status === 'ahead' ? 'Ahead' : 'On pace'}
               </span>
             </div>
             {activeItem.leg.handoff && (
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-gray-400">→ {activeItem.leg.handoff.name}</span>
+              <div className="flex items-center gap-3 pt-3"
+                style={{borderTop:`1px solid ${activeItem.eta.status === 'overdue' ? 'var(--amber-dim)' : 'var(--green-dim)'}`}}>
+                <span className="text-sm flex-1" style={{color:'var(--text)'}}>
+                  → {activeItem.leg.handoff.name}
+                </span>
                 {activeItem.leg.handoff.lat != null && activeItem.leg.handoff.lng != null && (
                   <a
                     href={`https://maps.apple.com/?daddr=${activeItem.leg.handoff.lat},${activeItem.leg.handoff.lng}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-400 hover:text-blue-300 underline underline-offset-2"
                     onClick={e => e.stopPropagation()}
+                    className="text-sm font-medium px-3 py-1.5 rounded-lg min-h-[36px] flex items-center"
+                    style={{background:'rgba(96,165,250,0.12)', color:'var(--blue)', border:'1px solid rgba(96,165,250,0.25)'}}
                   >
                     Meet here ↗
                   </a>
@@ -153,61 +154,68 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
           </div>
         )}
 
-        <div className="text-xs text-gray-500 uppercase tracking-wide mb-2">All Legs</div>
+        {/* Timeline */}
+        <div className="font-display text-xs font-semibold uppercase tracking-widest mb-4" style={{color:'var(--faint)'}}>
+          All Legs
+        </div>
 
         {timeline.length === 0 ? (
-          <p className="text-gray-500 text-sm">No assignments yet.</p>
+          <p className="text-sm" style={{color:'var(--muted)'}}>No assignments yet.</p>
         ) : (
-          <div className="flex flex-col gap-2">
-            {timeline.map(item => (
-              <div
-                key={item.leg.id}
-                className={`flex items-center gap-3 rounded-lg px-3 py-3 ${
-                  item.status === 'in-progress'
-                    ? item.eta?.status === 'overdue'
-                      ? 'bg-amber-950 border border-amber-700'
-                      : 'bg-green-950 border border-green-700'
-                    : item.status === 'completed'
-                      ? 'bg-gray-800 opacity-60'
-                      : 'bg-gray-800 opacity-40'
-                }`}
-              >
-                <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-xs ${
-                  item.status === 'completed'
-                    ? 'bg-gray-600 text-gray-300'
-                    : item.status === 'in-progress'
-                      ? item.eta?.status === 'overdue'
-                        ? 'bg-amber-500 text-black'
-                        : 'bg-green-500 text-black'
-                      : 'border border-gray-600'
-                }`}>
-                  {item.status === 'completed' ? '✓' : item.status === 'in-progress' ? '▶' : ''}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className={`text-sm font-medium ${
-                    item.status === 'not-started' ? 'text-gray-500' : 'text-white'
-                  }`}>
-                    Leg {item.leg.legNumber} · {item.runner?.name ?? '—'}
+          <div className="relative">
+            {/* Connecting line */}
+            <div className="absolute left-[9px] top-3 bottom-3 w-px" style={{background:'var(--border)'}} />
+            <div className="flex flex-col gap-1">
+              {timeline.map(item => {
+                const isActive = item.status === 'in-progress'
+                const isDone = item.status === 'completed'
+                const isOverdue = item.eta?.status === 'overdue'
+                return (
+                  <div key={item.leg.id}
+                    className="flex items-start gap-3 py-2.5 px-3 rounded-lg"
+                    style={{
+                      opacity: isDone ? 0.45 : 1,
+                      background: isActive ? (isOverdue ? 'var(--amber-bg)' : 'var(--green-bg)') : 'transparent',
+                    }}>
+                    {/* Status dot */}
+                    <div className="mt-0.5 flex-shrink-0 w-5 flex justify-center">
+                      {isDone ? (
+                        <div className="w-2 h-2 rounded-full mt-1" style={{background:'var(--faint)'}} />
+                      ) : isActive ? (
+                        <div className="relative w-3 h-3 mt-0.5">
+                          <div className="absolute inset-0 rounded-full"
+                            style={{background: isOverdue ? 'var(--amber)' : 'var(--green)'}} />
+                          <div className="absolute -inset-1 rounded-full opacity-30 live-dot"
+                            style={{background: isOverdue ? 'var(--amber)' : 'var(--green)'}} />
+                        </div>
+                      ) : (
+                        <div className="w-2 h-2 rounded-full mt-1" style={{border:'1px solid var(--faint)'}} />
+                      )}
+                    </div>
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="font-display font-semibold text-base leading-tight"
+                          style={{color: item.status === 'not-started' ? 'var(--faint)' : 'var(--text)'}}>
+                          {item.runner?.name ?? '—'}
+                        </span>
+                        <span className="font-display font-semibold text-base flex-shrink-0"
+                          style={{color: isActive ? (isOverdue ? 'var(--amber)' : 'var(--green)') : 'var(--muted)'}}>
+                          {isDone && item.result?.finishedAt
+                            ? formatTime(item.result.finishedAt)
+                            : isActive && item.eta
+                              ? formatTime(String(item.eta.eta))
+                              : '—'}
+                        </span>
+                      </div>
+                      <div className="text-xs mt-0.5" style={{color:'var(--faint)'}}>
+                        Leg {item.leg.legNumber} · {item.leg.distanceMiles} mi
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-500">{item.leg.distanceMiles} mi</div>
-                </div>
-
-                <div className="text-right flex-shrink-0">
-                  {item.status === 'completed' && item.result?.finishedAt ? (
-                    <span className="text-xs text-gray-400">{formatTime(item.result.finishedAt)}</span>
-                  ) : item.status === 'in-progress' && item.eta ? (
-                    <span className={`text-sm font-bold ${
-                      item.eta.status === 'overdue' ? 'text-amber-400' : 'text-green-400'
-                    }`}>
-                      {formatTime(String(item.eta.eta))}
-                    </span>
-                  ) : (
-                    <span className="text-xs text-gray-600">—</span>
-                  )}
-                </div>
-              </div>
-            ))}
+                )
+              })}
+            </div>
           </div>
         )}
       </div>
