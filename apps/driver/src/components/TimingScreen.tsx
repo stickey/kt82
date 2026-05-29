@@ -32,6 +32,7 @@ export function TimingScreen({ race, team, pin, resultId, leg, startedAt, nextHa
 
   // ETA poll every 30s
   useEffect(() => {
+    setEta(null)  // clear stale ETA from previous leg
     const api = createDriverApi(pin)
     async function poll() {
       try {
@@ -42,7 +43,7 @@ export function TimingScreen({ race, team, pin, resultId, leg, startedAt, nextHa
     poll()
     const id = setInterval(poll, 30_000)
     return () => clearInterval(id)
-  }, [pin, team.id])
+  }, [pin, team.id, resultId])
 
   async function handleLap() {
     if (acting) return
