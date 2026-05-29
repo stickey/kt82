@@ -14,7 +14,7 @@ function extractHandoffName(legName: string): string {
     .trim()
 }
 
-async function seedLegs(raceId: string) {
+async function seedLegs(raceId: string, csvFile?: string) {
   const race = await prisma.race.findUnique({ where: { id: raceId } })
   if (!race) throw new Error(`Race not found: ${raceId}`)
 
@@ -24,7 +24,9 @@ async function seedLegs(raceId: string) {
     process.exit(1)
   }
 
-  const csvPath = path.join(__dirname, '../../../resources/KT82legs.csv')
+  const csvPath = csvFile
+    ? path.isAbsolute(csvFile) ? csvFile : path.join(process.cwd(), csvFile)
+    : path.join(__dirname, '../../../resources/KT82legs.csv')
   const records = parse(fs.readFileSync(csvPath, 'utf-8'), {
     columns: true,
     skip_empty_lines: true,
@@ -56,12 +58,13 @@ async function seedLegs(raceId: string) {
   console.log('Done.')
 }
 
-const raceId = process.argv[2]
+const [raceId, csvFile] = process.argv.slice(2)
 if (!raceId) {
-  console.error('Usage: pnpm seed:legs <raceId>')
+  console.error('Usage: pnpm seed:legs <raceId> [csvFile]')
+  console.error('Example: pnpm seed:legs clx123abc ../resources/KT82legs.csv')
   process.exit(1)
 }
 
-seedLegs(raceId)
+seedLegs(raceId, csvFile)
   .catch(err => { console.error(err.message); process.exit(1) })
   .finally(() => prisma.$disconnect())

@@ -30,7 +30,9 @@ cd server && PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH" pnpm test src/__
 # Seed all 18 legs + handoffs from resources/KT82legs.csv into a race
 # 1. Create a race in the Manager app, copy its ID from the URL or DB
 # 2. Run:
-cd server && PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH" pnpm seed:legs <raceId>
+cd server && PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH" pnpm seed:legs <raceId> [csvFile]
+# csvFile defaults to resources/KT82legs.csv if omitted; path relative to server/ or absolute
+# Example: pnpm seed:legs clx123abc ../resources/KT82legs.csv
 # Guards against double-seeding. To re-seed, wipe via Manager → Danger tab first.
 
 # Seed a team roster from a CSV file (must have a "name" column)
