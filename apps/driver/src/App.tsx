@@ -11,7 +11,7 @@ type View =
   | { type: 'no-race' }
   | { type: 'auth'; race: Race }
   | { type: 'start'; race: Race; team: TeamSummary; pin: string; nextLeg: Leg }
-  | { type: 'racing'; race: Race; team: TeamSummary; pin: string; resultId: string; leg: Leg; startedAt: string; nextHandoff: Handoff | null; currentRunner: string | null }
+  | { type: 'racing'; race: Race; team: TeamSummary; pin: string; resultId: string; leg: Leg; startedAt: string; nextHandoff: Handoff | null; currentRunner: string | null; raceStartedAt: string | null }
   | { type: 'complete'; race: Race; team: TeamSummary; pin: string }
 
 export default function App() {
@@ -42,6 +42,7 @@ export default function App() {
         startedAt: state.result.startedAt,
         nextHandoff: state.nextHandoff,
         currentRunner: state.currentRunner?.name ?? null,
+        raceStartedAt: state.raceStartedAt ?? null,
       })
     }
   }
@@ -58,6 +59,7 @@ export default function App() {
       startedAt: state.result.startedAt,
       nextHandoff: state.nextHandoff,
       currentRunner: state.currentRunner?.name ?? null,
+      raceStartedAt: state.raceStartedAt ?? null,
     })
   }
 
@@ -73,6 +75,7 @@ export default function App() {
       startedAt: state.result.startedAt,
       nextHandoff: state.nextHandoff,
       currentRunner: state.currentRunner?.name ?? null,
+      raceStartedAt: state.raceStartedAt ?? null,
     })
   }
 
@@ -124,6 +127,7 @@ export default function App() {
         startedAt={view.startedAt}
         nextHandoff={view.nextHandoff}
         currentRunner={view.currentRunner}
+        raceStartedAt={view.raceStartedAt}
         onLap={handleLap}
         onComplete={handleComplete}
       />
