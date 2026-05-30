@@ -1,5 +1,5 @@
 {
-  "buildCommand": "pnpm run vercel-build",
+  "buildCommand": "pnpm -w run vercel-build",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/index" },
     { "source": "/tracker/:path*", "destination": "/tracker/index.html" },
