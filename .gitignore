@@ -4,3 +4,4 @@ dist/
 .env.test
 *.js.map
 .superpowers/
+.claude/settings.local.json
