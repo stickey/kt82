@@ -1,5 +1,12 @@
 {
   "buildCommand": "pnpm -w run vercel-build",
+  "outputDirectory": "public",
+  "functions": {
+    "api/index.ts": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/index" },
     { "source": "/tracker/:path*", "destination": "/tracker/index.html" },
