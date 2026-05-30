@@ -1,24 +1,3 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "api/index.ts",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "buildCommand": "pnpm -w run vercel-build",
-        "distDir": "public"
-      }
-    }
-  ],
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api/index.ts" },
-    { "src": "/tracker/(.*)", "dest": "/tracker/index.html" },
-    { "src": "/captain/(.*)", "dest": "/captain/index.html" },
-    { "src": "/manager/(.*)", "dest": "/manager/index.html" },
-    { "src": "/driver/(.*)", "dest": "/driver/index.html" }
-  ]
+  "buildCommand": "pnpm -w run vercel-build"
 }

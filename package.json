@@ -1,6 +1,9 @@
 {
   "name": "kt82",
   "private": true,
+  "devDependencies": {
+    "esbuild": "^0.21.5"
+  },
   "pnpm": {
     "onlyBuiltDependencies": ["@prisma/client", "@prisma/engines", "bcrypt", "esbuild", "prisma"]
   },
@@ -12,7 +15,7 @@
     "dev:driver": "pnpm --filter driver dev",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
-    "vercel-build": "(cd server && pnpm exec prisma generate) && pnpm -r build && mkdir -p public/tracker public/captain public/manager public/driver && cp -r apps/tracker/dist/. public/tracker && cp -r apps/captain/dist/. public/captain && cp -r apps/manager/dist/. public/manager && cp -r apps/driver/dist/. public/driver",
+    "vercel-build": "bash scripts/vercel-build.sh",
     "db:migrate": "cd server && pnpm exec prisma migrate deploy"
   }
 }
