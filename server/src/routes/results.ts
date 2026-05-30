@@ -64,6 +64,11 @@ router.get('/teams/:id/current', teamAuth, async (req, res, next) => {
         )
       : null
 
+    const firstResult = await prisma.legResult.findFirst({
+      where: { teamId },
+      orderBy: { startedAt: 'asc' },
+    })
+
     res.json({
       status: 'in-progress',
       result: serializeResult(activeResult),
@@ -72,6 +77,7 @@ router.get('/teams/:id/current', teamAuth, async (req, res, next) => {
       currentRunner: assignment?.teamMember ?? null,
       assignment,
       eta,
+      raceStartedAt: (firstResult ?? activeResult).startedAt.toISOString(),
     })
   } catch (err) { next(err) }
 })

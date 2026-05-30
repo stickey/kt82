@@ -36,6 +36,33 @@ describe('GET /api/teams/:id/current', () => {
     expect(res.body.status).toBe('in-progress')
     expect(res.body.eta.status).toBe('on-pace')
     expect(res.body.currentRunner.name).toBe(member.name)
+    expect(res.body.raceStartedAt).toBe(startedAt.toISOString())
+  })
+
+  it('returns raceStartedAt equal to the first leg startedAt when on a later leg', async () => {
+    const race = await createRace()
+    const team = await createTeam(race.id)
+    const leg1 = await createLeg(race.id, 1, 5)
+    const leg2 = await createLeg(race.id, 2, 5)
+    const member = await createMember(team.id)
+    await createAssignment(team.id, leg1.id, member.id, 480)
+    await createAssignment(team.id, leg2.id, member.id, 480)
+
+    const leg1Start = new Date(Date.now() - 60 * 60 * 1000) // 1 hour ago
+    await prisma.legResult.create({
+      data: { teamId: team.id, legId: leg1.id, startedAt: leg1Start, finishedAt: new Date(Date.now() - 30 * 60 * 1000) },
+    })
+    const leg2Start = new Date(Date.now() - 10 * 60 * 1000)
+    await prisma.legResult.create({
+      data: { teamId: team.id, legId: leg2.id, startedAt: leg2Start },
+    })
+
+    const res = await request(app)
+      .get(`/api/teams/${team.id}/current`)
+      .set('X-Team-Pin', '1234')
+    expect(res.status).toBe(200)
+    expect(res.body.status).toBe('in-progress')
+    expect(res.body.raceStartedAt).toBe(leg1Start.toISOString())
   })
 })
 
