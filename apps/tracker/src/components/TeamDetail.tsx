@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { api, formatTime } from '../api'
+import { api, formatTime, formatElapsed, formatRaceTime } from '../api'
 import type { LegTimelineItem } from '../api'
 
 interface Props {
@@ -91,6 +91,22 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
     }
   }
 
+  const raceStartedAt = timeline
+    .filter(t => t.result !== null)
+    .sort((a, b) => new Date(a.result!.startedAt).getTime() - new Date(b.result!.startedAt).getTime())[0]
+    ?.result?.startedAt ?? null
+
+  const raceEndedAt = !activeItem && timeline.length > 0 && timeline.every(t => t.status === 'completed')
+    ? (() => { const ts = [...timeline].map(t => t.result?.finishedAt).filter(Boolean).sort(); return ts[ts.length - 1] ?? null })()
+    : null
+
+  const raceElapsedMs = raceStartedAt
+    ? Math.max(0, new Date(raceEndedAt ?? Date.now()).getTime() - new Date(raceStartedAt).getTime())
+    : 0
+  const legElapsedMs = activeItem?.result?.startedAt
+    ? Math.max(0, Date.now() - new Date(activeItem.result.startedAt).getTime())
+    : 0
+
   return (
     <div className="min-h-screen" style={{background:'var(--bg)', color:'var(--text)'}}>
       {/* Header */}
@@ -102,6 +118,26 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
         <button onClick={handleShare} className="text-sm min-h-[44px] flex items-center" style={{color:'var(--muted)'}}>
           Share
         </button>
+      </div>
+
+      {/* Race time banner — sticky */}
+      <div
+        className="sticky top-0 z-10 flex items-center justify-between px-4 py-2"
+        style={{ background: '#0f172a', borderBottom: '2px solid #1e3a5f' }}
+      >
+        <div className="flex items-center gap-2">
+          <div className="relative w-2.5 h-2.5 flex-shrink-0">
+            <div className={`absolute inset-0 rounded-full opacity-60 ${raceStartedAt && !raceEndedAt ? 'animate-ping' : ''}`} style={{ background: '#60a5fa' }} />
+            <div className="absolute inset-0 rounded-full" style={{ background: '#60a5fa' }} />
+          </div>
+          <span className="text-sm font-semibold" style={{ color: '#94a3b8' }}>{teamName}</span>
+        </div>
+        <div className="text-right">
+          <div className="font-mono text-base font-bold leading-none" style={{ color: '#60a5fa' }}>
+            {formatRaceTime(raceElapsedMs)}
+          </div>
+          <div className="text-[9px] uppercase tracking-widest mt-0.5" style={{ color: '#475569' }}>Race time</div>
+        </div>
       </div>
 
       <div className="p-4 max-w-3xl mx-auto">
@@ -133,7 +169,7 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
             <div className="text-sm mb-4" style={{color:'var(--muted)'}}>
               Leg {activeItem.leg.legNumber} · {activeItem.leg.name} · {activeItem.leg.distanceMiles} mi
             </div>
-            <div className="flex items-end gap-3 mb-4">
+            <div className="flex items-end gap-3 mb-1">
               <span className="font-display text-5xl font-bold leading-none"
                 style={{color: activeItem.eta.status === 'overdue' ? 'var(--amber)' : 'var(--green)'}}>
                 {formatTime(String(activeItem.eta.eta))}
@@ -145,6 +181,9 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
                 }}>
                 {activeItem.eta.status === 'overdue' ? 'Overdue' : activeItem.eta.status === 'ahead' ? 'Ahead' : 'On pace'}
               </span>
+            </div>
+            <div className="text-sm mb-4" style={{color:'var(--muted)'}}>
+              {formatElapsed(legElapsedMs)} on this leg
             </div>
             {activeItem.leg.handoff && (
               <div className="flex items-center gap-3 pt-3"
