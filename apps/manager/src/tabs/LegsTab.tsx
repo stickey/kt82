@@ -108,8 +108,8 @@ export function LegsTab({ race, on401 }: Props) {
           legNumber: num, name: legForm.name.trim(), distanceMiles: dist,
         })
       }
-      await load(race!.id)
       setModal(null)
+      await load(race!.id)
     } catch (err: any) {
       if (err.message?.includes('→ 401')) { on401(); return }
       setFormError('Failed to save leg')
@@ -123,8 +123,8 @@ export function LegsTab({ race, on401 }: Props) {
     setSaving(true)
     try {
       await api.delete(`/legs/${modal.leg.id}`)
-      await load(race!.id)
       setModal(null)
+      await load(race!.id)
     } catch (err: any) {
       if (err.message?.includes('→ 401')) { on401(); return }
       setFormError('Failed to delete')
@@ -153,8 +153,8 @@ export function LegsTab({ race, on401 }: Props) {
       } else if (modal?.type === 'editHandoff') {
         await api.put(`/handoffs/${modal.handoff.id}`, body)
       }
-      await load(race!.id)
       setModal(null)
+      await load(race!.id)
     } catch (err: any) {
       if (err.message?.includes('→ 401')) { on401(); return }
       setFormError('Failed to save handoff')
@@ -202,7 +202,7 @@ export function LegsTab({ race, on401 }: Props) {
                   <span className="text-gray-400 text-xs ml-2">{leg.distanceMiles} mi</span>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
-                  {!leg.handoff && <span className="text-amber-400 text-xs hidden sm:inline">No handoff</span>}
+                  {!leg.handoff && <span className="text-amber-400 text-xs">No handoff</span>}
                   <button
                     onClick={e => { e.stopPropagation(); openEditLeg(leg) }}
                     className="text-blue-400 hover:text-blue-300 text-xs min-h-[44px] px-1"

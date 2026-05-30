@@ -14,7 +14,7 @@ export function Modal({ title, onClose, children }: Props) {
   }, [onClose])
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-end md:items-center justify-center z-50 md:p-4">
+    <div className="fixed inset-0 bg-black/60 flex items-end md:items-center justify-center z-50 md:p-4" onClick={onClose}>
       <div
         className="bg-gray-900 border border-gray-800 rounded-t-2xl md:rounded-2xl w-full md:max-w-md shadow-xl"
         onClick={e => e.stopPropagation()}

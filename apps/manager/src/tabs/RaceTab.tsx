@@ -22,6 +22,7 @@ export function RaceTab({ onRaceChange, on401 }: Props) {
   useEffect(() => { load() }, [])
 
   async function load() {
+    setLoading(true)
     setLoadError('')
     try {
       const races = await api.get<Race[]>('/races')
@@ -44,7 +45,7 @@ export function RaceTab({ onRaceChange, on401 }: Props) {
 
   function openEdit() {
     if (!race) return
-    setForm({ name: race.name, date: race.date.slice(0, 10) })
+    setForm({ name: race.name, date: new Date(race.date).toISOString().slice(0, 10) })
     setFormError('')
     setShowModal(true)
   }

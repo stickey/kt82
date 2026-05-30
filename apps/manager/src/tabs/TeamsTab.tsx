@@ -95,6 +95,7 @@ export function TeamsTab({ race, on401 }: Props) {
       setModal(null)
     } catch (err: any) {
       if (err.message?.includes('→ 401')) { on401(); return }
+      else setFormError('Failed to reset team')
     } finally {
       setSaving(false)
     }
