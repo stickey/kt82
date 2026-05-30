@@ -1,17 +1,24 @@
 {
-  "buildCommand": "pnpm -w run vercel-build",
-  "outputDirectory": "public",
-  "functions": {
-    "api/index.ts": {
-      "memory": 1024,
-      "maxDuration": 10
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/index.ts",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "buildCommand": "pnpm -w run vercel-build",
+        "distDir": "public"
+      }
     }
-  },
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index" },
-    { "source": "/tracker/:path*", "destination": "/tracker/index.html" },
-    { "source": "/captain/:path*", "destination": "/captain/index.html" },
-    { "source": "/manager/:path*", "destination": "/manager/index.html" },
-    { "source": "/driver/:path*", "destination": "/driver/index.html" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/index.ts" },
+    { "src": "/tracker/(.*)", "dest": "/tracker/index.html" },
+    { "src": "/captain/(.*)", "dest": "/captain/index.html" },
+    { "src": "/manager/(.*)", "dest": "/manager/index.html" },
+    { "src": "/driver/(.*)", "dest": "/driver/index.html" }
   ]
 }
