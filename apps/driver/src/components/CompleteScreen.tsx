@@ -8,7 +8,7 @@ interface Props {
   pin: string
 }
 
-export function CompleteScreen({ race, team, pin }: Props) {
+export function CompleteScreen({ race: _race, team, pin }: Props) {
   const [items, setItems] = useState<LegTimelineItem[]>([])
   const [error, setError] = useState('')
 

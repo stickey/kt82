@@ -119,7 +119,6 @@ export default function App() {
   if (view.type === 'racing') {
     return (
       <TimingScreen
-        race={view.race}
         team={view.team}
         pin={view.pin}
         resultId={view.resultId}
