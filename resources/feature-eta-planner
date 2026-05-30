@@ -1,0 +1,59 @@
+# Family Spectator Feature — Enrich the Existing Timeline
+
+## Context
+
+Families want to drive ahead and meet their runner at a handoff point. They need two things inline with the existing leg list: **when** the runner will arrive at each upcoming handoff, and a **navigation link** to get there. No new section — add both directly to the leg timeline rows that already exist in `TeamDetail`.
+
+---
+
+## What Changes in the Timeline
+
+The existing timeline has three leg states. Here's what each will show after this change:
+
+**Completed legs** — unchanged (show finished time, muted styling)
+
+**In-progress leg** — mostly unchanged; the hero card already shows ETA + nav link. The timeline row can optionally gain a nav icon for consistency, but this is low-priority.
+
+**Not-started legs** — two additions per row:
+1. **Projected arrival time** — right-aligned, same position where active legs show ETA. Computed by chaining from the active leg's ETA through each subsequent leg's pace × distance.
+2. **Navigate link** — small `↗ Navigate` link (or map pin icon) next to the handoff name, visible only when handoff has coordinates. Same Apple Maps URL pattern already used in the hero card.
+
+If no leg is currently in progress (race not started), future legs show navigation links but no projected times (no ETA anchor to chain from).
+
+---
+
+## ETA Chaining Logic (client-side, in TeamDetail)
+
+Starting anchor: `activeItem.eta.eta` — the server-calculated projected finish time for the current leg.
+
+```
+projectedArrival(N+1) = projectedArrival(N) + assignment(N+1).targetPaceSecPerMile × leg(N+1).distanceMiles
+```
+
+Build a `Map<legId, Date>` before rendering. Only legs with an assignment have projected times; those without show `—`.
+
+---
+
+## Files to Modify
+
+**`apps/tracker/src/components/TeamDetail.tsx`** — only file changed:
+
+1. After deriving `activeItem`, compute `projectedTimes: Map<string, Date>` by iterating not-started items in leg order, chaining from `activeItem.eta.eta`
+2. In the timeline row render for not-started legs:
+   - Right side: show `formatTime(projectedTimes.get(item.leg.id))` where currently blank
+   - Below or beside the leg name: if `item.leg.handoff?.lat` exists, render a small `↗ Navigate` anchor (Apple Maps URL, same as hero card)
+3. Reuse `formatTime` (already imported from `../api`)
+4. Reuse the Apple Maps URL builder already in the file
+
+No CSS changes, no new section, no other files touched.
+
+---
+
+## Verification
+
+1. Start tracker: `pnpm --filter tracker dev`
+2. With a race in-progress, open a team detail view
+3. Not-started legs show projected arrival times (increasing down the list)
+4. Each not-started leg with handoff coordinates has a visible navigate link
+5. Times update after a lap is recorded (30s poll cycle or sooner)
+6. Legs without assignment data show `—` for time, no nav link if no handoff

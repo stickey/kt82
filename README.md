@@ -221,6 +221,60 @@ If the runner is ahead of or behind pace, remaining seconds can be negative or v
 
 ---
 
+## Development Setup
+
+### Prerequisites
+
+- **Node 20** — use `nvm use 20` or set `PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH"` in your shell
+- **Docker** — for the PostgreSQL container (`relay-race-db`)
+- **pnpm** — package manager (all commands below assume Node 20 is in PATH)
+
+### Initial Setup
+
+```bash
+# Install dependencies
+PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH" pnpm install
+
+# Start the database container (if not already running)
+docker start relay-race-db
+
+# Run database migrations
+cd server && PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH" pnpm exec prisma migrate dev
+```
+
+### Running the Server
+
+```bash
+cd server && PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH" pnpm dev
+# Starts on http://localhost:3001 with hot reload
+```
+
+### Running the Apps
+
+Each app is an independent Vite dev server. Run the server first, then start whichever app(s) you need:
+
+| App | Command | Port | Auth |
+|-----|---------|------|------|
+| Manager | `pnpm --filter manager dev` | 5175 | Admin password |
+| Captain | `pnpm --filter captain dev` | 5174 | Team PIN |
+| Driver | `pnpm --filter driver dev` | 5176 | Team PIN |
+| Tracker | `pnpm --filter tracker dev` | 5173 | None (public) |
+
+Prefix each command with `PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH"`.
+
+### Dev Credentials
+
+- **Admin password** (Manager app): `kt82admin`
+- **Team PINs** (Captain/Driver apps): created via the Manager app; `1234` is used in tests
+
+### Running Tests
+
+```bash
+cd server && PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH" pnpm test
+```
+
+---
+
 ## Out of Scope (MVP)
 
 - Real-time GPS tracking
