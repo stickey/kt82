@@ -1,6 +1,7 @@
 # Sub-project 1 — Server + DB + Monorepo Scaffold
 
 **Date:** 2026-05-26
+**Status:** Implemented
 **Scope:** Foundational monorepo setup, Express API server, PostgreSQL schema via Prisma, shared package skeleton. All four frontend apps receive empty Vite+React shells. Sub-projects 2–5 fill in those shells.
 
 ---
