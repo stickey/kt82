@@ -11,6 +11,7 @@
     "dev:manager": "pnpm --filter manager dev",
     "dev:driver": "pnpm --filter driver dev",
     "build": "pnpm -r build",
-    "test": "pnpm -r test"
+    "test": "pnpm -r test",
+    "vercel-build": "pnpm -r build && mkdir -p public/tracker public/captain public/manager public/driver && cp -r apps/tracker/dist/. public/tracker && cp -r apps/captain/dist/. public/captain && cp -r apps/manager/dist/. public/manager && cp -r apps/driver/dist/. public/driver && cd server && pnpm exec prisma migrate deploy"
   }
 }

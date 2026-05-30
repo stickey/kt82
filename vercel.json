@@ -1,0 +1,10 @@
+{
+  "buildCommand": "pnpm vercel-build",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index" },
+    { "source": "/tracker/:path*", "destination": "/tracker/index.html" },
+    { "source": "/captain/:path*", "destination": "/captain/index.html" },
+    { "source": "/manager/:path*", "destination": "/manager/index.html" },
+    { "source": "/driver/:path*", "destination": "/driver/index.html" }
+  ]
+}
