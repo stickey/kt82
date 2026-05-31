@@ -1,2 +1,2 @@
 import { app } from '../server/src/app'
-export = app
+export default app

@@ -1,4 +1,16 @@
 {
   "framework": null,
-  "buildCommand": "pnpm -w run vercel-build"
+  "buildCommand": "pnpm -w run vercel-build",
+  "outputDirectory": "public",
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/index" },
+    { "source": "/tracker/:path*", "destination": "/tracker/index.html" },
+    { "source": "/tracker", "destination": "/tracker/index.html" },
+    { "source": "/captain/:path*", "destination": "/captain/index.html" },
+    { "source": "/captain", "destination": "/captain/index.html" },
+    { "source": "/manager/:path*", "destination": "/manager/index.html" },
+    { "source": "/manager", "destination": "/manager/index.html" },
+    { "source": "/driver/:path*", "destination": "/driver/index.html" },
+    { "source": "/driver", "destination": "/driver/index.html" }
+  ]
 }
