@@ -12,7 +12,7 @@ find . -maxdepth 7 -name "libquery_engine*" 2>/dev/null | grep -v ".git" | head 
 pnpm -r build
 
 OUTPUT=/vercel/output
-FUNC_DIR="$OUTPUT/functions/api.func"
+FUNC_DIR="$OUTPUT/functions/api/[[...slug]].func"
 
 # --- Static files ---
 mkdir -p "$OUTPUT/static/tracker" "$OUTPUT/static/captain" "$OUTPUT/static/manager" "$OUTPUT/static/driver"
@@ -66,15 +66,6 @@ cat > "$OUTPUT/config.json" << 'EOF'
 {
   "version": 3,
   "routes": [
-    {"src": "/api/health",      "dest": "/api"},
-    {"src": "/api/auth",        "dest": "/api"},
-    {"src": "/api/races",       "dest": "/api"},
-    {"src": "/api/legs",        "dest": "/api"},
-    {"src": "/api/handoffs",    "dest": "/api"},
-    {"src": "/api/teams",       "dest": "/api"},
-    {"src": "/api/members",     "dest": "/api"},
-    {"src": "/api/assignments", "dest": "/api"},
-    {"src": "/api/results",     "dest": "/api"},
     {"handle": "filesystem"},
     {"src": "/tracker", "dest": "/tracker/index.html"},
     {"src": "/captain", "dest": "/captain/index.html"},
