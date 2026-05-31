@@ -37,21 +37,20 @@ mkdir -p "$FUNC_DIR"
 # With pnpm shamefully-hoist, @prisma/client lands at root node_modules but
 # prisma generate (run from server/) may write .prisma/client to either root or
 # server/node_modules depending on where it finds @prisma/client installed.
-mkdir -p "$FUNC_DIR/node_modules/@prisma" "$FUNC_DIR/node_modules/.prisma/client"
+# mkdir only the parent dirs — NOT the destination itself.
+# cp -r copies into an existing dir (creating client/client/), so let cp create the leaf.
+mkdir -p "$FUNC_DIR/node_modules/@prisma" "$FUNC_DIR/node_modules/.prisma"
 cp -rL node_modules/@prisma/client "$FUNC_DIR/node_modules/@prisma/client"
 
 echo "Locating .prisma/client generated files..."
-ls node_modules/.prisma/client 2>/dev/null && echo "Found at root node_modules/.prisma/client"
-ls server/node_modules/.prisma/client 2>/dev/null && echo "Found at server/node_modules/.prisma/client"
-
 if [ -d "node_modules/.prisma/client" ] && [ "$(ls -A node_modules/.prisma/client 2>/dev/null)" ]; then
   cp -rL node_modules/.prisma/client "$FUNC_DIR/node_modules/.prisma/client"
-  echo "Copied .prisma/client from root"
+  echo "Copied .prisma/client from root ($(ls node_modules/.prisma/client | wc -l) files)"
 elif [ -d "server/node_modules/.prisma/client" ] && [ "$(ls -A server/node_modules/.prisma/client 2>/dev/null)" ]; then
   cp -rL server/node_modules/.prisma/client "$FUNC_DIR/node_modules/.prisma/client"
-  echo "Copied .prisma/client from server/"
+  echo "Copied .prisma/client from server/ ($(ls server/node_modules/.prisma/client | wc -l) files)"
 else
-  echo "ERROR: .prisma/client not found in root or server/ — prisma generate may have failed"
+  echo "ERROR: .prisma/client not found — prisma generate may have failed"
   exit 1
 fi
 
