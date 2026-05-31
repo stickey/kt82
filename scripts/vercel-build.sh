@@ -30,10 +30,25 @@ mkdir -p "$FUNC_DIR"
   --outfile="$FUNC_DIR/index.js"
 
 # Copy Prisma client and its generated query engine binary.
+# With pnpm shamefully-hoist, @prisma/client lands at root node_modules but
+# prisma generate (run from server/) may write .prisma/client to either root or
+# server/node_modules depending on where it finds @prisma/client installed.
 mkdir -p "$FUNC_DIR/node_modules/@prisma" "$FUNC_DIR/node_modules/.prisma/client"
 cp -rL node_modules/@prisma/client "$FUNC_DIR/node_modules/@prisma/client"
-if [ -d "node_modules/.prisma/client" ]; then
+
+echo "Locating .prisma/client generated files..."
+ls node_modules/.prisma/client 2>/dev/null && echo "Found at root node_modules/.prisma/client"
+ls server/node_modules/.prisma/client 2>/dev/null && echo "Found at server/node_modules/.prisma/client"
+
+if [ -d "node_modules/.prisma/client" ] && [ "$(ls -A node_modules/.prisma/client 2>/dev/null)" ]; then
   cp -rL node_modules/.prisma/client "$FUNC_DIR/node_modules/.prisma/client"
+  echo "Copied .prisma/client from root"
+elif [ -d "server/node_modules/.prisma/client" ] && [ "$(ls -A server/node_modules/.prisma/client 2>/dev/null)" ]; then
+  cp -rL server/node_modules/.prisma/client "$FUNC_DIR/node_modules/.prisma/client"
+  echo "Copied .prisma/client from server/"
+else
+  echo "ERROR: .prisma/client not found in root or server/ — prisma generate may have failed"
+  exit 1
 fi
 
 # --- Function config ---
