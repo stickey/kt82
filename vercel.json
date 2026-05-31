@@ -1,4 +1,11 @@
 {
   "framework": null,
-  "buildCommand": "pnpm -w run vercel-build"
+  "buildCommand": "pnpm -w run vercel-build",
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "/api" },
+    { "source": "/tracker/:path*", "destination": "/tracker/index.html" },
+    { "source": "/captain/:path*", "destination": "/captain/index.html" },
+    { "source": "/manager/:path*",  "destination": "/manager/index.html" },
+    { "source": "/driver/:path*",   "destination": "/driver/index.html" }
+  ]
 }
