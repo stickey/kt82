@@ -8,9 +8,10 @@ set -e
 pnpm -r build
 
 OUTPUT=/vercel/output
-# [[...slug]] = optional catch-all: Vercel auto-routes all /api/* here
-# without rewriting the URL, so Express receives the original path
-FUNC_DIR="$OUTPUT/functions/api/[[...slug]].func"
+# api.func (prefix match): Vercel routes /api/* to this function.
+# The route uses dest="/api$1" so the dest equals the original path —
+# req.url arrives at Express unmodified.
+FUNC_DIR="$OUTPUT/functions/api.func"
 
 # --- Static files ---
 mkdir -p "$OUTPUT/static/tracker" "$OUTPUT/static/captain" "$OUTPUT/static/manager" "$OUTPUT/static/driver"
@@ -54,6 +55,7 @@ cat > "$OUTPUT/config.json" << 'EOF'
 {
   "version": 3,
   "routes": [
+    {"src": "^/api(/.*)?$", "dest": "/api$1"},
     {"handle": "filesystem"},
     {"src": "^/tracker(/.*)?$", "dest": "/tracker/index.html"},
     {"src": "^/captain(/.*)?$", "dest": "/captain/index.html"},
