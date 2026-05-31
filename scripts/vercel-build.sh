@@ -12,8 +12,9 @@ find . -maxdepth 7 -name "libquery_engine*" 2>/dev/null | grep -v ".git" | head 
 pnpm -r build
 
 OUTPUT=/vercel/output
-# [[...slug]] is Vercel's catch-all convention — handles /api AND /api/* automatically
-FUNC_DIR="$OUTPUT/functions/api/[[...slug]].func"
+# [..all].func: single-bracket catch-all. dest "/api/[...all]" doesn't match any src
+# pattern so there's no routing loop. Both /api and /api/* route here.
+FUNC_DIR="$OUTPUT/functions/api/[...all].func"
 
 # --- Static files ---
 mkdir -p "$OUTPUT/static/tracker" "$OUTPUT/static/captain" "$OUTPUT/static/manager" "$OUTPUT/static/driver"
@@ -67,7 +68,8 @@ cat > "$OUTPUT/config.json" << 'EOF'
 {
   "version": 3,
   "routes": [
-    {"src": "^/api(/.*)?$", "dest": "/api/[[...slug]]"},
+    {"src": "^/api$",    "dest": "/api/[...all]"},
+    {"src": "^/api/(.*)", "dest": "/api/[...all]"},
     {"handle": "filesystem"},
     {"src": "^/tracker(/.*)?$", "dest": "/tracker/index.html"},
     {"src": "^/captain(/.*)?$", "dest": "/captain/index.html"},
