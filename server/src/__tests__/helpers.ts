@@ -1,4 +1,4 @@
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 import { prisma } from '../lib/prisma'
 
 export async function createRace(overrides: { name?: string; date?: Date } = {}) {

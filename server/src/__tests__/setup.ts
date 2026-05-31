@@ -1,5 +1,5 @@
 import { beforeAll, beforeEach, afterAll } from 'vitest'
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 import { prisma } from '../lib/prisma'
 
 beforeAll(async () => {
