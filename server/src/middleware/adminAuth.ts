@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 
 export async function adminAuth(
   req: Request,

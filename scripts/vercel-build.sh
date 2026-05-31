@@ -8,9 +8,6 @@ set -e
 pnpm -r build
 
 OUTPUT=/vercel/output
-# api.func (prefix match): Vercel routes /api/* to this function.
-# The route uses dest="/api$1" so the dest equals the original path —
-# req.url arrives at Express unmodified.
 FUNC_DIR="$OUTPUT/functions/api.func"
 
 # --- Static files ---
@@ -23,24 +20,18 @@ cp -r apps/driver/dist/. "$OUTPUT/static/driver/"
 # --- Serverless function ---
 mkdir -p "$FUNC_DIR"
 
-# Bundle api/index.ts into a single JS file.
-# bcrypt and @prisma/client are marked external because they contain native .node binaries
-# that esbuild cannot bundle — we copy them manually below.
+# Bundle api/index.ts. bcryptjs is pure-JS so esbuild bundles it directly.
+# Only @prisma/client is external (native query engine binary).
 ./node_modules/.bin/esbuild api/index.ts \
   --bundle \
   --platform=node \
   --target=node20 \
-  --external:bcrypt \
   --external:@prisma/client \
   --outfile="$FUNC_DIR/index.js"
 
-# Copy native modules into the function's local node_modules.
-# Use cp -rL to dereference pnpm symlinks and copy the real files.
+# Copy Prisma client and its generated query engine binary.
 mkdir -p "$FUNC_DIR/node_modules/@prisma" "$FUNC_DIR/node_modules/.prisma/client"
-cp -rL node_modules/bcrypt "$FUNC_DIR/node_modules/bcrypt"
 cp -rL node_modules/@prisma/client "$FUNC_DIR/node_modules/@prisma/client"
-
-# Copy the generated Prisma client (query engine binary lives here)
 if [ -d "node_modules/.prisma/client" ]; then
   cp -rL node_modules/.prisma/client "$FUNC_DIR/node_modules/.prisma/client"
 fi
@@ -51,11 +42,15 @@ cat > "$FUNC_DIR/.vc-config.json" << 'EOF'
 EOF
 
 # --- Routing config ---
+# Two explicit routes to avoid Vercel regex quirks with optional capture groups:
+# - exact /api match
+# - any /api/<subpath> match
 cat > "$OUTPUT/config.json" << 'EOF'
 {
   "version": 3,
   "routes": [
-    {"src": "^/api(/.*)?$", "dest": "/api"},
+    {"src": "^/api$", "dest": "/api"},
+    {"src": "^/api/.*", "dest": "/api"},
     {"handle": "filesystem"},
     {"src": "^/tracker(/.*)?$", "dest": "/tracker/index.html"},
     {"src": "^/captain(/.*)?$", "dest": "/captain/index.html"},
