@@ -13,11 +13,18 @@ import trackerRouter from './routes/tracker'
 
 export const app = express()
 
+console.log('[kt82] app module loaded, NODE_ENV:', process.env.NODE_ENV)
+
 app.use(cors()) // TODO: restrict origins before production
 app.use(express.json())
 
+app.use((req, _res, next) => {
+  console.log(`[kt82] ${req.method} ${req.url}`)
+  next()
+})
+
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true })
+  res.json({ ok: true, timestamp: new Date().toISOString(), node: process.version })
 })
 
 app.use('/api', authRouter)

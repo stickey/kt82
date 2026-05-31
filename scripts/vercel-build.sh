@@ -55,7 +55,7 @@ cat > "$OUTPUT/config.json" << 'EOF'
 {
   "version": 3,
   "routes": [
-    {"src": "^/api(/.*)?$", "dest": "/api$1"},
+    {"src": "^/api(/.*)?$", "dest": "/api"},
     {"handle": "filesystem"},
     {"src": "^/tracker(/.*)?$", "dest": "/tracker/index.html"},
     {"src": "^/captain(/.*)?$", "dest": "/captain/index.html"},
