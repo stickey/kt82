@@ -8,7 +8,7 @@ set -e
 pnpm -r build
 
 OUTPUT=/vercel/output
-FUNC_DIR="$OUTPUT/functions/index.func"
+FUNC_DIR="$OUTPUT/functions/api/health.func"
 
 # --- Static files ---
 mkdir -p "$OUTPUT/static/tracker" "$OUTPUT/static/captain" "$OUTPUT/static/manager" "$OUTPUT/static/driver"
@@ -56,7 +56,6 @@ cat > "$OUTPUT/config.json" << 'EOF'
 {
   "version": 3,
   "routes": [
-    {"src": "^(/api.*)", "dest": "$1"},
     {"handle": "filesystem"},
     {"src": "^/tracker", "dest": "/tracker/index.html"},
     {"src": "^/captain", "dest": "/captain/index.html"},
