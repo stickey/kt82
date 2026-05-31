@@ -1,8 +1,12 @@
 #!/bin/bash
 set -e
 
-# Generate Prisma client from server/prisma/schema.prisma
+# Generate Prisma client. output is pinned to repo-root/node_modules/.prisma/client
+# in schema.prisma so it lands where @prisma/client (hoisted to root) can find it.
 (cd server && pnpm exec prisma generate)
+echo "=== prisma generate output locations ==="
+find . -maxdepth 7 -path "*/.prisma/client" -type d 2>/dev/null | grep -v ".git"
+find . -maxdepth 7 -name "libquery_engine*" 2>/dev/null | grep -v ".git" | head -10
 
 # Build all workspace packages (4 SPAs + server TypeScript)
 pnpm -r build
