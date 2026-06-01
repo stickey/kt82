@@ -51,3 +51,20 @@ describe('DELETE /api/assignments/:id', () => {
     expect(res.status).toBe(204)
   })
 })
+
+describe('parsePace', () => {
+  it('converts mm:ss to seconds per mile', async () => {
+    // import the function — we'll export it from the seed script
+    const { parsePace } = await import('../seed/assignments')
+    expect(parsePace('8:30')).toBe(510)
+    expect(parsePace('10:00')).toBe(600)
+    expect(parsePace('9:05')).toBe(545)
+  })
+
+  it('throws on invalid format', async () => {
+    const { parsePace } = await import('../seed/assignments')
+    expect(() => parsePace('abc')).toThrow('Invalid targetPace "abc"')
+    expect(() => parsePace('8')).toThrow('Invalid targetPace "8"')
+    expect(() => parsePace('')).toThrow()
+  })
+})
