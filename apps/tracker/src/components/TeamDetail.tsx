@@ -193,7 +193,7 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
                 </span>
                 {activeItem.leg.handoff.lat != null && activeItem.leg.handoff.lng != null && (
                   <a
-                    href={`https://maps.apple.com/?daddr=${activeItem.leg.handoff.lat},${activeItem.leg.handoff.lng}`}
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${activeItem.leg.handoff.lat},${activeItem.leg.handoff.lng}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={e => e.stopPropagation()}
@@ -269,7 +269,7 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
                       </div>
                       {!isDone && !isActive && item.leg.handoff?.lat != null && item.leg.handoff?.lng != null && (
                         <a
-                          href={`https://maps.apple.com/?daddr=${item.leg.handoff.lat},${item.leg.handoff.lng}`}
+                          href={`https://www.google.com/maps/dir/?api=1&destination=${item.leg.handoff.lat},${item.leg.handoff.lng}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={e => e.stopPropagation()}
