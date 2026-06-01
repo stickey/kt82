@@ -42,6 +42,14 @@ cd server && PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH" pnpm seed:roster
 # Example: pnpm seed:roster clx123abc ../resources/team.rungmc.csv
 # Guards against double-seeding. Remove members first via the Captain app.
 
+# Seed leg assignments from a CSV (must have legNumber, runner, targetPace columns)
+# 1. Create a race, seed legs, create a team, seed roster
+# 2. Run (csvFile path relative to server/ dir or absolute):
+cd server && PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH" pnpm seed:assignments <teamId> <csvFile>
+# Example: pnpm seed:assignments clx123abc ../resources/assignments.csv
+# CSV format: legNumber,runner,targetPace  (targetPace as mm:ss, e.g. 8:30)
+# Guards against double-seeding. Clear assignments via Manager → Teams → Reset first.
+
 # Install dependencies after package.json changes (from repo root)
 PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH" pnpm install
 
