@@ -68,6 +68,12 @@ export function formatDuration(startIso: string, endIso: string): string {
   return formatElapsed(new Date(endIso).getTime() - new Date(startIso).getTime())
 }
 
+export function formatPace(secPerMile: number): string {
+  const m = Math.floor(secPerMile / 60)
+  const s = Math.round(secPerMile % 60).toString().padStart(2, '0')
+  return `${m}:${s}`
+}
+
 export function buildNavUrl(handoff: Handoff): string {
   if (handoff.lat != null && handoff.lng != null)
     return `https://maps.apple.com/?daddr=${handoff.lat},${handoff.lng}`
