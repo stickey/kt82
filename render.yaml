@@ -3,7 +3,7 @@ services:
     name: kt82
     runtime: node
     plan: free
-    buildCommand: npm install -g pnpm@9 && NODE_ENV=development pnpm install --frozen-lockfile && bash scripts/render-build.sh
+    buildCommand: npm install -g pnpm@9 && pnpm install --frozen-lockfile && bash scripts/render-build.sh
     startCommand: node server/dist/index.js
     envVars:
       - key: NODE_ENV
