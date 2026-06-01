@@ -69,6 +69,22 @@ router.get('/teams/:id/current', teamAuth, async (req, res, next) => {
       orderBy: { startedAt: 'asc' },
     })
 
+    const nextAssignment = await prisma.legAssignment.findFirst({
+      where: {
+        teamId,
+        leg: { legNumber: { gt: activeResult.leg.legNumber } },
+      },
+      orderBy: { leg: { legNumber: 'asc' } },
+      include: { teamMember: true, leg: true },
+    })
+
+    const nextRunnerEta = (eta && nextAssignment)
+      ? new Date(
+          eta.eta.getTime() +
+          nextAssignment.targetPaceSecPerMile * nextAssignment.leg.distanceMiles * 1000
+        ).toISOString()
+      : null
+
     res.json({
       status: 'in-progress',
       result: serializeResult(activeResult),
@@ -78,6 +94,9 @@ router.get('/teams/:id/current', teamAuth, async (req, res, next) => {
       assignment,
       eta,
       raceStartedAt: (firstResult ?? activeResult).startedAt.toISOString(),
+      nextRunner: nextAssignment?.teamMember ?? null,
+      nextLeg: nextAssignment?.leg ?? null,
+      nextRunnerEta,
     })
   } catch (err) { next(err) }
 })

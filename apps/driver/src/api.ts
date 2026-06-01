@@ -23,6 +23,9 @@ export type CurrentStateInProgress = {
   currentRunner: TeamMember | null
   eta: { eta: string; secondsRemaining: number; status: 'on-pace' | 'ahead' | 'overdue' } | null
   raceStartedAt: string | null
+  nextRunner: TeamMember | null
+  nextLeg: Leg | null
+  nextRunnerEta: string | null
 }
 
 export type CurrentState = CurrentStateNotStarted | CurrentStateInProgress

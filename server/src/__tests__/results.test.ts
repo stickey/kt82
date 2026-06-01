@@ -64,6 +64,46 @@ describe('GET /api/teams/:id/current', () => {
     expect(res.body.status).toBe('in-progress')
     expect(res.body.raceStartedAt).toBe(leg1Start.toISOString())
   })
+
+  it('returns nextRunner and nextLeg when a second leg assignment exists', async () => {
+    const race = await createRace()
+    const team = await createTeam(race.id)
+    const leg1 = await createLeg(race.id, 1, 5)
+    const leg2 = await createLeg(race.id, 2, 4)
+    const runner1 = await createMember(team.id, 'Alice')
+    const runner2 = await createMember(team.id, 'Bob')
+    await createAssignment(team.id, leg1.id, runner1.id, 480)
+    await createAssignment(team.id, leg2.id, runner2.id, 500)
+    const startedAt = new Date(Date.now() - 5 * 60 * 1000)
+    await prisma.legResult.create({ data: { teamId: team.id, legId: leg1.id, startedAt } })
+
+    const res = await request(app)
+      .get(`/api/teams/${team.id}/current`)
+      .set('X-Team-Pin', '1234')
+    expect(res.status).toBe(200)
+    expect(res.body.nextRunner.name).toBe('Bob')
+    expect(res.body.nextLeg.legNumber).toBe(2)
+    expect(res.body.nextRunnerEta).not.toBeNull()
+    // nextRunnerEta should be a valid ISO string in the future
+    expect(new Date(res.body.nextRunnerEta).getTime()).toBeGreaterThan(Date.now())
+  })
+
+  it('returns null nextRunner on the last leg', async () => {
+    const race = await createRace()
+    const team = await createTeam(race.id)
+    const leg1 = await createLeg(race.id, 1, 5)
+    const runner1 = await createMember(team.id, 'Alice')
+    await createAssignment(team.id, leg1.id, runner1.id, 480)
+    await prisma.legResult.create({ data: { teamId: team.id, legId: leg1.id, startedAt: new Date() } })
+
+    const res = await request(app)
+      .get(`/api/teams/${team.id}/current`)
+      .set('X-Team-Pin', '1234')
+    expect(res.status).toBe(200)
+    expect(res.body.nextRunner).toBeNull()
+    expect(res.body.nextLeg).toBeNull()
+    expect(res.body.nextRunnerEta).toBeNull()
+  })
 })
 
 describe('POST /api/teams/:id/results (START)', () => {

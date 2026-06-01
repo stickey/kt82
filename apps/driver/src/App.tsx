@@ -11,7 +11,7 @@ type View =
   | { type: 'no-race' }
   | { type: 'auth'; race: Race }
   | { type: 'start'; race: Race; team: TeamSummary; pin: string; nextLeg: Leg }
-  | { type: 'racing'; race: Race; team: TeamSummary; pin: string; resultId: string; leg: Leg; startedAt: string; nextHandoff: Handoff | null; currentRunner: string | null; raceStartedAt: string | null }
+  | { type: 'racing'; race: Race; team: TeamSummary; pin: string; resultId: string; leg: Leg; startedAt: string; nextHandoff: Handoff | null; currentRunner: string | null; raceStartedAt: string | null; nextRunner: string | null; nextLegNumber: number | null; nextRunnerEta: string | null }
   | { type: 'complete'; race: Race; team: TeamSummary; pin: string }
 
 export default function App() {
@@ -43,6 +43,9 @@ export default function App() {
         nextHandoff: state.nextHandoff,
         currentRunner: state.currentRunner?.name ?? null,
         raceStartedAt: state.raceStartedAt ?? null,
+        nextRunner: state.nextRunner?.name ?? null,
+        nextLegNumber: state.nextLeg?.legNumber ?? null,
+        nextRunnerEta: state.nextRunnerEta ?? null,
       })
     }
   }
@@ -60,6 +63,9 @@ export default function App() {
       nextHandoff: state.nextHandoff,
       currentRunner: state.currentRunner?.name ?? null,
       raceStartedAt: state.raceStartedAt ?? null,
+      nextRunner: state.nextRunner?.name ?? null,
+      nextLegNumber: state.nextLeg?.legNumber ?? null,
+      nextRunnerEta: state.nextRunnerEta ?? null,
     })
   }
 
@@ -76,6 +82,9 @@ export default function App() {
       nextHandoff: state.nextHandoff,
       currentRunner: state.currentRunner?.name ?? null,
       raceStartedAt: state.raceStartedAt ?? null,
+      nextRunner: state.nextRunner?.name ?? null,
+      nextLegNumber: state.nextLeg?.legNumber ?? null,
+      nextRunnerEta: state.nextRunnerEta ?? null,
     })
   }
 
@@ -129,6 +138,9 @@ export default function App() {
         raceStartedAt={view.raceStartedAt}
         onLap={handleLap}
         onComplete={handleComplete}
+        nextRunner={view.nextRunner}
+        nextLegNumber={view.nextLegNumber}
+        nextRunnerEta={view.nextRunnerEta}
       />
     )
   }
