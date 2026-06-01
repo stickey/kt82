@@ -12,6 +12,10 @@ KT82 Race Suite — four mobile-first React web apps + an Express API for runnin
 # All pnpm commands require Node 20 in PATH:
 # PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH" pnpm ...
 
+# Run the full dev stack (server + all 4 apps) — keep terminal open, Ctrl+C to stop
+PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH" ./scripts/dev.sh
+# For a specific git worktree: ./scripts/dev.sh <worktree-id>
+
 # Run API server (port 3001, hot reload)
 cd server && PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH" pnpm dev
 
