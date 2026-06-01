@@ -1,4 +1,4 @@
-**Status:** Approved
+**Status:** Implemented
 
 # Race Complete Summary — Leg Splits with Pace vs Target
 
