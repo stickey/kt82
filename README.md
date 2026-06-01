@@ -275,6 +275,52 @@ cd server && PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH" pnpm test
 
 ---
 
+## Deployment
+
+KT82 is hosted on [Render](https://render.com) as a single Docker web service. The Express server serves both the API (`/api/*`) and the four SPA bundles as static files under their respective path prefixes (`/tracker`, `/captain`, `/manager`, `/driver`).
+
+### Architecture
+
+```
+Render Docker service (node:20-slim)
+  └── node server/dist/bundle.js        ← esbuild bundle of server + @kt82/shared
+      ├── GET /api/*                     ← Express API routes
+      ├── GET /tracker/*                 ← React SPA (static bundle)
+      ├── GET /captain/*                 ← React SPA (static bundle)
+      ├── GET /manager/*                 ← React SPA (static bundle)
+      └── GET /driver/*                  ← React SPA (static bundle)
+
+External PostgreSQL database (connection via DATABASE_URL)
+```
+
+### Required Environment Variables
+
+Set these in the Render dashboard (they are declared with `sync: false` in `render.yaml`):
+
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `ADMIN_PASSWORD_HASH` | bcrypt hash of the admin password (`kt82admin` for dev) |
+
+### Deploying
+
+Push to `main`. Render auto-deploys on every push. The build runs the multi-stage `Dockerfile`:
+
+1. Installs all dependencies
+2. Runs `prisma generate`
+3. Builds all four SPA apps with Vite
+4. Bundles the server + shared package with esbuild
+5. Prunes dev dependencies
+6. The runtime container starts with `prisma migrate deploy` then the server
+
+### Generating an Admin Password Hash
+
+```bash
+node -e "const b = require('bcryptjs'); b.hash('your-password', 10).then(console.log)"
+```
+
+---
+
 ## Out of Scope (MVP)
 
 - Real-time GPS tracking

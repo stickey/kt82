@@ -88,6 +88,36 @@ In production, Express serves built app bundles as static files under path prefi
 - Team PINs: created via Manager app; `1234` used in tests
 - DB: `postgresql://postgres:postgres@localhost:5432/kt82`
 
+## Deployment (Production)
+
+**Platform:** Render — single Docker web service. Tagged at `v1.1.0`.
+
+**How it works:**
+- `render.yaml` declares `runtime: docker`; Render builds the Dockerfile on every push to `main`
+- The Dockerfile is a two-stage build (`node:20-slim`): builder installs all deps, builds SPAs + server, prunes dev deps; runtime copies only the artifacts
+- `scripts/docker-start.sh` is the container entrypoint: runs `prisma migrate deploy` then `node server/dist/bundle.js`
+- `scripts/esbuild-server.js` bundles `server/src/index.ts` + the `@kt82/shared` workspace package into a single CJS file so Node.js never needs to resolve the workspace TypeScript symlink at runtime
+
+**Key files:**
+- `Dockerfile` — multi-stage build definition
+- `render.yaml` — Render Blueprint (runtime: docker, env var declarations)
+- `scripts/docker-start.sh` — container startup (migrate + start)
+- `scripts/esbuild-server.js` — esbuild bundler for production server
+
+**Environment variables** (set in Render dashboard — `sync: false` in render.yaml):
+- `DATABASE_URL` — PostgreSQL connection string (external DB, not Render-provisioned)
+- `ADMIN_PASSWORD_HASH` — bcrypt hash of the admin password
+
+**To deploy:** push to `main`. Render auto-deploys on every push.
+
+**Why Docker, not Render's git-backed Node.js runtime:**
+The git-backed runtime had irreconcilable build-environment differences: devDependency/dependency split at build time, `@types/node` discovery issues under `moduleResolution: NodeNext`, and Prisma binary target mismatches. Docker eliminates all of these — the environment is fully controlled by the Dockerfile. See `docs/deployment-notes.md` for full history.
+
+**Why esbuild bundle instead of tsc output:**
+`@kt82/shared` uses `"main": "src/index.ts"` (TypeScript source). Node.js can't load TypeScript at runtime. esbuild inlines shared code at build time so the container only needs to run plain JavaScript. Do not change `main` in `packages/shared/package.json` to a compiled path — it breaks Vite's Rollup bundler during SPA builds (CJS re-exports aren't statically analyzable by Rollup).
+
+**Vercel was attempted and abandoned** — see `docs/deployment-notes.md` for details. Don't suggest Vercel as an alternative without reading that document first.
+
 ## Key Constraints
 
 - Mobile-first; all touch targets ≥ 44px; legible in sunlight
