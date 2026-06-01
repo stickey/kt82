@@ -1,0 +1,20 @@
+node_modules
+.git
+*.log
+.env
+.env.*
+.env.test
+
+# Pre-built outputs (built fresh inside Docker)
+apps/*/dist
+server/dist
+packages/shared/dist
+
+# IDE / tooling
+.claude
+.agents
+.copilot
+.vscode
+
+# Test artifacts
+coverage

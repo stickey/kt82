@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+echo "==> build shared"
+pnpm --filter @kt82/shared build
+
 echo "==> prisma generate"
 (cd server && pnpm exec prisma generate)
 
