@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { Prisma } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 import { calculateETA } from '@kt82/shared'
 
@@ -30,7 +31,8 @@ router.get('/races/:id/status', async (req, res, next) => {
     const activeResultByTeam = Object.fromEntries(activeResults.map((r) => [r.teamId, r]))
 
     const activeLegIds = activeResults.map((r) => r.legId)
-    const assignments = activeLegIds.length > 0
+    type AssignmentWithMember = Prisma.LegAssignmentGetPayload<{ include: { teamMember: true } }>
+    const assignments: AssignmentWithMember[] = activeLegIds.length > 0
       ? await prisma.legAssignment.findMany({
           where: { teamId: { in: teamIds }, legId: { in: activeLegIds } },
           include: { teamMember: true },
