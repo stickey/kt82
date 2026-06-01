@@ -1,5 +1,6 @@
 import express from 'express'
 import cors from 'cors'
+import path from 'path'
 import { errorHandler } from './middleware/errorHandler'
 import authRouter from './routes/auth'
 import racesRouter from './routes/races'
@@ -36,5 +37,14 @@ app.use('/api', membersRouter)
 app.use('/api', assignmentsRouter)
 app.use('/api', resultsRouter)
 app.use('/api', trackerRouter)
+
+if (process.env.NODE_ENV === 'production') {
+  const publicDir = path.join(__dirname, 'public')
+  for (const name of ['tracker', 'captain', 'manager', 'driver']) {
+    const appDir = path.join(publicDir, name)
+    app.use(`/${name}`, express.static(appDir))
+    app.get(`/${name}/*`, (_req, res) => res.sendFile(path.join(appDir, 'index.html')))
+  }
+}
 
 app.use(errorHandler)

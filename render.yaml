@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: kt82
+    runtime: node
+    plan: free
+    buildCommand: npm install -g pnpm@9 && pnpm install --frozen-lockfile && bash scripts/render-build.sh
+    startCommand: node server/dist/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: ADMIN_PASSWORD_HASH
+        sync: false
