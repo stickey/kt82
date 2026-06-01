@@ -3,6 +3,8 @@ dist/
 public/
 .env
 .env.test
+.env.*
+.tmp.env
 *.js.map
 .superpowers/
 .claude/settings.local.json
