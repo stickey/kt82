@@ -1,16 +1,28 @@
 #!/bin/bash
 set -e
 
-# Generate Prisma client (needs to run before tsc)
+echo "==> prisma generate"
 (cd server && pnpm exec prisma generate)
 
-# Apply pending database migrations
+echo "==> prisma migrate deploy"
 (cd server && pnpm exec prisma migrate deploy)
 
-# Build server TypeScript and all SPAs sequentially (parallel builds OOM on Render free tier)
-pnpm -r --workspace-concurrency=1 build
+echo "==> build server"
+pnpm --filter server build
 
-# Copy SPA bundles into server/dist/public/ for Express static serving
+echo "==> build tracker"
+pnpm --filter tracker build
+
+echo "==> build captain"
+pnpm --filter captain build
+
+echo "==> build manager"
+pnpm --filter manager build
+
+echo "==> build driver"
+pnpm --filter driver build
+
+echo "==> copy SPA bundles"
 mkdir -p server/dist/public/tracker server/dist/public/captain server/dist/public/manager server/dist/public/driver
 cp -r apps/tracker/dist/. server/dist/public/tracker/
 cp -r apps/captain/dist/. server/dist/public/captain/
