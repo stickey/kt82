@@ -70,9 +70,9 @@ export function formatDuration(startIso: string, endIso: string): string {
 
 export function buildNavUrl(handoff: Handoff): string {
   if (handoff.lat != null && handoff.lng != null)
-    return `https://maps.apple.com/?daddr=${handoff.lat},${handoff.lng}`
+    return `https://www.google.com/maps/dir/?api=1&destination=${handoff.lat},${handoff.lng}`
   if (handoff.address)
-    return `https://maps.apple.com/?daddr=${encodeURIComponent(handoff.address)}`
+    return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(handoff.address)}`
   return ''
 }
 
