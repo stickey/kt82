@@ -1,10 +1,8 @@
 services:
   - type: web
     name: kt82
-    runtime: node
+    runtime: docker
     plan: free
-    buildCommand: npm install -g pnpm@9 && pnpm install --frozen-lockfile && bash scripts/render-build.sh
-    startCommand: NODE_ENV=production node server/dist/index.js
     envVars:
       - key: DATABASE_URL
         sync: false
