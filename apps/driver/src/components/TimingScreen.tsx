@@ -15,9 +15,12 @@ interface Props {
   raceStartedAt: string | null
   onLap: (state: CurrentStateInProgress) => void
   onComplete: () => void
+  nextRunner: string | null
+  nextLegNumber: number | null
+  nextRunnerEta: string | null
 }
 
-export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff, currentRunner, raceStartedAt, onLap, onComplete }: Props) {
+export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff, currentRunner, raceStartedAt, onLap, onComplete, nextRunner, nextLegNumber, nextRunnerEta }: Props) {
   const [elapsed, setElapsed] = useState(0)
   const [eta, setEta] = useState<{ eta: string; secondsRemaining: number; status: 'on-pace' | 'ahead' | 'overdue' } | null>(null)
   const [error, setError] = useState('')
@@ -101,6 +104,24 @@ export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff,
             Leg {leg.legNumber} · {leg.name} · {leg.distanceMiles} mi
           </div>
         </div>
+
+        {/* On Deck chip */}
+        {nextRunner && (
+          <div className="bg-slate-800 rounded-lg px-3 py-2.5 mt-2">
+            <div className="flex justify-between items-start">
+              <div>
+                <div className="text-xs uppercase tracking-widest text-amber-400 mb-0.5">On Deck</div>
+                <div className="text-sm font-semibold text-white">{nextRunner}</div>
+                {nextRunnerEta && (
+                  <div className="text-xs text-slate-400 mt-0.5">Est. finish {formatTime(nextRunnerEta)}</div>
+                )}
+              </div>
+              {nextLegNumber && (
+                <div className="text-xs text-slate-400">Leg {nextLegNumber}</div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Elapsed + ETA */}
         <div className={`rounded-xl border p-4 ${etaBgClass}`}>
