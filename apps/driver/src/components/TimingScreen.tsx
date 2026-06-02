@@ -69,13 +69,14 @@ export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff,
 
   async function handleStop() {
     if (stopActing) return
+    if (!resultId) return
     setStopActing(true)
     setStopError('')
     const finishedAt = pendingStopAt ?? new Date().toISOString()
     setPendingStopAt(finishedAt)
     try {
       const api = createDriverApi(pin)
-      await api.patch(`/results/${resultId!}`, { finishedAt, action: 'stop' })
+      await api.patch(`/results/${resultId}`, { finishedAt, action: 'stop' })
       setPendingStopAt(null)
       onComplete()
     } catch (err: unknown) {

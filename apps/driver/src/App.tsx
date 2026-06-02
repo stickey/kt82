@@ -105,14 +105,21 @@ export default function App() {
           : prev)
         return
       }
-      const state = await api.get<CurrentStateInProgress>(`/teams/${team.id}/current`)
+      // Re-enable LAP immediately using the PATCH response — GET enriches but isn't required
       setView(prev => prev.type !== 'racing' ? prev : {
         ...prev,
-        resultId: state.result.id,
-        nextLeg: state.nextLeg ?? null,
-        nextRunner: state.nextRunner?.name ?? null,
-        nextRunnerEta: state.nextRunnerEta ?? null,
+        resultId: lapResult.next!.id,
       })
+      try {
+        const state = await api.get<CurrentStateInProgress>(`/teams/${team.id}/current`)
+        setView(prev => prev.type !== 'racing' ? prev : {
+          ...prev,
+          resultId: state.result.id,
+          nextLeg: state.nextLeg ?? null,
+          nextRunner: state.nextRunner?.name ?? null,
+          nextRunnerEta: state.nextRunnerEta ?? null,
+        })
+      } catch { /* resultId already restored; next-leg info refreshes on next ETA poll */ }
     }).catch(() => {
       const action: PendingAction = { resultId: oldResultId, finishedAt, action: 'lap' }
       enqueue(action)
@@ -141,21 +148,30 @@ export default function App() {
         const lapResult = await api.patch<{ current: unknown; next: { id: string } | null }>(
           `/results/${action.resultId}`, { finishedAt: action.finishedAt, action: action.action }
         )
-        dequeue()
-        setPendingAction(null)
         if (lapResult.next === null) {
+          dequeue()
+          setPendingAction(null)
           setView(prev => prev.type === 'racing'
             ? { type: 'complete', race: prev.race, team: prev.team, pin: prev.pin }
             : prev)
         } else {
-          const state = await api.get<CurrentStateInProgress>(`/teams/${teamId}/current`)
+          // Restore resultId from PATCH response before dequeue — GET is non-fatal
           setView(prev => prev.type !== 'racing' ? prev : {
             ...prev,
-            resultId: state.result.id,
-            nextLeg: state.nextLeg ?? null,
-            nextRunner: state.nextRunner?.name ?? null,
-            nextRunnerEta: state.nextRunnerEta ?? null,
+            resultId: lapResult.next!.id,
           })
+          dequeue()
+          setPendingAction(null)
+          try {
+            const state = await api.get<CurrentStateInProgress>(`/teams/${teamId}/current`)
+            setView(prev => prev.type !== 'racing' ? prev : {
+              ...prev,
+              resultId: state.result.id,
+              nextLeg: state.nextLeg ?? null,
+              nextRunner: state.nextRunner?.name ?? null,
+              nextRunnerEta: state.nextRunnerEta ?? null,
+            })
+          } catch { /* resultId already restored; next-leg info refreshes on next ETA poll */ }
         }
       } catch { /* keep trying */ }
     }, 5_000)
