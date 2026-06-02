@@ -22,9 +22,7 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    function onHashChange() {
-      setTeamId(getHashTeamId())
-    }
+    function onHashChange() { setTeamId(getHashTeamId()) }
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
@@ -51,19 +49,19 @@ export default function App() {
   }
 
   if (noRace) return (
-    <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
-      <p className="text-gray-400">No active race.</p>
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg)' }}>
+      <p style={{ color: 'var(--mut)' }}>No active race.</p>
     </div>
   )
 
   if (!race) return (
-    <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
-      <p className="text-gray-400 text-sm">Loading...</p>
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg)' }}>
+      <p style={{ fontSize: 13, color: 'var(--mut)' }}>Loading…</p>
     </div>
   )
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen" style={{ background: 'var(--bg)', color: 'var(--text)' }}>
       {teamId
         ? <TeamDetail teamId={teamId} teamName={teamName} onBack={navigateBack} />
         : <TeamGrid race={race} onTeamClick={navigateToTeam} />
