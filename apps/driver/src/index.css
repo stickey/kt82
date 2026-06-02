@@ -1,3 +1,32 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* === Direction B — Dark theme (Driver is always dark) === */
+:root {
+  --bg:      #13110a;
+  --panel:   #1d1810;
+  --panel2:  #241d12;
+  --line:    rgba(255,240,220,0.10);
+  --line2:   rgba(255,240,220,0.055);
+  --text:    #fbf6ee;
+  --mut:     #a99e8c;
+  --faint:   #6a6053;
+  --accent:  #ff5a1f;
+  --green:   #37d27a;
+  --red:     #ff4d2e;
+  --amber:   #ffae3b;
+  --ink:     #13110a;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Hanken Grotesk', sans-serif;
+  min-height: 100dvh;
+}
+
+.font-display { font-family: 'Anton', sans-serif; }
+.font-mono    { font-family: 'JetBrains Mono', monospace; }
