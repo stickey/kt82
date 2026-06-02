@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
-import { createDriverApi, buildNavUrl, formatElapsed, formatTime } from '../api'
+import { createDriverApi, buildNavUrl, formatElapsed, formatRaceTime, formatTime } from '../api'
 import { LongPressButton } from './LongPressButton'
-import { RaceBanner } from './RaceBanner'
 import type { TeamSummary, Leg, Handoff, CurrentStateInProgress } from '../api'
 
 interface Props {
@@ -20,13 +19,18 @@ interface Props {
   nextRunnerEta: string | null
 }
 
+function initials(name: string): string {
+  return name.split(' ').slice(0, 2).map(w => w[0] ?? '').join('').toUpperCase()
+}
+
 export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff, currentRunner, raceStartedAt, onLap, onComplete, nextRunner, nextLegNumber, nextRunnerEta }: Props) {
   const [elapsed, setElapsed] = useState(0)
-  const [eta, setEta] = useState<{ eta: string; secondsRemaining: number; status: 'on-pace' | 'ahead' | 'overdue' } | null>(null)
-  const [error, setError] = useState('')
-  const [acting, setActing] = useState(false)
+  const [raceElapsed, setRaceElapsed] = useState(0)
+  const [eta, setEta]         = useState<{ eta: string; secondsRemaining: number; status: 'on-pace' | 'ahead' | 'overdue' } | null>(null)
+  const [error, setError]     = useState('')
+  const [acting, setActing]   = useState(false)
 
-  // Elapsed clock — ticks every second from startedAt
+  // Leg elapsed clock
   useEffect(() => {
     const start = new Date(startedAt).getTime()
     setElapsed(Date.now() - start)
@@ -34,15 +38,24 @@ export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff,
     return () => clearInterval(id)
   }, [startedAt])
 
+  // Race elapsed clock
+  useEffect(() => {
+    if (!raceStartedAt) return
+    const start = new Date(raceStartedAt).getTime()
+    setRaceElapsed(Date.now() - start)
+    const id = setInterval(() => setRaceElapsed(Date.now() - start), 1_000)
+    return () => clearInterval(id)
+  }, [raceStartedAt])
+
   // ETA poll every 30s
   useEffect(() => {
-    setEta(null)  // clear stale ETA from previous leg
+    setEta(null)
     const api = createDriverApi(pin)
     async function poll() {
       try {
         const state = await api.get<CurrentStateInProgress>(`/teams/${team.id}/current`)
         if (state.status === 'in-progress') setEta(state.eta ?? null)
-      } catch { /* keep stale ETA */ }
+      } catch { /* keep stale */ }
     }
     poll()
     const id = setInterval(poll, 30_000)
@@ -51,14 +64,12 @@ export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff,
 
   async function handleLap() {
     if (acting) return
-    setActing(true)
-    setError('')
+    setActing(true); setError('')
     const finishedAt = new Date().toISOString()
     try {
       const api = createDriverApi(pin)
       const lapResult = await api.patch<{ current: unknown; next: { id: string; startedAt: string } | null }>(
-        `/results/${resultId}`,
-        { finishedAt, action: 'lap' }
+        `/results/${resultId}`, { finishedAt, action: 'lap' }
       )
       if (lapResult.next === null) {
         onComplete()
@@ -75,8 +86,7 @@ export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff,
 
   async function handleStop() {
     if (acting) return
-    setActing(true)
-    setError('')
+    setActing(true); setError('')
     const finishedAt = new Date().toISOString()
     try {
       const api = createDriverApi(pin)
@@ -88,101 +98,134 @@ export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff,
     }
   }
 
-  const navUrl = nextHandoff ? buildNavUrl(nextHandoff) : ''
-  const paceColor = eta?.status === 'overdue' ? 'text-amber-400' : 'text-green-400'
-  const etaBgClass = eta?.status === 'overdue' ? 'bg-amber-900/40 border-amber-700' : 'bg-green-900/40 border-green-800'
+  const navUrl    = nextHandoff ? buildNavUrl(nextHandoff) : ''
+  const etaStatus = eta?.status ?? 'on-pace'
+  const paceColor = etaStatus === 'overdue' ? 'var(--red)' : 'var(--green)'
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex flex-col">
-      <RaceBanner teamName={team.name} raceStartedAt={raceStartedAt} />
-      <div className="flex-1 flex flex-col p-4 gap-4">
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg)', color: 'var(--text)' }}>
+
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-[18px] py-3" style={{ borderBottom: '1px solid var(--line)' }}>
+        <div className="flex items-center gap-2">
+          <div style={{ width: 18, height: 18, background: 'var(--accent)', borderRadius: 4, flexShrink: 0 }} />
+          <span className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 13, fontWeight: 800, letterSpacing: '0.04em' }}>
+            {team.name}
+          </span>
+        </div>
+        <span className="font-mono" style={{ fontSize: 12, color: 'var(--mut)' }}>
+          Race {formatRaceTime(raceElapsed)}
+        </span>
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 flex flex-col px-[18px] pt-5 pb-6 gap-4">
+
         {/* Runner info */}
-        <div className="text-center pt-2">
-          <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Now on course</div>
-          {currentRunner && <div className="text-2xl font-bold">{currentRunner}</div>}
-          <div className="text-sm text-gray-400">
-            Leg {leg.legNumber} · {leg.name} · {leg.distanceMiles} mi
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 10, fontWeight: 800, letterSpacing: '0.12em', color: 'var(--mut)' }}>
+              Now Running · Leg {leg.legNumber}
+            </span>
+            {eta && (
+              <span className="uppercase flex-shrink-0" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9.5, fontWeight: 800, letterSpacing: '0.1em', padding: '3px 8px', borderRadius: 999, background: paceColor, color: 'var(--ink)' }}>
+                {etaStatus === 'overdue' ? 'Behind Pace' : etaStatus === 'ahead' ? 'Ahead' : 'On Pace'}
+              </span>
+            )}
+          </div>
+          {currentRunner && (
+            <div className="font-display uppercase leading-none" style={{ fontSize: 50 }}>
+              {currentRunner}
+            </div>
+          )}
+          <div className="uppercase mt-1" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 13, fontWeight: 800, letterSpacing: '0.06em', color: 'var(--faint)' }}>
+            → {nextHandoff?.name ?? leg.name} · {leg.distanceMiles} mi
           </div>
         </div>
 
-        {/* On Deck chip */}
-        {nextRunner && (
-          <div className="bg-slate-800 rounded-lg px-3 py-2.5 mt-2">
-            <div className="flex justify-between items-start">
-              <div>
-                <div className="text-xs uppercase tracking-widest text-amber-400 mb-0.5">On Deck</div>
-                <div className="text-sm font-semibold text-white">{nextRunner}</div>
-                {nextRunnerEta && (
-                  <div className="text-xs text-slate-400 mt-0.5">Est. finish {formatTime(nextRunnerEta)}</div>
-                )}
-              </div>
-              {nextLegNumber && (
-                <div className="text-xs text-slate-400">Leg {nextLegNumber}</div>
-              )}
+        {/* Twin readout panels */}
+        <div className="flex gap-2.5">
+          <div className="flex-1 text-center" style={{ background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 16, padding: '12px 10px' }}>
+            <div className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', color: 'var(--faint)', marginBottom: 4 }}>Leg Time</div>
+            <div className="font-mono" style={{ fontSize: 38, fontWeight: 700, lineHeight: 1 }}>{formatElapsed(elapsed)}</div>
+            <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 10, color: 'var(--faint)', marginTop: 4 }}>{leg.distanceMiles} mi total</div>
+          </div>
+          <div className="flex-1 text-center" style={{ background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 16, padding: '12px 10px' }}>
+            <div className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', color: 'var(--faint)', marginBottom: 4 }}>
+              ETA · {nextHandoff?.name ?? leg.name}
             </div>
+            {eta
+              ? <div className="font-mono" style={{ fontSize: 38, fontWeight: 700, lineHeight: 1, color: paceColor }}>{formatTime(eta.eta)}</div>
+              : <div className="font-mono" style={{ fontSize: 38, color: 'var(--faint)', lineHeight: 1 }}>—</div>
+            }
+            <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 10, color: 'var(--faint)', marginTop: 4 }}>
+              {eta ? (etaStatus === 'overdue' ? 'behind pace' : etaStatus === 'ahead' ? 'ahead of pace' : 'on pace') : 'calculating…'}
+            </div>
+          </div>
+        </div>
+
+        {/* On Deck strip */}
+        {nextRunner && (
+          <div className="flex items-center gap-2.5" style={{ background: 'var(--panel2)', borderRadius: 14, padding: '10px 14px' }}>
+            <div className="flex items-center justify-center flex-shrink-0" style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--panel)', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 12, color: 'var(--mut)' }}>
+              {initials(nextRunner)}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 14, fontWeight: 800 }}>{nextRunner}</div>
+              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 10.5, color: 'var(--faint)', marginTop: 1 }}>
+                Leg {nextLegNumber}{nextHandoff ? ` · → ${nextHandoff.name}` : ''}
+                {nextRunnerEta ? ` · Est. ${formatTime(nextRunnerEta)}` : ''}
+              </div>
+            </div>
+            <span className="uppercase flex-shrink-0" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9, fontWeight: 800, letterSpacing: '0.1em', border: '1px solid var(--line)', borderRadius: 999, padding: '2px 8px', color: 'var(--mut)' }}>
+              On Deck
+            </span>
           </div>
         )}
 
-        {/* Elapsed + ETA */}
-        <div className={`rounded-xl border p-4 ${etaBgClass}`}>
-          <div className="flex justify-around items-center">
-            <div className="text-center">
-              <div className="text-xs text-gray-400 uppercase tracking-wide mb-1">Elapsed</div>
-              <div className="text-3xl font-bold font-mono">{formatElapsed(elapsed)}</div>
-            </div>
-            <div className="w-px h-12 bg-gray-700" />
-            <div className="text-center">
-              <div className="text-xs text-gray-400 uppercase tracking-wide mb-1">ETA</div>
-              {eta
-                ? <div className={`text-3xl font-bold ${paceColor}`}>{formatTime(eta.eta)}</div>
-                : <div className="text-xl text-gray-500">—</div>
-              }
-            </div>
-          </div>
-          {eta && (
-            <div className={`text-center text-xs mt-2 ${paceColor}`}>
-              {eta.status === 'overdue' ? 'overdue' : eta.status === 'ahead' ? 'ahead of pace' : 'on pace'}
-            </div>
-          )}
-        </div>
-
-        {/* Navigation */}
+        {/* Navigate button */}
         {navUrl && (
           <a
             href={navUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-center text-sm text-blue-400 underline min-h-[44px] flex items-center justify-center"
+            className="flex items-center justify-center gap-1.5 uppercase min-h-[44px]"
+            style={{ border: '1px solid var(--accent)', borderRadius: 14, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', color: 'var(--accent)', textDecoration: 'none' }}
           >
+            <svg width="11" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2C8.1 2 5 5.1 5 9c0 4.9 7 13 7 13s7-8.1 7-13c0-3.9-3.1-7-7-7z" fill="var(--accent)" />
+              <circle cx="12" cy="9" r="2.6" fill="var(--bg)" />
+            </svg>
             Navigate to {nextHandoff!.name} ↗
           </a>
         )}
 
-        {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+        {error && <p style={{ fontSize: 13, color: 'var(--red)', textAlign: 'center' }}>{error}</p>}
 
-        {/* LAP */}
-        <div className="mt-auto">
+        {/* LAP + END */}
+        <div className="mt-auto flex flex-col gap-2">
           <LongPressButton
             label="LAP"
             holdMs={1500}
             onComplete={handleLap}
-            colorClass="bg-blue-600"
+            bgStyle="var(--accent)"
+            textStyle="var(--ink)"
+            height={84}
             disabled={acting}
-            className="text-xl"
+            className="font-display text-[34px]"
           />
-          <p className="text-xs text-gray-500 text-center mt-1">Hold to record handoff</p>
-        </div>
-
-        {/* STOP — small, tucked away */}
-        <div className="pb-2">
+          <p className="text-center uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', color: 'var(--faint)' }}>
+            Hold to Record Handoff at {nextHandoff?.name ?? leg.name}
+          </p>
           <LongPressButton
-            label="••• End race early"
+            label="••• End Race Early"
             holdMs={1500}
             onComplete={handleStop}
-            colorClass="bg-gray-800"
-            textClass="text-gray-400"
+            bgStyle="var(--panel2)"
+            textStyle="var(--faint)"
+            height={44}
             disabled={acting}
-            className="text-sm"
+            className="text-[11px] font-hanken font-extrabold tracking-widest uppercase"
           />
         </div>
       </div>
