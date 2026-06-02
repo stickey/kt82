@@ -6,16 +6,16 @@ import type { TeamSummary, Leg, Handoff, CurrentStateInProgress } from '../api'
 interface Props {
   team: TeamSummary
   pin: string
-  resultId: string
+  resultId: string | null
   leg: Leg
   startedAt: string
   nextHandoff: Handoff | null
   currentRunner: string | null
   raceStartedAt: string | null
-  onLap: (state: CurrentStateInProgress) => void
+  onLapPress: (finishedAt: string) => void
   onComplete: () => void
   nextRunner: string | null
-  nextLegNumber: number | null
+  nextLeg: Leg | null
   nextRunnerEta: string | null
 }
 
@@ -23,12 +23,13 @@ function initials(name: string): string {
   return name.split(' ').slice(0, 2).map(w => w[0] ?? '').join('').toUpperCase()
 }
 
-export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff, currentRunner, raceStartedAt, onLap, onComplete, nextRunner, nextLegNumber, nextRunnerEta }: Props) {
+export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff, currentRunner, raceStartedAt, onLapPress, onComplete, nextRunner, nextLeg, nextRunnerEta }: Props) {
   const [elapsed, setElapsed] = useState(0)
   const [raceElapsed, setRaceElapsed] = useState(0)
   const [eta, setEta]         = useState<{ eta: string; secondsRemaining: number; status: 'on-pace' | 'ahead' | 'overdue' } | null>(null)
-  const [error, setError]     = useState('')
-  const [acting, setActing]   = useState(false)
+  const [stopError, setStopError]         = useState('')
+  const [stopActing, setStopActing]       = useState(false)
+  const [pendingStopAt, setPendingStopAt] = useState<string | null>(null)
 
   // Leg elapsed clock
   useEffect(() => {
@@ -62,39 +63,24 @@ export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff,
     return () => clearInterval(id)
   }, [pin, team.id, resultId])
 
-  async function handleLap() {
-    if (acting) return
-    setActing(true); setError('')
-    const finishedAt = new Date().toISOString()
-    try {
-      const api = createDriverApi(pin)
-      const lapResult = await api.patch<{ current: unknown; next: { id: string; startedAt: string } | null }>(
-        `/results/${resultId}`, { finishedAt, action: 'lap' }
-      )
-      if (lapResult.next === null) {
-        onComplete()
-      } else {
-        const state = await api.get<CurrentStateInProgress>(`/teams/${team.id}/current`)
-        setActing(false)
-        onLap(state)
-      }
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed — try again')
-      setActing(false)
-    }
+  function handleLap() {
+    onLapPress(new Date().toISOString())
   }
 
   async function handleStop() {
-    if (acting) return
-    setActing(true); setError('')
-    const finishedAt = new Date().toISOString()
+    if (stopActing) return
+    setStopActing(true)
+    setStopError('')
+    const finishedAt = pendingStopAt ?? new Date().toISOString()
+    setPendingStopAt(finishedAt)
     try {
       const api = createDriverApi(pin)
-      await api.patch(`/results/${resultId}`, { finishedAt, action: 'stop' })
+      await api.patch(`/results/${resultId!}`, { finishedAt, action: 'stop' })
+      setPendingStopAt(null)
       onComplete()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed — try again')
-      setActing(false)
+      setStopError(err instanceof Error ? err.message : 'Failed — try again')
+      setStopActing(false)
     }
   }
 
@@ -113,6 +99,12 @@ export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff,
             {team.name}
           </span>
         </div>
+        {!resultId && (
+          <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 11, color: 'var(--mut)', display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--mut)', flexShrink: 0, display: 'inline-block' }} />
+            Syncing…
+          </span>
+        )}
         <span className="font-mono" style={{ fontSize: 12, color: 'var(--mut)' }}>
           Race {formatRaceTime(raceElapsed)}
         </span>
@@ -173,7 +165,7 @@ export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff,
             <div className="flex-1 min-w-0">
               <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 14, fontWeight: 800 }}>{nextRunner}</div>
               <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 10.5, color: 'var(--faint)', marginTop: 1 }}>
-                Leg {nextLegNumber}{nextHandoff ? ` · → ${nextHandoff.name}` : ''}
+                Leg {nextLeg?.legNumber}{nextHandoff ? ` · → ${nextHandoff.name}` : ''}
                 {nextRunnerEta ? ` · Est. ${formatTime(nextRunnerEta)}` : ''}
               </div>
             </div>
@@ -200,7 +192,7 @@ export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff,
           </a>
         )}
 
-        {error && <p style={{ fontSize: 13, color: 'var(--red)', textAlign: 'center' }}>{error}</p>}
+        {stopError && <p style={{ fontSize: 13, color: 'var(--red)', textAlign: 'center' }}>{stopError}</p>}
 
         {/* LAP + END */}
         <div className="mt-auto flex flex-col gap-2">
@@ -211,7 +203,7 @@ export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff,
             bgStyle="var(--accent)"
             textStyle="var(--ink)"
             height={84}
-            disabled={acting}
+            disabled={!resultId}
             className="font-display text-[34px]"
           />
           <p className="text-center uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', color: 'var(--faint)' }}>
@@ -224,7 +216,7 @@ export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff,
             bgStyle="var(--panel2)"
             textStyle="var(--faint)"
             height={44}
-            disabled={acting}
+            disabled={stopActing || !resultId}
             className="text-[11px] font-hanken font-extrabold tracking-widest uppercase"
           />
         </div>
