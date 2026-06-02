@@ -17,6 +17,7 @@
 | [Google Maps](specs/2026-06-01-google-maps-design.md) | 2026-06-01 | ✅ Implemented | Switch all nav links from Apple Maps to Google Maps |
 | [Next runner up](specs/2026-06-01-next-runner-design.md) | 2026-06-01 | ✅ Implemented | On Deck chip in driver timing screen with next runner name + projected finish |
 | [Race complete summary](specs/2026-06-01-race-complete-summary-design.md) | 2026-06-01 | ✅ Implemented | Leg splits with actual pace, target pace, and ahead/behind delta |
+| [Direction B redesign](specs/2026-06-01-tracker-driver-direction-b-redesign.md) | 2026-06-01 | ✅ Implemented | Full visual restyle of Tracker + Driver: Anton/Hanken Grotesk/JetBrains Mono, warm dark palette, orange accent |
 
 Each spec has a matching implementation plan in `plans/` with the same filename stem.
 
