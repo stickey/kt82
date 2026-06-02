@@ -25,8 +25,28 @@ export default function App() {
       .catch(() => setView({ type: 'no-race' }))
   }, [])
 
-  function handleAuth(team: TeamSummary, pin: string, state: CurrentState) {
+  async function handleAuth(team: TeamSummary, pin: string, passedState: CurrentState) {
     const race = (view as { race: Race }).race
+    const api = createDriverApi(pin)
+
+    // Flush any action queued in a previous session before reading server state
+    let state = passedState
+    const pending = peek()
+    if (pending) {
+      try {
+        await api.patch(`/results/${pending.resultId}`, {
+          finishedAt: pending.finishedAt,
+          action: pending.action,
+        })
+      } catch { /* server state wins on failure */ }
+      dequeue()
+      setPendingAction(null)
+      // Re-fetch so we get up-to-date state after the flush
+      try {
+        state = await api.get<CurrentState>(`/teams/${team.id}/current`)
+      } catch { /* use passedState as fallback */ }
+    }
+
     if (state.status === 'not-started') {
       if (!state.nextLeg) { setView({ type: 'auth', race }); return }
       setView({ type: 'start', race, team, pin, nextLeg: state.nextLeg, nextRunner: state.nextRunner?.name ?? null })
