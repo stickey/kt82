@@ -94,9 +94,8 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
   // Race timestamps
   const raceStartedAt = sorted.find(t => t.result?.startedAt)?.result?.startedAt ?? null
   const allDone       = timeline.length > 0 && timeline.every(t => t.status === 'completed')
-  const raceEndedAt   = allDone
-    ? sorted.map(t => t.result?.finishedAt).filter(Boolean).sort().at(-1) ?? null
-    : null
+  const raceEndedAts  = allDone ? sorted.map(t => t.result?.finishedAt).filter(Boolean).sort() : []
+  const raceEndedAt   = raceEndedAts[raceEndedAts.length - 1] ?? null
   const raceElapsedMs = raceStartedAt
     ? Math.max(0, new Date(raceEndedAt ?? Date.now()).getTime() - new Date(raceStartedAt).getTime())
     : 0
