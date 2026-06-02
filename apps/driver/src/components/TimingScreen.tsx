@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { createDriverApi, buildNavUrl, formatElapsed, formatRaceTime, formatTime } from '../api'
 import { LongPressButton } from './LongPressButton'
-import type { TeamSummary, Leg, Handoff } from '../api'
+import type { TeamSummary, Leg, Handoff, CurrentStateInProgress } from '../api'
 
 interface Props {
   team: TeamSummary
@@ -54,7 +54,7 @@ export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff,
     const api = createDriverApi(pin)
     async function poll() {
       try {
-        const state = await api.get(`/teams/${team.id}/current`)
+        const state = await api.get<CurrentStateInProgress>(`/teams/${team.id}/current`)
         if (state.status === 'in-progress') setEta(state.eta ?? null)
       } catch { /* keep stale */ }
     }
