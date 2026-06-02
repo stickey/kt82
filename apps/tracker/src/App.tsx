@@ -14,6 +14,18 @@ export default function App() {
   const [noRace, setNoRace] = useState(false)
   const [teamId, setTeamId] = useState<string | null>(getHashTeamId)
   const [teamName, setTeamName] = useState('')
+  const [isOnline, setIsOnline] = useState(() => navigator.onLine)
+
+  useEffect(() => {
+    function handleOnline()  { setIsOnline(true)  }
+    function handleOffline() { setIsOnline(false) }
+    window.addEventListener('online',  handleOnline)
+    window.addEventListener('offline', handleOffline)
+    return () => {
+      window.removeEventListener('online',  handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
 
   useEffect(() => {
     api.get<Race>('/races/active')
@@ -62,6 +74,21 @@ export default function App() {
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg)', color: 'var(--text)' }}>
+      {!isOnline && (
+        <div style={{
+          background: 'var(--panel)',
+          borderBottom: '1px solid var(--line)',
+          padding: '10px 18px',
+          fontFamily: "'Hanken Grotesk', sans-serif",
+          fontSize: 12,
+          fontWeight: 700,
+          color: 'var(--mut)',
+          textAlign: 'center',
+          letterSpacing: '0.04em',
+        }}>
+          No connection — data may be stale
+        </div>
+      )}
       {teamId
         ? <TeamDetail teamId={teamId} teamName={teamName} onBack={navigateBack} />
         : <TeamGrid race={race} onTeamClick={navigateToTeam} />
