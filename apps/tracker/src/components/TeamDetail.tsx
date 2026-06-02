@@ -8,11 +8,36 @@ interface Props {
   onBack: () => void
 }
 
+function initials(name: string): string {
+  return name.split(' ').slice(0, 2).map(w => w[0] ?? '').join('').toUpperCase()
+}
+
+function NavPin({ url }: { url: string }) {
+  if (!url) return null
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={e => e.stopPropagation()}
+      title="Directions"
+      className="flex items-center justify-center flex-shrink-0"
+      style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--panel2)', border: '1px solid var(--line)' }}
+    >
+      <svg width="11" height="14" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2C8.1 2 5 5.1 5 9c0 4.9 7 13 7 13s7-8.1 7-13c0-3.9-3.1-7-7-7z" fill="var(--faint)" />
+        <circle cx="12" cy="9" r="2.6" fill="var(--panel2)" />
+      </svg>
+    </a>
+  )
+}
+
 export function TeamDetail({ teamId, teamName, onBack }: Props) {
   const [timeline, setTimeline] = useState<LegTimelineItem[]>([])
   const [pollError, setPollError] = useState(false)
   const [notFound, setNotFound] = useState(false)
   const [secondsSinceUpdate, setSecondsSinceUpdate] = useState<number | null>(null)
+  const [tick, setTick] = useState(0)
   const lastUpdatedRef = useRef<Date | null>(null)
   const notFoundRef = useRef(false)
 
@@ -27,263 +52,343 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
         setPollError(false)
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : ''
-        if (msg.includes('→ 404')) {
-          notFoundRef.current = true
-          setNotFound(true)
-        } else {
-          setPollError(true)
-        }
+        if (msg.includes('→ 404')) { notFoundRef.current = true; setNotFound(true) }
+        else setPollError(true)
       }
     }
-
     poll()
     const pollId = setInterval(poll, 30_000)
     const tickId = setInterval(() => {
       if (lastUpdatedRef.current) {
         setSecondsSinceUpdate(Math.floor((Date.now() - lastUpdatedRef.current.getTime()) / 1000))
       }
+      setTick(t => t + 1)
     }, 1_000)
-
-    return () => {
-      clearInterval(pollId)
-      clearInterval(tickId)
-    }
+    return () => { clearInterval(pollId); clearInterval(tickId) }
   }, [teamId])
 
   function handleShare() {
     const url = window.location.href
-    if (navigator.share) {
-      navigator.share({ title: teamName, url })
-    } else {
-      navigator.clipboard.writeText(url)
-    }
+    if (navigator.share) navigator.share({ title: teamName, url })
+    else navigator.clipboard.writeText(url)
   }
 
   if (notFound) {
     return (
-      <div className="min-h-screen flex flex-col" style={{background:'var(--bg)', color:'var(--text)'}}>
+      <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg)', color: 'var(--text)' }}>
         <div className="p-4">
-          <button onClick={onBack} className="text-sm min-h-[44px] flex items-center" style={{color:'var(--muted)'}}>
+          <button onClick={onBack} className="flex items-center min-h-[44px]" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--mut)' }}>
             ← All Teams
           </button>
         </div>
         <div className="flex-1 flex items-center justify-center">
-          <p style={{color:'var(--muted)'}}>Team not found.</p>
+          <p style={{ color: 'var(--mut)' }}>Team not found.</p>
         </div>
       </div>
     )
   }
 
   const activeItem = timeline.find(t => t.status === 'in-progress')
+  const sorted     = [...timeline].sort((a, b) => a.leg.legNumber - b.leg.legNumber)
 
+  // Race timestamps
+  const raceStartedAt = sorted.find(t => t.result?.startedAt)?.result?.startedAt ?? null
+  const allDone       = timeline.length > 0 && timeline.every(t => t.status === 'completed')
+  const raceEndedAt   = allDone
+    ? sorted.map(t => t.result?.finishedAt).filter(Boolean).sort().at(-1) ?? null
+    : null
+  const raceElapsedMs = raceStartedAt
+    ? Math.max(0, new Date(raceEndedAt ?? Date.now()).getTime() - new Date(raceStartedAt).getTime())
+    : 0
+  // re-read tick to force re-render every second
+  void tick
+
+  // Miles
+  const milesDone  = sorted.filter(t => t.status === 'completed').reduce((s, t) => s + t.leg.distanceMiles, 0)
+  const totalMiles = sorted.reduce((s, t) => s + t.leg.distanceMiles, 0) || 82
+  const milesToGo  = Math.max(0, totalMiles - milesDone)
+
+  // Projected arrival times for not-started legs
   const projectedTimes = new Map<string, Date>()
   if (activeItem?.eta?.eta) {
     let anchor = new Date(String(activeItem.eta.eta))
-    const notStarted = timeline
-      .filter(t => t.status === 'not-started')
-      .sort((a, b) => a.leg.legNumber - b.leg.legNumber)
-    for (const item of notStarted) {
+    for (const item of sorted.filter(t => t.status === 'not-started')) {
       if (!item.assignment) continue
       const durationMs = item.assignment.targetPaceSecPerMile * item.leg.distanceMiles * 1000
-      const arrival = new Date(anchor.getTime() + durationMs)
+      const arrival    = new Date(anchor.getTime() + durationMs)
       projectedTimes.set(item.leg.id, arrival)
       anchor = arrival
     }
   }
 
-  const raceStartedAt = timeline
-    .filter(t => t.result !== null)
-    .sort((a, b) => new Date(a.result!.startedAt).getTime() - new Date(b.result!.startedAt).getTime())[0]
-    ?.result?.startedAt ?? null
-
-  const raceEndedAt = !activeItem && timeline.length > 0 && timeline.every(t => t.status === 'completed')
-    ? (() => { const ts = [...timeline].map(t => t.result?.finishedAt).filter(Boolean).sort(); return ts[ts.length - 1] ?? null })()
+  // On-deck: first not-started leg after the active one
+  const onDeckItem = activeItem
+    ? sorted.find(t => t.status === 'not-started' && t.leg.legNumber > activeItem.leg.legNumber)
     : null
 
-  const raceElapsedMs = raceStartedAt
-    ? Math.max(0, new Date(raceEndedAt ?? Date.now()).getTime() - new Date(raceStartedAt).getTime())
-    : 0
+  // Leg time (ticking)
   const legElapsedMs = activeItem?.result?.startedAt
     ? Math.max(0, Date.now() - new Date(activeItem.result.startedAt).getTime())
     : 0
 
+  // Status helpers
+  const etaStatus  = activeItem?.eta?.status ?? 'on-pace'
+  const heroColor  = etaStatus === 'overdue' ? 'var(--red)' : 'var(--green)'
+  const heroBg     = etaStatus === 'overdue' ? '#ff4d2e' : '#37d27a'
+
+  function buildNavUrl(handoff: LegTimelineItem['leg']['handoff']): string {
+    if (!handoff) return ''
+    if (handoff.lat != null && handoff.lng != null)
+      return `https://www.google.com/maps/dir/?api=1&destination=${handoff.lat},${handoff.lng}`
+    if (handoff.address)
+      return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(handoff.address)}`
+    return ''
+  }
+
   return (
-    <div className="min-h-screen" style={{background:'var(--bg)', color:'var(--text)'}}>
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3" style={{borderBottom:'1px solid var(--border)'}}>
-        <button onClick={onBack} className="text-sm min-h-[44px] flex items-center" style={{color:'var(--muted)'}}>
+    <div className="min-h-screen" style={{ background: 'var(--bg)', color: 'var(--text)' }}>
+
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-[18px] py-3" style={{ borderBottom: '1px solid var(--line)' }}>
+        <button onClick={onBack} className="flex items-center min-h-[44px] uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', color: 'var(--mut)' }}>
           ← All Teams
         </button>
-        <span className="font-display text-xl font-bold">{teamName}</span>
-        <button onClick={handleShare} className="text-sm min-h-[44px] flex items-center" style={{color:'var(--muted)'}}>
-          Share
+        {pollError && <span style={{ fontSize: 11, color: 'var(--amber)' }}>⚠ Unable to refresh</span>}
+        {!pollError && secondsSinceUpdate !== null && secondsSinceUpdate > 0 && (
+          <span className="font-mono" style={{ fontSize: 11, color: 'var(--faint)' }}>{secondsSinceUpdate}s ago</span>
+        )}
+        <button onClick={handleShare} className="flex items-center min-h-[44px] uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', color: 'var(--mut)' }}>
+          Share ↗
         </button>
       </div>
 
-      {/* Race time banner — sticky */}
-      <div
-        className="sticky top-0 z-10 flex items-center justify-between px-4 py-2"
-        style={{ background: '#0f172a', borderBottom: '2px solid #1e3a5f' }}
-      >
-        <div className="flex items-center gap-2">
-          <div className="relative w-2.5 h-2.5 flex-shrink-0">
-            <div className={`absolute inset-0 rounded-full opacity-60 ${raceStartedAt && !raceEndedAt ? 'animate-ping' : ''}`} style={{ background: '#60a5fa' }} />
-            <div className="absolute inset-0 rounded-full" style={{ background: '#60a5fa' }} />
-          </div>
-          <span className="text-sm font-semibold" style={{ color: '#94a3b8' }}>{teamName}</span>
-        </div>
-        <div className="text-right">
-          <div className="font-mono text-base font-bold leading-none" style={{ color: '#60a5fa' }}>
-            {formatRaceTime(raceElapsedMs)}
-          </div>
-          <div className="text-[9px] uppercase tracking-widest mt-0.5" style={{ color: '#475569' }}>Race time</div>
-        </div>
-      </div>
+      <div className="max-w-2xl mx-auto px-[18px] pt-4 pb-10">
 
-      <div className="p-4 max-w-3xl mx-auto">
-        {/* Staleness */}
-        <p className="text-xs mb-5" style={{color:'var(--faint)'}}>
-          {pollError
-            ? 'Unable to refresh — check connection'
-            : secondsSinceUpdate !== null
-              ? `Updated ${secondsSinceUpdate}s ago`
-              : 'Loading...'}
-        </p>
+        {/* Team header + bib */}
+        <div className="flex items-start justify-between mb-4">
+          <div className="min-w-0 flex-1">
+            <p className="uppercase mb-1" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 10, fontWeight: 800, letterSpacing: '0.12em', color: 'var(--accent)' }}>
+              KT82 · Katy Trail Relay
+            </p>
+            <h1 className="font-display uppercase leading-none" style={{ fontSize: 48 }}>
+              {teamName}
+            </h1>
+          </div>
+          {activeItem && (
+            <div className="flex-shrink-0 ml-3 text-center" style={{ background: 'var(--accent)', borderRadius: 14, padding: '10px 14px', minWidth: 70 }}>
+              <div className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', color: 'var(--ink)' }}>Leg</div>
+              <div className="font-display leading-none" style={{ fontSize: 38, color: 'var(--ink)' }}>{activeItem.leg.legNumber}</div>
+              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9, fontWeight: 800, color: 'rgba(19,17,10,0.55)' }}>of {timeline.length || 18}</div>
+            </div>
+          )}
+        </div>
 
-        {/* Hero card */}
+        {/* Progress + total race time */}
+        {raceStartedAt && (
+          <div className="mb-4">
+            <div className="flex items-baseline justify-between mb-1">
+              <div>
+                <div className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', color: 'var(--faint)' }}>Total Race Time</div>
+                <div className="font-mono" style={{ fontSize: 26, fontWeight: 700, color: 'var(--text)', lineHeight: 1.1 }}>
+                  {formatRaceTime(raceElapsedMs)}
+                </div>
+              </div>
+              <div className="text-right">
+                <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 13, color: 'var(--mut)' }}>
+                  {milesToGo.toFixed(1)} mi to go
+                </div>
+                <div className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9, fontWeight: 800, letterSpacing: '0.1em', color: 'var(--faint)', marginTop: 2 }}>
+                  {milesDone.toFixed(1)} of {totalMiles.toFixed(0)} mi done
+                </div>
+              </div>
+            </div>
+            <div style={{ height: 5, background: 'var(--line)', borderRadius: 999, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${Math.min((milesDone / totalMiles) * 100, 100).toFixed(1)}%`, background: 'var(--accent)', borderRadius: 999 }} />
+            </div>
+          </div>
+        )}
+
+        {/* Hero — relay pass */}
         {activeItem && activeItem.runner && activeItem.eta && (
           <div
-            className={`rounded-2xl p-5 mb-6 ${activeItem.eta.status === 'overdue' ? 'glow-amber' : 'glow-green'}`}
-            style={{
-              background: activeItem.eta.status === 'overdue' ? 'var(--amber-bg)' : 'var(--green-bg)',
-              border: `1px solid ${activeItem.eta.status === 'overdue' ? 'var(--amber-dim)' : 'var(--green-dim)'}`,
-            }}
+            className={etaStatus === 'overdue' ? 'glow-red' : 'glow-green'}
+            style={{ background: heroBg, borderRadius: 22, padding: 16, marginBottom: 16 }}
           >
-            <div className="font-display text-xs font-semibold uppercase tracking-widest mb-3"
-              style={{color: activeItem.eta.status === 'overdue' ? 'var(--amber)' : 'var(--green)'}}>
-              Now on course
+            {/* Header */}
+            <div className="flex items-center justify-between mb-1">
+              <span className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 10, fontWeight: 800, letterSpacing: '0.12em', color: 'var(--ink)' }}>
+                Now Running · Leg {activeItem.leg.legNumber}
+              </span>
+              <span className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9.5, fontWeight: 800, letterSpacing: '0.1em', padding: '3px 9px', borderRadius: 999, background: 'rgba(0,0,0,0.18)', color: 'var(--ink)' }}>
+                {etaStatus === 'overdue' ? 'Behind Pace' : etaStatus === 'ahead' ? 'Ahead' : 'On Pace'}
+              </span>
             </div>
-            <div className="font-display text-3xl font-bold leading-none mb-1" style={{color:'var(--text)'}}>
+
+            {/* Runner name */}
+            <div className="font-display uppercase leading-none" style={{ fontSize: 52, color: 'var(--ink)', margin: '6px 0 4px' }}>
               {activeItem.runner.name}
             </div>
-            <div className="text-sm mb-4" style={{color:'var(--muted)'}}>
-              Leg {activeItem.leg.legNumber} · {activeItem.leg.name} · {activeItem.leg.distanceMiles} mi
-            </div>
-            <div className="flex items-end gap-3 mb-1">
-              <span className="font-display text-5xl font-bold leading-none"
-                style={{color: activeItem.eta.status === 'overdue' ? 'var(--amber)' : 'var(--green)'}}>
-                {formatTime(String(activeItem.eta.eta))}
-              </span>
-              <span className="font-display text-sm font-semibold uppercase tracking-wide mb-1 px-2 py-0.5 rounded"
-                style={{
-                  background: activeItem.eta.status === 'overdue' ? 'rgba(245,158,11,0.15)' : 'rgba(34,197,94,0.15)',
-                  color: activeItem.eta.status === 'overdue' ? 'var(--amber)' : 'var(--green)',
-                }}>
-                {activeItem.eta.status === 'overdue' ? 'Overdue' : activeItem.eta.status === 'ahead' ? 'Ahead' : 'On pace'}
-              </span>
-            </div>
-            <div className="text-sm mb-4" style={{color:'var(--muted)'}}>
-              {formatElapsed(legElapsedMs)} on this leg
-            </div>
+
+            {/* Destination */}
             {activeItem.leg.handoff && (
-              <div className="flex items-center gap-3 pt-3"
-                style={{borderTop:`1px solid ${activeItem.eta.status === 'overdue' ? 'var(--amber-dim)' : 'var(--green-dim)'}`}}>
-                <span className="text-sm flex-1" style={{color:'var(--text)'}}>
-                  → {activeItem.leg.handoff.name}
-                </span>
-                {activeItem.leg.handoff.lat != null && activeItem.leg.handoff.lng != null && (
-                  <a
-                    href={`https://www.google.com/maps/dir/?api=1&destination=${activeItem.leg.handoff.lat},${activeItem.leg.handoff.lng}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={e => e.stopPropagation()}
-                    className="text-sm font-medium px-3 py-1.5 rounded-lg min-h-[36px] flex items-center"
-                    style={{background:'rgba(96,165,250,0.12)', color:'var(--blue)', border:'1px solid rgba(96,165,250,0.25)'}}
-                  >
-                    Meet here ↗
-                  </a>
-                )}
+              <div className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 12.5, fontWeight: 800, letterSpacing: '0.06em', color: 'rgba(19,17,10,0.65)', marginBottom: 12 }}>
+                → Heading to {activeItem.leg.handoff.name}
               </div>
+            )}
+
+            {/* Three readouts */}
+            <div className="flex mb-3">
+              <div className="flex-1 text-center">
+                <div className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', color: 'rgba(19,17,10,0.55)', marginBottom: 2 }}>Est. Arrival</div>
+                <div className="font-mono" style={{ fontSize: 34, fontWeight: 700, color: 'var(--ink)', lineHeight: 1 }}>
+                  {formatTime(String(activeItem.eta.eta))}
+                </div>
+              </div>
+              <div className="flex-1 text-center" style={{ borderLeft: '1px solid rgba(0,0,0,0.15)' }}>
+                <div className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', color: 'rgba(19,17,10,0.55)', marginBottom: 2 }}>Leg Time</div>
+                <div className="font-mono" style={{ fontSize: 22, fontWeight: 700, color: 'var(--ink)', lineHeight: 1.1 }}>
+                  {formatElapsed(legElapsedMs)}
+                </div>
+              </div>
+              <div className="flex-1 text-center" style={{ borderLeft: '1px solid rgba(0,0,0,0.15)' }}>
+                <div className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', color: 'rgba(19,17,10,0.55)', marginBottom: 2 }}>To Go</div>
+                <div className="font-mono" style={{ fontSize: 18, fontWeight: 700, color: 'var(--ink)', lineHeight: 1.2 }}>
+                  {activeItem.leg.distanceMiles} mi
+                </div>
+              </div>
+            </div>
+
+            {/* Hands off to (on-deck) */}
+            {onDeckItem && onDeckItem.runner && (
+              <div className="flex items-center gap-2 mb-2" style={{ background: 'rgba(0,0,0,0.16)', borderRadius: 12, padding: '10px 12px' }}>
+                <div className="flex items-center justify-center flex-shrink-0" style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(0,0,0,0.20)', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 13, color: 'var(--ink)' }}>
+                  {initials(onDeckItem.runner.name)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 14, fontWeight: 800, color: 'var(--ink)' }}>
+                    {onDeckItem.runner.name}
+                  </div>
+                  <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 10.5, color: 'rgba(19,17,10,0.60)' }}>
+                    Leg {onDeckItem.leg.legNumber} · {onDeckItem.leg.distanceMiles} mi
+                    {onDeckItem.leg.handoff ? ` → ${onDeckItem.leg.handoff.name}` : ''}
+                  </div>
+                </div>
+                <span className="uppercase flex-shrink-0" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9, fontWeight: 800, letterSpacing: '0.1em', background: 'rgba(0,0,0,0.18)', borderRadius: 999, padding: '2px 8px', color: 'var(--ink)' }}>
+                  On Deck
+                </span>
+              </div>
+            )}
+
+            {/* Drive to */}
+            {activeItem.leg.handoff && buildNavUrl(activeItem.leg.handoff) && (
+              <a
+                href={buildNavUrl(activeItem.leg.handoff)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()}
+                className="flex items-center justify-center gap-2"
+                style={{ background: 'rgba(0,0,0,0.28)', borderRadius: 12, padding: '11px 14px', textDecoration: 'none' }}
+              >
+                <svg width="12" height="15" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2C8.1 2 5 5.1 5 9c0 4.9 7 13 7 13s7-8.1 7-13c0-3.9-3.1-7-7-7z" fill="var(--ink)" />
+                  <circle cx="12" cy="9" r="2.6" fill="rgba(0,0,0,0.3)" />
+                </svg>
+                <span className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', color: 'var(--ink)' }}>
+                  Drive to {activeItem.leg.handoff.name} →
+                </span>
+              </a>
             )}
           </div>
         )}
 
-        {/* Timeline */}
-        <div className="font-display text-xs font-semibold uppercase tracking-widest mb-4" style={{color:'var(--faint)'}}>
-          All Legs
+        {/* The Course */}
+        <div className="font-display uppercase" style={{ fontSize: 24, marginBottom: 2 }}>The Course</div>
+        <div className="uppercase mb-3" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 10, fontWeight: 800, letterSpacing: '0.1em', color: 'var(--faint)' }}>
+          {timeline.length} Handoffs
         </div>
 
         {timeline.length === 0 ? (
-          <p className="text-sm" style={{color:'var(--muted)'}}>No assignments yet.</p>
+          <p style={{ fontSize: 13, color: 'var(--mut)' }}>No assignments yet.</p>
         ) : (
-          <div className="relative">
-            {/* Connecting line */}
-            <div className="absolute left-[9px] top-3 bottom-3 w-px" style={{background:'var(--border)'}} />
-            <div className="flex flex-col gap-1">
-              {timeline.map(item => {
-                const isActive = item.status === 'in-progress'
-                const isDone = item.status === 'completed'
-                const isOverdue = item.eta?.status === 'overdue'
-                return (
-                  <div key={item.leg.id}
-                    className="flex items-start gap-3 py-2.5 px-3 rounded-lg"
-                    style={{
-                      opacity: isDone ? 0.45 : 1,
-                      background: isActive ? (isOverdue ? 'var(--amber-bg)' : 'var(--green-bg)') : 'transparent',
-                    }}>
-                    {/* Status dot */}
-                    <div className="mt-0.5 flex-shrink-0 w-5 flex justify-center">
-                      {isDone ? (
-                        <div className="w-2 h-2 rounded-full mt-1" style={{background:'var(--faint)'}} />
-                      ) : isActive ? (
-                        <div className="relative w-3 h-3 mt-0.5">
-                          <div className="absolute inset-0 rounded-full"
-                            style={{background: isOverdue ? 'var(--amber)' : 'var(--green)'}} />
-                          <div className="absolute -inset-1 rounded-full opacity-30 live-dot"
-                            style={{background: isOverdue ? 'var(--amber)' : 'var(--green)'}} />
-                        </div>
-                      ) : (
-                        <div className="w-2 h-2 rounded-full mt-1" style={{border:'1px solid var(--faint)'}} />
-                      )}
+          <div className="flex flex-col gap-0.5">
+            {sorted.map(item => {
+              const isDone    = item.status === 'completed'
+              const isActive  = item.status === 'in-progress'
+              const isNext    = onDeckItem?.leg.id === item.leg.id
+              const iStatus   = isActive ? (etaStatus === 'overdue' ? 'var(--red)' : 'var(--green)') : 'var(--mut)'
+              const navUrl    = buildNavUrl(item.leg.handoff)
+
+              // Delta for done rows
+              let deltaLabel: string | null = null
+              if (isDone && item.assignment && item.result?.startedAt && item.result?.finishedAt) {
+                const actualSec = (new Date(item.result.finishedAt).getTime() - new Date(item.result.startedAt).getTime()) / 1000
+                const targetSec = item.assignment.targetPaceSecPerMile * item.leg.distanceMiles
+                const deltaSec  = actualSec - targetSec  // positive = slower (behind)
+                const deltaMin  = Math.round(Math.abs(deltaSec) / 60)
+                if (deltaMin > 0) deltaLabel = deltaSec > 0 ? `+${deltaMin}m` : `-${deltaMin}m`
+              }
+
+              return (
+                <div
+                  key={item.leg.id}
+                  className="flex items-center gap-2.5 px-2.5 py-2"
+                  style={{
+                    borderRadius: 10,
+                    opacity: isDone ? 0.4 : 1,
+                    background: isActive
+                      ? `${heroBg}1e`
+                      : 'transparent',
+                  }}
+                >
+                  {/* Leg number */}
+                  <span className="font-display uppercase flex-shrink-0 text-center" style={{ fontSize: 20, width: 26, color: isActive ? heroColor : 'var(--faint)', lineHeight: 1 }}>
+                    {item.leg.legNumber}
+                  </span>
+
+                  {/* Avatar */}
+                  <div className="flex items-center justify-center flex-shrink-0" style={{ width: 30, height: 30, borderRadius: '50%', background: isActive ? `${heroBg}40` : 'var(--panel2)', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 10, color: isActive ? heroColor : 'var(--mut)' }}>
+                    {item.runner ? initials(item.runner.name) : '?'}
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 15, fontWeight: 800, color: isActive ? iStatus : isDone ? 'var(--faint)' : 'var(--text)', lineHeight: 1.2 }}>
+                      {item.runner?.name ?? '—'}
                     </div>
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline justify-between gap-2">
-                        <span className="font-display font-semibold text-base leading-tight"
-                          style={{color: item.status === 'not-started' ? 'var(--faint)' : 'var(--text)'}}>
-                          {item.runner?.name ?? '—'}
-                        </span>
-                        <span className="font-display font-semibold text-base flex-shrink-0"
-                          style={{color: isActive ? (isOverdue ? 'var(--amber)' : 'var(--green)') : 'var(--muted)'}}>
-                          {isDone && item.result?.finishedAt
-                            ? formatTime(item.result.finishedAt)
-                            : isActive && item.eta
-                              ? formatTime(String(item.eta.eta))
-                              : projectedTimes.has(item.leg.id)
-                                ? `~${formatTime(projectedTimes.get(item.leg.id)!.toISOString())}`
-                                : '—'}
-                        </span>
-                      </div>
-                      <div className="text-xs mt-0.5" style={{color:'var(--faint)'}}>
-                        Leg {item.leg.legNumber} · {item.leg.distanceMiles} mi
-                      </div>
-                      {!isDone && !isActive && item.leg.handoff?.lat != null && item.leg.handoff?.lng != null && (
-                        <a
-                          href={`https://www.google.com/maps/dir/?api=1&destination=${item.leg.handoff.lat},${item.leg.handoff.lng}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={e => e.stopPropagation()}
-                          className="text-xs mt-1 py-2 inline-block min-h-[44px] flex items-center"
-                          style={{color:'var(--blue)'}}
-                        >
-                          ↗ Navigate to {item.leg.handoff.name}
-                        </a>
-                      )}
+                    <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 10, color: 'var(--faint)', marginTop: 1 }}>
+                      {item.leg.handoff?.name ?? item.leg.name} · {item.leg.distanceMiles} mi
                     </div>
                   </div>
-                )
-              })}
-            </div>
+
+                  {/* Time + tags */}
+                  <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                    {isActive && (
+                      <span className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 8, fontWeight: 800, letterSpacing: '0.1em', background: heroColor, color: 'var(--ink)', borderRadius: 999, padding: '2px 6px' }}>Live</span>
+                    )}
+                    {isNext && (
+                      <span className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 8, fontWeight: 800, letterSpacing: '0.1em', border: '1px solid var(--line)', color: 'var(--mut)', borderRadius: 999, padding: '2px 6px' }}>On Deck</span>
+                    )}
+                    <span className="font-mono" style={{ fontSize: 14, color: isActive ? iStatus : isDone ? 'var(--faint)' : 'var(--mut)' }}>
+                      {isDone && item.result?.finishedAt
+                        ? formatTime(item.result.finishedAt)
+                        : isActive && item.eta
+                          ? formatTime(String(item.eta.eta))
+                          : projectedTimes.has(item.leg.id)
+                            ? `~${formatTime(projectedTimes.get(item.leg.id)!.toISOString())}`
+                            : '—'}
+                    </span>
+                    {deltaLabel && (
+                      <span className="font-mono" style={{ fontSize: 10, color: deltaLabel.startsWith('+') ? 'var(--red)' : 'var(--green)' }}>
+                        {deltaLabel}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Nav pin */}
+                  <NavPin url={navUrl} />
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
