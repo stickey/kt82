@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { api, formatTime, formatElapsed, formatRaceTime } from '../api'
 import type { LegTimelineItem } from '../api'
 import { CourseScreen } from './CourseScreen'
+import { LegProgressScreen } from './LegProgressScreen'
 import { COURSE_LEGS } from '@kt82/shared'
 
 interface Props {
@@ -43,6 +44,7 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
   const lastUpdatedRef = useRef<Date | null>(null)
   const notFoundRef = useRef(false)
   const [showCourse, setShowCourse] = useState(false)
+  const [showLegProgress, setShowLegProgress] = useState(false)
 
   useEffect(() => {
     async function poll() {
@@ -157,6 +159,21 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
     />
   )
 
+  if (showLegProgress && activeItem && activeItem.runner && activeItem.assignment && activeItem.result) return (
+    <LegProgressScreen
+      runner={activeItem.runner.name}
+      town={activeItem.leg.handoff?.name ?? activeItem.leg.name}
+      legN={activeItem.leg.legNumber}
+      totalLegs={timeline.length || 18}
+      distMiles={activeItem.leg.distanceMiles}
+      startedAtMs={new Date(activeItem.result.startedAt).getTime()}
+      targetPaceSecPerMile={activeItem.assignment.targetPaceSecPerMile}
+      teamName={teamName}
+      backLabel={`← ${teamName}`}
+      onBack={() => setShowLegProgress(false)}
+    />
+  )
+
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg)', color: 'var(--text)' }}>
 
@@ -250,12 +267,24 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
 
             {/* Three readouts */}
             <div className="flex mb-3">
-              <div className="flex-1 text-center">
+              <button
+                onClick={() => setShowLegProgress(true)}
+                style={{ flex: '1 1 0', background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                  textAlign: 'center', minHeight: 44, display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', justifyContent: 'center' }}
+              >
                 <div className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', color: 'rgba(19,17,10,0.55)', marginBottom: 2 }}>Est. Arrival</div>
                 <div className="font-mono" style={{ fontSize: 34, fontWeight: 700, color: 'var(--ink)', lineHeight: 1 }}>
                   {formatTime(String(activeItem.eta.eta))}
                 </div>
-              </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 5 }}>
+                  <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: 10,
+                    opacity: 0.85, letterSpacing: '0.06em', color: 'var(--ink)' }}>BY PACE</span>
+                  <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 9,
+                    letterSpacing: '0.06em', background: 'rgba(0,0,0,0.18)', padding: '2px 7px',
+                    borderRadius: 20, color: 'var(--ink)' }}>→</span>
+                </div>
+              </button>
               <div className="flex-1 text-center" style={{ borderLeft: '1px solid rgba(0,0,0,0.15)' }}>
                 <div className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', color: 'rgba(19,17,10,0.55)', marginBottom: 2 }}>Leg Time</div>
                 <div className="font-mono" style={{ fontSize: 22, fontWeight: 700, color: 'var(--ink)', lineHeight: 1.1 }}>
@@ -263,7 +292,7 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
                 </div>
               </div>
               <div className="flex-1 text-center" style={{ borderLeft: '1px solid rgba(0,0,0,0.15)' }}>
-                <div className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', color: 'rgba(19,17,10,0.55)', marginBottom: 2 }}>To Go</div>
+                <div className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', color: 'rgba(19,17,10,0.55)', marginBottom: 2 }}>Distance</div>
                 <div className="font-mono" style={{ fontSize: 18, fontWeight: 700, color: 'var(--ink)', lineHeight: 1.2 }}>
                   {activeItem.leg.distanceMiles} mi
                 </div>
