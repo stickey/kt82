@@ -11,9 +11,10 @@ function lpDur(sec: number): string {
 }
 
 function lpPace(sec: number): string {
-  const m = Math.floor(sec / 60)
-  const s = Math.round(sec % 60).toString().padStart(2, '0')
-  return `${m}:${s}`
+  const totalSec = Math.round(sec)
+  const m = Math.floor(totalSec / 60)
+  const s = totalSec % 60
+  return `${m}:${s.toString().padStart(2, '0')}`
 }
 
 function lpSigned(sec: number): string {

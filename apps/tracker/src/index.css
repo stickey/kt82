@@ -58,7 +58,9 @@ body {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.25; }
 }
-.live-dot { animation: live-dot 1.5s ease-in-out infinite; }
+@media (prefers-reduced-motion: no-preference) {
+  .live-dot { animation: live-dot 1.5s ease-in-out infinite; }
+}
 
 @keyframes glow-green {
   from { box-shadow: 0 14px 40px rgba(55,210,122,0.18); }
