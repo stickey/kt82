@@ -6,7 +6,7 @@ Race-day timing app used by the driver/timekeeper in the support vehicle to star
 
 - Authenticates with a team PIN, then detects whether the race has started
 - **Start screen:** Displays the first leg info; hold the START button (~500ms) to begin the race
-- **Timing screen:** Ticking elapsed clock + server-polled ETA side by side; navigate to the next handoff point; hold LAP (~1500ms) to record a handoff and advance to the next leg; hold "End race early" (~1500ms) to stop
+- **Timing screen:** Ticking elapsed clock + server-polled ETA side by side; navigate to the next handoff point; tap **"VIEW ALL 18 LEGS · THE COURSE →"** for a full course overview (see below); hold LAP (~1500ms) to record a handoff and advance to the next leg; hold "End race early" (~1500ms) to stop
 - **Complete screen:** Total race time + per-leg splits for all completed legs
 - All timing buttons use long-press (hold-to-activate) to prevent accidental taps in a moving vehicle
 - Timestamps are captured client-side at the moment of button activation
@@ -31,17 +31,43 @@ Login with your team PIN. PINs are created by the race director in the Manager a
 
 Dev credential: `1234` (after creating a team in Manager or via the test suite).
 
+## Course Overview Screen
+
+Reachable from the timing screen by tapping **"VIEW ALL 18 LEGS · THE COURSE →"** (a secondary button below the navigation link). Shows the entire 18-leg course on one scrollable screen while keeping the race clock running.
+
+**What it shows:**
+- Live race clock (same tick as the timing screen) and a blinking **LIVE** indicator
+- Progress bar with a position marker dot showing how far through the course the team is
+- Tally pills: `✓ N DONE`, `● ON LEG N`, `N TO GO`
+- "Race in Progress" callout with the current leg's start → finish names
+- All 18 leg rows with done / active / upcoming status styling:
+  - **Done** — green-washed background, ✓ DONE badge
+  - **Active** — accent-highlighted background with border, LIVE badge
+  - **Next** — NEXT outlined badge
+- Per-leg **difficulty chip** (Easy / Medium / Difficult, with Distance or Single Track note where applicable)
+- Per-leg **mileage** in monospace
+
+**Map links:** Every leg row has three tappable Google Maps links — all open in a new tab:
+- **START** — drops a pin at the leg's start coordinates
+- **FINISH** — drops a pin at the leg's finish coordinates
+- **FULL DIRECTIONS ↗** — turn-by-turn route from start to finish
+
+Back button returns to the timing screen. The timing state (current leg, elapsed clock, resultId) is fully preserved — nothing resets on back.
+
+**Offline note:** The course data is entirely static (bundled in the app). Opening the course overview requires no network request.
+
 ## File Structure
 
 ```
 src/
   api.ts              — PIN-bearing API client factory, format helpers (formatElapsed, formatTime, formatDuration, buildNavUrl)
-  App.tsx             — discriminated union state machine (loading → auth → start → racing → complete)
+  App.tsx             — discriminated union state machine (loading → auth → start → racing → course → complete)
   components/
     LongPressButton.tsx — reusable hold-to-activate button with rAF fill animation
     AuthScreen.tsx    — team selection dropdown + PIN entry
     StartScreen.tsx   — first leg info + START long-press
-    TimingScreen.tsx  — elapsed clock, ETA poll, navigation link, LAP/STOP
+    TimingScreen.tsx  — elapsed clock, ETA poll, navigation link, LAP/STOP, VIEW ALL LEGS button
+    CourseScreen.tsx  — all-18-legs course overview with map links and live clock
     CompleteScreen.tsx — total time + leg-by-leg splits
 ```
 
