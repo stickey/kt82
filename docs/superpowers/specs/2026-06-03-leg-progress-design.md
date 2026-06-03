@@ -1,7 +1,7 @@
 # Leg Progress Screen — "When Do They Arrive?"
 
 **Date:** 2026-06-03  
-**Status:** Approved  
+**Status:** Implemented  
 **Apps:** Driver, Tracker  
 **Variant:** Direction A (progress bar + arrival table)
 
