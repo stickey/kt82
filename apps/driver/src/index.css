@@ -30,3 +30,9 @@ body {
 
 .font-display { font-family: 'Anton', sans-serif; }
 .font-mono    { font-family: 'JetBrains Mono', monospace; }
+
+@keyframes live-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.25; }
+}
+.live-dot { animation: live-dot 1.5s ease-in-out infinite; }
