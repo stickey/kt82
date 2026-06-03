@@ -17,13 +17,14 @@ interface Props {
   nextRunner: string | null
   nextLeg: Leg | null
   nextRunnerEta: string | null
+  onViewCourse: () => void
 }
 
 function initials(name: string): string {
   return name.split(' ').slice(0, 2).map(w => w[0] ?? '').join('').toUpperCase()
 }
 
-export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff, currentRunner, raceStartedAt, onLapPress, onComplete, nextRunner, nextLeg, nextRunnerEta }: Props) {
+export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff, currentRunner, raceStartedAt, onLapPress, onComplete, nextRunner, nextLeg, nextRunnerEta, onViewCourse }: Props) {
   const [elapsed, setElapsed] = useState(0)
   const [raceElapsed, setRaceElapsed] = useState(0)
   const [eta, setEta]         = useState<{ eta: string; secondsRemaining: number; status: 'on-pace' | 'ahead' | 'overdue' } | null>(null)
@@ -192,6 +193,17 @@ export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff,
             Navigate to {nextHandoff!.name} ↗
           </a>
         )}
+
+        {/* View all legs */}
+        <button
+          onClick={onViewCourse}
+          className="flex items-center justify-center gap-1.5 uppercase min-h-[44px] w-full"
+          style={{ border: '1px solid var(--line)', borderRadius: 14, background: 'none', cursor: 'pointer',
+            fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 11, fontWeight: 800,
+            letterSpacing: '0.08em', color: 'var(--mut)' }}
+        >
+          VIEW ALL 18 LEGS · THE COURSE →
+        </button>
 
         {stopError && <p style={{ fontSize: 13, color: 'var(--red)', textAlign: 'center' }}>{stopError}</p>}
 

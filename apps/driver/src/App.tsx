@@ -4,6 +4,7 @@ import { AuthScreen } from './components/AuthScreen'
 import { StartScreen } from './components/StartScreen'
 import { TimingScreen } from './components/TimingScreen'
 import { CompleteScreen } from './components/CompleteScreen'
+import { CourseScreen } from './components/CourseScreen'
 import { enqueue, peek, dequeue, type PendingAction } from './pendingActions'
 import type { Race, TeamSummary, Leg, Handoff, CurrentState, CurrentStateInProgress } from './api'
 
@@ -13,6 +14,7 @@ type View =
   | { type: 'auth'; race: Race }
   | { type: 'start'; race: Race; team: TeamSummary; pin: string; nextLeg: Leg; nextRunner: string | null }
   | { type: 'racing'; race: Race; team: TeamSummary; pin: string; resultId: string | null; leg: Leg; startedAt: string; nextHandoff: Handoff | null; currentRunner: string | null; raceStartedAt: string | null; nextRunner: string | null; nextLeg: Leg | null; nextRunnerEta: string | null }
+  | { type: 'course'; race: Race; team: TeamSummary; pin: string; resultId: string | null; leg: Leg; startedAt: string; nextHandoff: Handoff | null; currentRunner: string | null; raceStartedAt: string | null; nextRunner: string | null; nextLeg: Leg | null; nextRunnerEta: string | null }
   | { type: 'complete'; race: Race; team: TeamSummary; pin: string }
 
 export default function App() {
@@ -152,6 +154,14 @@ export default function App() {
     setView({ type: 'complete', race: v.race, team: v.team, pin: v.pin })
   }
 
+  function handleViewCourse() {
+    setView(prev => prev.type === 'racing' ? { ...prev, type: 'course' } : prev)
+  }
+
+  function handleBackFromCourse() {
+    setView(prev => prev.type === 'course' ? { ...prev, type: 'racing' } : prev)
+  }
+
   // Retry queued LAP actions (while racing with null resultId, or after last-leg optimistic complete)
   useEffect(() => {
     if (!pendingAction) return
@@ -220,6 +230,16 @@ export default function App() {
       currentRunner={view.currentRunner} raceStartedAt={view.raceStartedAt}
       onLapPress={handleLapPress} onComplete={handleComplete}
       nextRunner={view.nextRunner} nextLeg={view.nextLeg} nextRunnerEta={view.nextRunnerEta}
+      onViewCourse={handleViewCourse}
+    />
+  )
+  if (view.type === 'course') return (
+    <CourseScreen
+      currentLegNumber={view.leg.legNumber}
+      raceStartedAt={view.raceStartedAt}
+      teamName={view.team.name}
+      backLabel="← TIMING"
+      onBack={handleBackFromCourse}
     />
   )
   return <CompleteScreen race={view.race} team={view.team} pin={view.pin} />
