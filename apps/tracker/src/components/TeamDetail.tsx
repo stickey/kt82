@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { api, formatTime, formatElapsed, formatRaceTime } from '../api'
 import type { LegTimelineItem } from '../api'
+import { CourseScreen } from './CourseScreen'
+import { COURSE_LEGS } from '@kt82/shared'
 
 interface Props {
   teamId: string
@@ -40,6 +42,7 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
   const [tick, setTick] = useState(0)
   const lastUpdatedRef = useRef<Date | null>(null)
   const notFoundRef = useRef(false)
+  const [showCourse, setShowCourse] = useState(false)
 
   useEffect(() => {
     async function poll() {
@@ -143,6 +146,16 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
       return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(handoff.address)}`
     return ''
   }
+
+  if (showCourse) return (
+    <CourseScreen
+      currentLegNumber={allDone ? COURSE_LEGS.length + 1 : (activeItem?.leg.legNumber ?? 0)}
+      raceStartedAt={raceStartedAt}
+      teamName={teamName}
+      backLabel={`← ${teamName}`}
+      onBack={() => setShowCourse(false)}
+    />
+  )
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg)', color: 'var(--text)' }}>
@@ -301,8 +314,19 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
         )}
 
         {/* The Course */}
-        <div className="font-display uppercase" style={{ fontSize: 24, marginBottom: 2 }}>The Course</div>
-        <div className="uppercase mb-3" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 10, fontWeight: 800, letterSpacing: '0.1em', color: 'var(--faint)' }}>
+        <button
+          onClick={() => setShowCourse(true)}
+          className="flex items-center justify-between w-full min-h-[44px] mb-0"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}
+        >
+          <span className="font-display uppercase" style={{ fontSize: 24 }}>The Course</span>
+          <span className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 11,
+            fontWeight: 800, letterSpacing: '0.08em', color: 'var(--accent)' }}>
+            ALL {COURSE_LEGS.length} LEGS →
+          </span>
+        </button>
+        <div className="uppercase mb-3" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 10,
+          fontWeight: 800, letterSpacing: '0.1em', color: 'var(--faint)' }}>
           {timeline.length} Handoffs
         </div>
 
