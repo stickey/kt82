@@ -35,7 +35,7 @@ function MapLink({ kind, name, url, dotColor, nameColor, filled }: {
       rel="noopener noreferrer"
       onClick={e => e.stopPropagation()}
       style={{ display: 'grid', gridTemplateColumns: '12px 1fr auto', alignItems: 'center',
-        columnGap: 10, textDecoration: 'none', color: 'inherit', padding: '3px 0' }}
+        columnGap: 10, textDecoration: 'none', color: 'inherit', padding: '3px 0', minHeight: 44 }}
     >
       <span style={{ width: 9, height: 9, borderRadius: '50%', justifySelf: 'center',
         background: filled ? dotColor : 'transparent', border: `2px solid ${dotColor}` }} />
@@ -143,7 +143,7 @@ function LegRow({ leg, state, isNextUp, isLast }: {
       <div style={{ minWidth: 0 }}>
         <MapLink kind="start" name={leg.startName}
           url={mapPoint(leg.startLat, leg.startLng)}
-          dotColor={dotColor} nameColor={nameColor} filled={isNow || isDone} />
+          dotColor={dotColor} nameColor={nameColor} filled={false} />
         <div style={{ width: 2, height: 9, marginLeft: 5,
           background: isDone ? 'color-mix(in srgb, var(--green) 40%, transparent)' : 'var(--line)' }} />
         <MapLink kind="finish" name={leg.endName}
@@ -155,7 +155,8 @@ function LegRow({ leg, state, isNextUp, isLast }: {
           onClick={e => e.stopPropagation()}
           style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 7,
             textDecoration: 'none', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800,
-            fontSize: 9.5, letterSpacing: '0.08em', color: isNow ? 'var(--accent)' : 'var(--mut)' }}>
+            fontSize: 9.5, letterSpacing: '0.08em', color: isNow ? 'var(--accent)' : 'var(--mut)',
+            minHeight: 44 }}>
           FULL DIRECTIONS <span style={{ fontSize: 11 }}>↗</span>
         </a>
       </div>
@@ -203,7 +204,7 @@ export function CourseScreen({ currentLegNumber, raceStartedAt, teamName, backLa
         padding: '8px 18px' }}>
         <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer',
           color: 'var(--mut)', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800,
-          fontSize: 12, letterSpacing: '0.04em', padding: 0, whiteSpace: 'nowrap', minHeight: 44 }}>
+          fontSize: 12, letterSpacing: '0.04em', padding: 0, whiteSpace: 'nowrap', minHeight: 44, minWidth: 44 }}>
           {backLabel}
         </button>
         {isRacing && (
