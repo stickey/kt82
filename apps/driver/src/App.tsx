@@ -128,13 +128,13 @@ export default function App() {
         return
       }
       // Re-enable LAP immediately using the PATCH response — GET enriches but isn't required
-      setView(prev => prev.type !== 'racing' ? prev : {
+      setView(prev => (prev.type !== 'racing' && prev.type !== 'course') ? prev : {
         ...prev,
         resultId: lapResult.next!.id,
       })
       try {
         const state = await api.get<CurrentStateInProgress>(`/teams/${team.id}/current`)
-        setView(prev => prev.type !== 'racing' ? prev : {
+        setView(prev => (prev.type !== 'racing' && prev.type !== 'course') ? prev : {
           ...prev,
           resultId: state.result.id,
           nextLeg: state.nextLeg ?? null,
