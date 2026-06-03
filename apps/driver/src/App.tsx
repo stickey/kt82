@@ -13,8 +13,9 @@ type View =
   | { type: 'no-race' }
   | { type: 'auth'; race: Race }
   | { type: 'start'; race: Race; team: TeamSummary; pin: string; nextLeg: Leg; nextRunner: string | null }
-  | { type: 'racing'; race: Race; team: TeamSummary; pin: string; resultId: string | null; leg: Leg; startedAt: string; nextHandoff: Handoff | null; currentRunner: string | null; raceStartedAt: string | null; nextRunner: string | null; nextLeg: Leg | null; nextRunnerEta: string | null }
-  | { type: 'course'; race: Race; team: TeamSummary; pin: string; resultId: string | null; leg: Leg; startedAt: string; nextHandoff: Handoff | null; currentRunner: string | null; raceStartedAt: string | null; nextRunner: string | null; nextLeg: Leg | null; nextRunnerEta: string | null }
+  | { type: 'racing'; race: Race; team: TeamSummary; pin: string; resultId: string | null; leg: Leg; startedAt: string; nextHandoff: Handoff | null; currentRunner: string | null; raceStartedAt: string | null; nextRunner: string | null; nextLeg: Leg | null; nextRunnerEta: string | null; targetPaceSecPerMile: number | null }
+  | { type: 'course'; race: Race; team: TeamSummary; pin: string; resultId: string | null; leg: Leg; startedAt: string; nextHandoff: Handoff | null; currentRunner: string | null; raceStartedAt: string | null; nextRunner: string | null; nextLeg: Leg | null; nextRunnerEta: string | null; targetPaceSecPerMile: number | null }
+  | { type: 'leg-progress'; race: Race; team: TeamSummary; pin: string; resultId: string | null; leg: Leg; startedAt: string; nextHandoff: Handoff | null; currentRunner: string | null; raceStartedAt: string | null; nextRunner: string | null; nextLeg: Leg | null; nextRunnerEta: string | null; targetPaceSecPerMile: number | null }
   | { type: 'complete'; race: Race; team: TeamSummary; pin: string }
 
 export default function App() {
@@ -64,6 +65,7 @@ export default function App() {
         nextRunner: state.nextRunner?.name ?? null,
         nextLeg: state.nextLeg ?? null,
         nextRunnerEta: state.nextRunnerEta ?? null,
+        targetPaceSecPerMile: state.targetPaceSecPerMile ?? null,
       })
     }
   }
@@ -81,6 +83,7 @@ export default function App() {
       nextRunner: state.nextRunner?.name ?? null,
       nextLeg: state.nextLeg ?? null,
       nextRunnerEta: state.nextRunnerEta ?? null,
+      targetPaceSecPerMile: state.targetPaceSecPerMile ?? null,
     })
   }
 
@@ -115,6 +118,7 @@ export default function App() {
       nextRunner: null,
       nextLeg: null,
       nextRunnerEta: null,
+      targetPaceSecPerMile: null,
     })
 
     // Attempt the PATCH in the background
@@ -140,6 +144,7 @@ export default function App() {
           nextLeg: state.nextLeg ?? null,
           nextRunner: state.nextRunner?.name ?? null,
           nextRunnerEta: state.nextRunnerEta ?? null,
+          targetPaceSecPerMile: state.targetPaceSecPerMile ?? null,
         })
       } catch { /* resultId already restored; next-leg info refreshes on next ETA poll */ }
     }).catch(() => {
@@ -200,6 +205,7 @@ export default function App() {
               nextLeg: state.nextLeg ?? null,
               nextRunner: state.nextRunner?.name ?? null,
               nextRunnerEta: state.nextRunnerEta ?? null,
+              targetPaceSecPerMile: state.targetPaceSecPerMile ?? null,
             })
           } catch { /* resultId already restored; next-leg info refreshes on next ETA poll */ }
         }

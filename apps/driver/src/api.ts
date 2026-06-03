@@ -26,6 +26,7 @@ export type CurrentStateInProgress = {
   nextRunner: TeamMember | null
   nextLeg: Leg | null
   nextRunnerEta: string | null
+  targetPaceSecPerMile: number | null
 }
 
 export type CurrentState = CurrentStateNotStarted | CurrentStateInProgress
