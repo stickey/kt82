@@ -122,7 +122,7 @@ export default function App() {
       `/results/${oldResultId}`, { finishedAt, action: 'lap' }
     ).then(async (lapResult) => {
       if (lapResult.next === null) {
-        setView(prev => prev.type === 'racing'
+        setView(prev => (prev.type === 'racing' || prev.type === 'course')
           ? { type: 'complete', race, team, pin }
           : prev)
         return
