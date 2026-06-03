@@ -18,13 +18,14 @@ interface Props {
   nextLeg: Leg | null
   nextRunnerEta: string | null
   onViewCourse: () => void
+  onViewLegProgress: (() => void) | null
 }
 
 function initials(name: string): string {
   return name.split(' ').slice(0, 2).map(w => w[0] ?? '').join('').toUpperCase()
 }
 
-export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff, currentRunner, raceStartedAt, onLapPress, onComplete, nextRunner, nextLeg, nextRunnerEta, onViewCourse }: Props) {
+export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff, currentRunner, raceStartedAt, onLapPress, onComplete, nextRunner, nextLeg, nextRunnerEta, onViewCourse, onViewLegProgress }: Props) {
   const [elapsed, setElapsed] = useState(0)
   const [raceElapsed, setRaceElapsed] = useState(0)
   const [eta, setEta]         = useState<{ eta: string; secondsRemaining: number; status: 'on-pace' | 'ahead' | 'overdue' } | null>(null)
@@ -146,7 +147,7 @@ export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff,
           </div>
           <div className="flex-1 text-center" style={{ background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 16, padding: '12px 10px' }}>
             <div className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', color: 'var(--faint)', marginBottom: 4 }}>
-              ETA · {nextHandoff?.name ?? leg.name}
+              ETA
             </div>
             {eta
               ? <div className="font-mono" style={{ fontSize: 38, fontWeight: 700, lineHeight: 1, color: paceColor }}>{formatTime(eta.eta)}</div>
@@ -157,6 +158,28 @@ export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff,
             </div>
           </div>
         </div>
+
+        {/* When do they arrive */}
+        {onViewLegProgress && (
+          <button
+            onClick={onViewLegProgress}
+            className="flex items-center justify-between w-full"
+            style={{ border: 'none', borderRadius: 14, background: paceColor, cursor: 'pointer',
+              padding: '13px 18px', minHeight: 52, textAlign: 'left' }}
+          >
+            <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+              <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 14,
+                letterSpacing: '0.02em', lineHeight: 1, color: 'var(--ink)', whiteSpace: 'nowrap' }}>
+                WHEN DO THEY ARRIVE?
+              </span>
+              <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: 10,
+                letterSpacing: '0.06em', lineHeight: 1, color: 'var(--ink)', opacity: 0.85, whiteSpace: 'nowrap' }}>
+                EST. RANGE · PACE ±30s/MI
+              </span>
+            </span>
+            <span style={{ fontSize: 20, color: 'var(--ink)', flexShrink: 0 }}>→</span>
+          </button>
+        )}
 
         {/* On Deck strip */}
         {nextRunner && (

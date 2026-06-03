@@ -5,6 +5,7 @@ import { StartScreen } from './components/StartScreen'
 import { TimingScreen } from './components/TimingScreen'
 import { CompleteScreen } from './components/CompleteScreen'
 import { CourseScreen } from './components/CourseScreen'
+import { LegProgressScreen } from './components/LegProgressScreen'
 import { enqueue, peek, dequeue, type PendingAction } from './pendingActions'
 import type { Race, TeamSummary, Leg, Handoff, CurrentState, CurrentStateInProgress } from './api'
 
@@ -167,6 +168,14 @@ export default function App() {
     setView(prev => prev.type === 'course' ? { ...prev, type: 'racing' } : prev)
   }
 
+  function handleViewLegProgress() {
+    setView(prev => prev.type === 'racing' ? { ...prev, type: 'leg-progress' } : prev)
+  }
+
+  function handleBackFromLegProgress() {
+    setView(prev => prev.type === 'leg-progress' ? { ...prev, type: 'racing' } : prev)
+  }
+
   // Retry queued LAP actions (while racing with null resultId, or after last-leg optimistic complete)
   useEffect(() => {
     if (!pendingAction) return
@@ -237,6 +246,7 @@ export default function App() {
       onLapPress={handleLapPress} onComplete={handleComplete}
       nextRunner={view.nextRunner} nextLeg={view.nextLeg} nextRunnerEta={view.nextRunnerEta}
       onViewCourse={handleViewCourse}
+      onViewLegProgress={view.targetPaceSecPerMile !== null ? handleViewLegProgress : null}
     />
   )
   if (view.type === 'course') return (
@@ -246,6 +256,20 @@ export default function App() {
       teamName={view.team.name}
       backLabel="← TIMING"
       onBack={handleBackFromCourse}
+    />
+  )
+  if (view.type === 'leg-progress') return (
+    <LegProgressScreen
+      runner={view.currentRunner ?? 'Runner'}
+      town={view.nextHandoff?.name ?? view.leg.name}
+      legN={view.leg.legNumber}
+      totalLegs={18}
+      distMiles={view.leg.distanceMiles}
+      startedAtMs={new Date(view.startedAt).getTime()}
+      targetPaceSecPerMile={view.targetPaceSecPerMile!}
+      teamName={view.team.name}
+      backLabel="← TIMING"
+      onBack={handleBackFromLegProgress}
     />
   )
   return <CompleteScreen race={view.race} team={view.team} pin={view.pin} />
