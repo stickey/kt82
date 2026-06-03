@@ -97,6 +97,7 @@ router.get('/teams/:id/current', teamAuth, async (req, res, next) => {
       nextRunner: nextAssignment?.teamMember ?? null,
       nextLeg: nextAssignment?.leg ?? null,
       nextRunnerEta,
+      targetPaceSecPerMile: assignment?.targetPaceSecPerMile ?? null,
     })
   } catch (err) { next(err) }
 })

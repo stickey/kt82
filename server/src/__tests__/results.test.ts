@@ -37,6 +37,7 @@ describe('GET /api/teams/:id/current', () => {
     expect(res.body.eta.status).toBe('on-pace')
     expect(res.body.currentRunner.name).toBe(member.name)
     expect(res.body.raceStartedAt).toBe(startedAt.toISOString())
+    expect(res.body.targetPaceSecPerMile).toBe(480)
   })
 
   it('returns raceStartedAt equal to the first leg startedAt when on a later leg', async () => {
