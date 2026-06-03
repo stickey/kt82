@@ -19,6 +19,7 @@
 | [Race complete summary](specs/2026-06-01-race-complete-summary-design.md) | 2026-06-01 | ✅ Implemented | Leg splits with actual pace, target pace, and ahead/behind delta |
 | [Direction B redesign](specs/2026-06-01-tracker-driver-direction-b-redesign.md) | 2026-06-01 | ✅ Implemented | Full visual restyle of Tracker + Driver: Anton/Hanken Grotesk/JetBrains Mono, warm dark palette, orange accent |
 | [Offline resilience](specs/2026-06-02-offline-resilience-design.md) | 2026-06-02 | ✅ Implemented | Driver: optimistic LAP, localStorage queue, background retry, sync indicator; Tracker: offline banner |
+| [Course overview](specs/2026-06-02-course-overview-design.md) | 2026-06-02 | ✅ Implemented | All-18-legs screen in Tracker + Driver with Google Maps links, live clock, difficulty chips, done/active/upcoming status |
 
 Each spec has a matching implementation plan in `plans/` with the same filename stem.
 

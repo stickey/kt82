@@ -1,7 +1,7 @@
 # Course Overview Screen — Design Spec
 
 **Date:** 2026-06-02  
-**Status:** Ready for implementation  
+**Status:** Implemented  
 **Scope:** Tracker + Driver apps; read-only screen layered on existing data
 
 ---
