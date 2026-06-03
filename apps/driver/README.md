@@ -6,7 +6,7 @@ Race-day timing app used by the driver/timekeeper in the support vehicle to star
 
 - Authenticates with a team PIN, then detects whether the race has started
 - **Start screen:** Displays the first leg info; hold the START button (~500ms) to begin the race
-- **Timing screen:** Ticking elapsed clock + server-polled ETA side by side; navigate to the next handoff point; tap **"VIEW ALL 18 LEGS · THE COURSE →"** for a full course overview (see below); hold LAP (~1500ms) to record a handoff and advance to the next leg; hold "End race early" (~1500ms) to stop
+- **Timing screen:** Ticking elapsed clock + server-polled ETA side by side; navigate to the next handoff point; tap **"WHEN DO THEY ARRIVE?"** for a pace-sweep arrival detail (see below); tap **"VIEW ALL 18 LEGS · THE COURSE →"** for a full course overview (see below); hold LAP (~1500ms) to record a handoff and advance to the next leg; hold "End race early" (~1500ms) to stop
 - **Complete screen:** Total race time + per-leg splits for all completed legs
 - All timing buttons use long-press (hold-to-activate) to prevent accidental taps in a moving vehicle
 - Timestamps are captured client-side at the moment of button activation
@@ -30,6 +30,24 @@ Opens at **http://localhost:5176**
 Login with your team PIN. PINs are created by the race director in the Manager app.
 
 Dev credential: `1234` (after creating a team in Manager or via the test suite).
+
+## Leg Progress Screen ("When Do They Arrive?")
+
+Reachable from the timing screen via the **"WHEN DO THEY ARRIVE?"** button — a full-width button directly below the twin ETA/elapsed panels, colored green (on pace) or red (behind pace) to match the current status. Only appears once the runner's target pace is known from the server.
+
+**What it shows:**
+- **Progress bar** — estimated position on the current leg right now, with an I-beam range marker spanning the ±30 s/mi uncertainty. The track fills solid to the near edge of the range; the range span is shown at ~40% opacity; a white notch marks the best estimate. Label above shows `≈X.X OF Y.Y MI` and below shows `likely range · ≈N% in`
+- **Arrival by pace table** — 5 rows, fastest arrival first:
+
+  | PACE | ARRIVES | IN | Δ | LEG TIME |
+  |---|---|---|---|---|
+  | Runner's adjusted pace for each scenario | Estimated clock time | Countdown | ±min:sec vs target | Total leg duration |
+
+  The target-pace row is highlighted in orange. FASTEST / TARGET / SLOWEST tags on the extreme and middle rows. Δ column is red if slower than target, green if faster.
+- **Footnote:** "Position barely shifts with pace — but arrival can swing several minutes. Plan warm-ups off the spread, not a single time."
+- Ticking **LIVE** indicator — all times update every second
+
+Back button returns to the timing screen. No data is fetched — all values are derived from the runner's start timestamp and target pace already in view state.
 
 ## Course Overview Screen
 
@@ -66,7 +84,8 @@ src/
     LongPressButton.tsx — reusable hold-to-activate button with rAF fill animation
     AuthScreen.tsx    — team selection dropdown + PIN entry
     StartScreen.tsx   — first leg info + START long-press
-    TimingScreen.tsx  — elapsed clock, ETA poll, navigation link, LAP/STOP, VIEW ALL LEGS button
+    TimingScreen.tsx  — elapsed clock, ETA poll, navigation link, WHEN DO THEY ARRIVE button, LAP/STOP, VIEW ALL LEGS button
+    LegProgressScreen.tsx — pace-swept progress bar + arrival table for the live leg
     CourseScreen.tsx  — all-18-legs course overview with map links and live clock
     CompleteScreen.tsx — total time + leg-by-leg splits
 ```

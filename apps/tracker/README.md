@@ -7,6 +7,7 @@ Public read-only race status board for spectators and team supporters.
 - Shows all teams' current status at a glance (2-column card grid)
 - Displays live ETA, current runner, and pace status (on pace / ahead / overdue) for each in-progress team
 - Tap a team card to see the full leg-by-leg timeline
+- Tap the **Est. Arrival** time in the hero card to open the leg progress screen (see below)
 - Tap **"ALL 18 LEGS →"** on the team detail to open the full course overview (see below)
 - Share a direct link to a team's view via native share sheet or clipboard copy
 - Auto-detects the active race — no configuration needed
@@ -35,6 +36,24 @@ None — fully public. No login required.
 Team detail views use hash routing: `http://localhost:5173/#team/<teamId>`
 
 These URLs are shareable and bookmarkable. Opening a direct team link works without going through the grid first.
+
+## Leg Progress Screen
+
+Reachable from the team detail page by tapping the **Est. Arrival** time in the hero card. A **"BY PACE →"** pill appears beneath the arrival time to indicate it's tappable.
+
+**What it shows:**
+- **Runner name**, leg number, destination, and target pace in the header
+- **Progress bar** — estimated position on the current leg, with an I-beam range marker spanning the ±30 s/mi uncertainty. A white notch marks the best estimate; the range fill shows the spread at ~40% opacity
+- **Arrival by pace table** — 5 rows spanning the runner's target pace ±30 s/mi in 15 s steps, fastest first:
+
+  | PACE | ARRIVES | IN | Δ | LEG TIME |
+  |---|---|---|---|---|
+  | Scenario pace | Estimated clock time | Countdown | ±min:sec vs target | Total leg duration |
+
+  The target-pace row is highlighted. Δ is red if slower than target, green if faster.
+- All numbers tick every second. No API calls — derived from existing timeline data.
+
+Back button returns to the team detail.
 
 ## Course Overview Screen
 
@@ -67,6 +86,7 @@ src/
   App.tsx             — hash router, race auto-detect on mount
   components/
     TeamGrid.tsx      — polling grid of all teams; "Updated Xs ago" counter
-    TeamDetail.tsx    — hero section (current runner + ETA) + full leg timeline
+    TeamDetail.tsx    — hero section (current runner + ETA, tappable for leg progress) + full leg timeline
+    LegProgressScreen.tsx — pace-swept progress bar + arrival table for the live leg
     CourseScreen.tsx  — all-18-legs course overview with map links and live clock
 ```
