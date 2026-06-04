@@ -8,3 +8,4 @@ public/
 *.js.map
 .superpowers/
 .claude/settings.local.json
+.DS_Store
