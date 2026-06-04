@@ -262,6 +262,7 @@ export function LegMapScreen({
         <div style={{ display: 'flex', marginBottom: 4, paddingBottom: 5, borderBottom: '1px solid rgba(251,246,238,0.1)' }}>
           <span style={{ flex: '0 0 56px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 8, letterSpacing: '0.1em', color: 'rgba(251,246,238,0.35)' }}>PACE</span>
           <span style={{ flex: 1, textAlign: 'right', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 8, letterSpacing: '0.1em', color: 'rgba(251,246,238,0.35)' }}>ARRIVES</span>
+          <span style={{ flex: '0 0 52px', textAlign: 'right', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 8, letterSpacing: '0.1em', color: 'rgba(251,246,238,0.35)' }}>LEG TIME</span>
         </div>
         {ests.map((e, i) => {
           const isTarget = e.off === 0
@@ -276,6 +277,9 @@ export function LegMapScreen({
               </span>
               <span style={{ flex: 1, textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 13, color: isTarget ? ACCENT : 'rgba(251,246,238,0.75)' }}>
                 {c.full}<span style={{ fontSize: 9, color: 'rgba(251,246,238,0.4)', marginLeft: 3 }}>{c.ap}</span>
+              </span>
+              <span style={{ flex: '0 0 52px', textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 13, color: isTarget ? ACCENT : 'rgba(251,246,238,0.75)' }}>
+                {fmtElapsed(e.total * 1000)}
               </span>
             </div>
           )
