@@ -23,11 +23,14 @@ When a team has not yet started the race (no legs in-progress or completed), the
 **Gate condition (in TeamDetail):** After the timeline has loaded, if no leg has status `in-progress` or `completed`, render `<PreRaceScreen>` and return. This covers both the zero-assignments case (empty timeline) and the all-not-started case.
 
 ```tsx
+const forcePreRace = new URLSearchParams(window.location.search).has('prerace')
 const hasStarted = timeline.some(t => t.status === 'in-progress' || t.status === 'completed')
-if (!hasStarted) return (
+if (forcePreRace || !hasStarted) return (
   <PreRaceScreen teamName={teamName} raceDate={raceDate} timeline={timeline} onBack={onBack} />
 )
 ```
+
+**Manual testing:** Append `?prerace` to any team URL (e.g. `http://localhost:5173/#team/clx123abc?prerace`) to force the pre-race screen regardless of race state. The polling loop still runs so removing the param and refreshing returns to the live view.
 
 **Automatic transition to live view:** Because `PreRaceScreen` is an early-return inside `TeamDetail` (not a separate mounted component), `TeamDetail`'s existing 30-second polling loop (`/teams/${teamId}/timeline`) continues to run while the pre-race screen is displayed. When a leg transitions to `in-progress` or `completed`, the next poll updates `timeline`, `hasStarted` flips to `true`, the gate no longer fires, and the user automatically sees the live race view — no extra polling or transition logic required in `PreRaceScreen`.
 
