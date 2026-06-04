@@ -3,6 +3,7 @@ import { api, formatTime, formatElapsed, formatRaceTime } from '../api'
 import type { LegTimelineItem } from '../api'
 import { CourseScreen } from './CourseScreen'
 import { LegProgressScreen } from './LegProgressScreen'
+import { LegMapScreen } from './LegMapScreen'
 import { COURSE_LEGS } from '@kt82/shared'
 
 interface Props {
@@ -45,6 +46,7 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
   const notFoundRef = useRef(false)
   const [showCourse, setShowCourse] = useState(false)
   const [showLegProgress, setShowLegProgress] = useState(false)
+  const [showLegMap, setShowLegMap] = useState(false)
 
   useEffect(() => {
     async function poll() {
@@ -171,6 +173,22 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
       teamName={teamName}
       backLabel={`← ${teamName}`}
       onBack={() => setShowLegProgress(false)}
+      onViewLegMap={() => setShowLegMap(true)}
+    />
+  )
+
+  if (showLegMap && activeItem && activeItem.runner && activeItem.assignment && activeItem.result) return (
+    <LegMapScreen
+      runner={activeItem.runner.name}
+      town={activeItem.leg.handoff?.name ?? activeItem.leg.name}
+      legN={activeItem.leg.legNumber}
+      totalLegs={timeline.length || 18}
+      distMiles={activeItem.leg.distanceMiles}
+      startedAtMs={new Date(activeItem.result.startedAt).getTime()}
+      targetPaceSecPerMile={activeItem.assignment.targetPaceSecPerMile}
+      teamName={teamName}
+      backLabel={`← ${teamName}`}
+      onBack={() => setShowLegMap(false)}
     />
   )
 
@@ -285,6 +303,20 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
                     borderRadius: 20, color: 'var(--ink)' }}>→</span>
                 </div>
               </button>
+              {activeItem.assignment && (
+                <button
+                  onClick={() => setShowLegMap(true)}
+                  style={{
+                    flex: '0 0 auto', background: 'none', border: 'none', cursor: 'pointer',
+                    padding: '0 12px', textAlign: 'center', minHeight: 44,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    borderLeft: '1px solid rgba(0,0,0,0.15)',
+                  }}
+                >
+                  <div className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', color: 'rgba(19,17,10,0.55)', marginBottom: 2 }}>Map</div>
+                  <div style={{ fontSize: 18 }}>🗺</div>
+                </button>
+              )}
               <div className="flex-1 text-center" style={{ borderLeft: '1px solid rgba(0,0,0,0.15)' }}>
                 <div className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', color: 'rgba(19,17,10,0.55)', marginBottom: 2 }}>Leg Time</div>
                 <div className="font-mono" style={{ fontSize: 22, fontWeight: 700, color: 'var(--ink)', lineHeight: 1.1 }}>
