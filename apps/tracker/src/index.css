@@ -82,3 +82,22 @@ body {
 }
 .glow-green { animation: glow-green 1.5s ease-in-out infinite alternate; }
 .glow-red   { animation: glow-red   1.5s ease-in-out infinite alternate; }
+
+/* Pre-race countdown band — always dark regardless of theme */
+.pr-cd-band {
+  background: var(--panel2);
+}
+@media (prefers-color-scheme: light) {
+  .pr-cd-band {
+    background: #1a160f;
+  }
+}
+
+/* Pulsing dot for the countdown label */
+@keyframes pr-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.35; transform: scale(0.82); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .pr-pulse { animation: pr-pulse 1.3s ease-in-out infinite; }
+}
