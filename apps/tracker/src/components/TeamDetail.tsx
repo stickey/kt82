@@ -1,14 +1,16 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { api, formatTime, formatElapsed, formatRaceTime } from '../api'
 import type { LegTimelineItem } from '../api'
 import { CourseScreen } from './CourseScreen'
 import { LegProgressScreen } from './LegProgressScreen'
 import { LegMapScreen } from './LegMapScreen'
+import { PreRaceScreen } from './PreRaceScreen'
 import { COURSE_LEGS } from '@kt82/shared'
 
 interface Props {
   teamId: string
   teamName: string
+  raceDate: string
   onBack: () => void
 }
 
@@ -36,7 +38,7 @@ function NavPin({ url }: { url: string }) {
   )
 }
 
-export function TeamDetail({ teamId, teamName, onBack }: Props) {
+export function TeamDetail({ teamId, teamName, raceDate, onBack }: Props) {
   const [timeline, setTimeline] = useState<LegTimelineItem[]>([])
   const [pollError, setPollError] = useState(false)
   const [notFound, setNotFound] = useState(false)
@@ -47,6 +49,16 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
   const [showCourse, setShowCourse] = useState(false)
   const [showLegProgress, setShowLegProgress] = useState(false)
   const [showLegMap, setShowLegMap] = useState(false)
+
+  const params = useMemo(() => new URLSearchParams(window.location.search), [])
+  const startOffsetMs = params.has('startoffset') ? Number(params.get('startoffset')) : null
+
+  const assignedStartTime = useMemo(() => {
+    if (startOffsetMs !== null) return new Date(Date.now() + startOffsetMs)
+    const d = new Date(raceDate)
+    d.setHours(7, 0, 0, 0)
+    return d
+  }, [startOffsetMs, raceDate])
 
   useEffect(() => {
     async function poll() {
@@ -116,6 +128,11 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
   // re-read tick to force re-render every second
   void tick
 
+  const hasStarted = timeline.some(t => t.status === 'in-progress' || t.status === 'completed')
+  const forcePreRace = params.has('prerace') || startOffsetMs !== null
+  const startTimeReached = Date.now() >= assignedStartTime.getTime()
+  const showPreRace = !hasStarted || (forcePreRace && !startTimeReached)
+
   // Miles
   const milesDone  = sorted.filter(t => t.status === 'completed').reduce((s, t) => s + t.leg.distanceMiles, 0)
   const totalMiles = sorted.reduce((s, t) => s + t.leg.distanceMiles, 0) || 82
@@ -157,6 +174,15 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
       return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(handoff.address)}`
     return ''
   }
+
+  if (showPreRace) return (
+    <PreRaceScreen
+      teamName={teamName}
+      assignedStartTime={assignedStartTime}
+      timeline={timeline}
+      onBack={onBack}
+    />
+  )
 
   if (showCourse) return (
     <CourseScreen
@@ -388,7 +414,7 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
           className="flex items-center justify-between w-full min-h-[44px] mb-0"
           style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}
         >
-          <span className="font-display uppercase" style={{ fontSize: 24 }}>The Course</span>
+          <span className="font-display uppercase" style={{ fontSize: 24 }}>Arrivals</span>
           <span className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 11,
             fontWeight: 800, letterSpacing: '0.08em', color: 'var(--accent)' }}>
             ALL {COURSE_LEGS.length} LEGS →

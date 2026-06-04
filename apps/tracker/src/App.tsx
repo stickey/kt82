@@ -90,7 +90,7 @@ export default function App() {
         </div>
       )}
       {teamId
-        ? <TeamDetail teamId={teamId} teamName={teamName} onBack={navigateBack} />
+        ? <TeamDetail teamId={teamId} teamName={teamName} raceDate={race.date} onBack={navigateBack} />
         : <TeamGrid race={race} onTeamClick={navigateToTeam} />
       }
     </div>
