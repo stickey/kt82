@@ -47,4 +47,6 @@ if (process.env.NODE_ENV === 'production') {
   }
 }
 
+app.get('/', (_req, res) => res.redirect('/tracker'))
+
 app.use(errorHandler)
