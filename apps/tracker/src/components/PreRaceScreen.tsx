@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, Fragment } from 'react'
 import type { LegTimelineItem } from '../api'
-import { COURSE_LEGS } from '@kt82/shared'
+import { COURSE_LEGS, mapPoint, mapRoute, TOTAL_COURSE_MILES } from '@kt82/shared'
 
 interface Props {
   teamName: string
@@ -31,15 +31,6 @@ function prDate(d: Date) {
   return `${days[d.getDay()]} · ${mons[d.getMonth()]} ${d.getDate()}`
 }
 
-function mapsPoint(lat: number, lng: number) {
-  return `https://www.google.com/maps?q=${lat},${lng}`
-}
-
-function mapsRoute(sLat: number, sLng: number, eLat: number, eLng: number) {
-  return `https://www.google.com/maps/dir/${sLat},${sLng}/${eLat},${eLng}`
-}
-
-const TOTAL_MILES = COURSE_LEGS.reduce((s, l) => s + l.miles, 0).toFixed(1)
 
 export function PreRaceScreen({ teamName, assignedStartTime, timeline, onBack }: Props) {
   const [nowMs, setNowMs] = useState(Date.now())
@@ -66,7 +57,6 @@ export function PreRaceScreen({ teamName, assignedStartTime, timeline, onBack }:
   const cd = prCd((assignedStartTime.getTime() - nowMs) / 1000)
   const sc = prClock(assignedStartTime)
   const fc = prClock(finishTime)
-  void fc // used in Task 3
 
   return (
     <div style={{
@@ -149,9 +139,43 @@ export function PreRaceScreen({ teamName, assignedStartTime, timeline, onBack }:
         </div>
       </div>
 
-      {/* Hero + Route placeholders — filled in Tasks 3 and 4 */}
+      {/* HERO: start → finish */}
+      <div style={{
+        flexShrink: 0, margin: '14px 16px 0', background: 'var(--accent)',
+        borderRadius: 18, padding: '15px 18px 13px', color: 'var(--ink)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 }}>
+          <div>
+            <div style={{ fontWeight: 800, fontSize: 8.5, letterSpacing: '0.14em', opacity: 0.75 }}>TEAM START</div>
+            <div className="font-mono" style={{ fontWeight: 700, fontSize: 32, lineHeight: 0.9, marginTop: 4 }}>
+              {sc.full}<span style={{ fontSize: 15, opacity: 0.9, marginLeft: 3 }}>{sc.ap}</span>
+            </div>
+          </div>
+          <div className="font-display" style={{ opacity: 0.45, fontSize: 20, marginBottom: 4 }}>→</div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontWeight: 800, fontSize: 8.5, letterSpacing: '0.14em', opacity: 0.75 }}>EST. FINISH · HERMANN</div>
+            <div className="font-mono" style={{ fontWeight: 700, fontSize: 32, lineHeight: 0.9, marginTop: 4 }}>
+              {fc.full}<span style={{ fontSize: 15, opacity: 0.9, marginLeft: 3 }}>{fc.ap}</span>
+            </div>
+          </div>
+        </div>
+        <div style={{
+          marginTop: 10, paddingTop: 9, borderTop: '1px solid rgba(255,255,255,0.18)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <span style={{ fontWeight: 700, fontSize: 10.5, opacity: 0.8, letterSpacing: '0.04em' }}>
+            {TOTAL_COURSE_MILES.toFixed(1)} MI · {COURSE_LEGS.length} LEGS · 6 RUNNERS
+          </span>
+          <span style={{
+            fontWeight: 800, fontSize: 8.5, letterSpacing: '0.08em',
+            background: 'rgba(0,0,0,0.2)', padding: '3px 8px', borderRadius: 20,
+          }}>≈ ESTIMATES</span>
+        </div>
+      </div>
+
+      {/* Route placeholder — filled in Task 4 */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '18px', color: 'var(--faint)', fontSize: 12 }}>
-        (hero + route coming soon)
+        (route coming soon)
       </div>
 
     </div>
