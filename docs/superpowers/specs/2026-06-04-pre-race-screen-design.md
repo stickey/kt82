@@ -1,6 +1,6 @@
 # Pre-Race Screen Design
 
-**Status:** Approved — ready for implementation  
+**Status:** Implemented  
 **Date:** 2026-06-04  
 **Feature:** Tracker app pre-race landing page for a team before they start leg 1
 
