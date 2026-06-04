@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KT82 — Leg Progress · Directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; }
+  * { box-sizing: border-box; }
+  body { font-family: 'Hanken Grotesk', system-ui, sans-serif; }
+  @keyframes a-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+  .a-blink { animation: a-blink 1.5s ease-in-out infinite; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script src="kt82-data.js"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="leg-progress.jsx?v=7"></script>
+
+<script type="text/babel">
+  const { IOSDevice, DesignCanvas, DCSection, DCArtboard, DCPostIt, LegProgress } = window;
+
+  // light palette (matches the live prototype default: light + #ff2e63)
+  const t = { bg:'#f4f0e7', panel:'#ffffff', panel2:'#faf6ec', line:'rgba(0,0,0,0.09)',
+    line2:'rgba(0,0,0,0.05)', text:'#1a160f', mut:'#6f6759', faint:'#b0a795',
+    accent:'#e8480f', green:'#0e9b52', red:'#dd3a23', amber:'#c47d12', ink:'#ffffff' };
+
+  // fixed demo scenario — Trail Mix's live leg, frozen so both directions
+  // show identical numbers for a fair comparison.
+  const cur = window.KT82.current;
+  const legStartedAtMs = cur.startedAt.getTime();
+  const nowMs = legStartedAtMs + cur.elapsedSec * 1000;
+
+  const shared = {
+    t, legStartedAtMs, nowMs, dist: cur.dist, paceSec: cur.runner.pace,
+    runner: cur.runner, town: cur.town, legN: cur.n, totalLegs: window.KT82.totalLegs,
+    teamName: 'Trail Mix', backLabel: '← TRAIL MIX', onBack: () => {},
+  };
+
+  function Frame({ variant }) {
+    return (
+      <IOSDevice dark={false} width={402} height={874}>
+        <LegProgress {...shared} variant={variant} />
+      </IOSDevice>
+    );
+  }
+
+  function App() {
+    return (
+      <DesignCanvas>
+        <DCSection id="leg-progress" title="Runner leg-progress — “When do they arrive?”"
+          subtitle="Live leg · target pace ±30s/mi in 15s steps · two layout directions">
+          <DCArtboard id="a" label="A · Hero bar + fanned ticks + table" width={402} height={874}>
+            <Frame variant="A" />
+          </DCArtboard>
+          <DCArtboard id="b" label="B · Pace lanes (chart + table merged)" width={402} height={874}>
+            <Frame variant="B" />
+          </DCArtboard>
+          <DCPostIt top={-6} left={846} rotate={2} width={210}>
+            Both reachable from the Driver “When do they arrive?” button + the Tracker NOW-RUNNING hero. Toggle A/B live via Tweaks in the prototype.
+          </DCPostIt>
+        </DCSection>
+      </DesignCanvas>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KT82 Tracker — Concepts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500;700&family=Saira:wght@400;500;600;700&family=Saira+Condensed:wght@500;600;700;800&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; background: #e9e6e0; }
+  * { box-sizing: border-box; }
+  @keyframes a-pulse { from { transform: scale(0.8); opacity: 0.3; } to { transform: scale(1.6); opacity: 0; } }
+  @keyframes a-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+  .a-pulse { animation: a-pulse 1.6s ease-out infinite; }
+  .a-blink { animation: a-blink 1.5s ease-in-out infinite; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" fill="#13110a"/>
+    <rect x="30" y="30" width="40" height="40" rx="6" fill="#ff5a1f"/>
+    <text x="50" y="58" font-family="Arial" font-size="22" font-weight="bold" fill="#13110a" text-anchor="middle">KT</text>
+  </svg>
+</template>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script src="kt82-data.js"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="directionA.jsx"></script>
+<script type="text/babel" src="directionB.jsx"></script>
+<script type="text/babel" src="directionB-driver.jsx"></script>
+
+<script type="text/babel">
+  const { DesignCanvas, DCSection, DCArtboard, IOSDevice, DetailA, GridA, DetailB, GridB,
+    DriverStart, DriverTiming, DriverComplete } = window;
+  const W = 402, H = 874;
+  const boardStyle = { background: 'transparent', boxShadow: 'none', borderRadius: 48 };
+
+  function Phone({ dark, children }) {
+    return <IOSDevice dark={dark} width={W} height={H}>{children}</IOSDevice>;
+  }
+
+  function App() {
+    return (
+      <DesignCanvas>
+        <DCSection id="dirA" title="Direction A · Race Instrument"
+          subtitle="Precision chronograph — Saira Condensed + mono numerics, hairlines, one volt signal accent. Restrained, technical, data-first.">
+          <DCArtboard id="a-detail-dark" label="Team detail · Dark" width={W} height={H} style={boardStyle}>
+            <Phone dark><DetailA theme="dark" /></Phone>
+          </DCArtboard>
+          <DCArtboard id="a-detail-light" label="Team detail · Light" width={W} height={H} style={boardStyle}>
+            <Phone><DetailA theme="light" /></Phone>
+          </DCArtboard>
+          <DCArtboard id="a-grid-dark" label="All teams · Dark" width={W} height={H} style={boardStyle}>
+            <Phone dark><GridA theme="dark" /></Phone>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="dirB" title="Direction B · Course / Bib"
+          subtitle="Athletic poster — Anton display, warm ink + vivid accent, race-bib energy. Color-forward status, big type, expressive.">
+          <DCArtboard id="b-detail-dark" label="Team detail · Dark" width={W} height={H} style={boardStyle}>
+            <Phone dark><DetailB theme="dark" /></Phone>
+          </DCArtboard>
+          <DCArtboard id="b-detail-light" label="Team detail · Light" width={W} height={H} style={boardStyle}>
+            <Phone><DetailB theme="light" /></Phone>
+          </DCArtboard>
+          <DCArtboard id="b-grid-dark" label="All teams · Dark" width={W} height={H} style={boardStyle}>
+            <Phone dark><GridB theme="dark" /></Phone>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="driverB" title="Driver · Race-day timing"
+          subtitle="In-vehicle timekeeping in Direction B. Big glanceable readouts, hold-to-activate buttons (shown mid-hold), navigate links, live leg + race clocks.">
+          <DCArtboard id="drv-start" label="Start · Hold to begin" width={W} height={H} style={boardStyle}>
+            <Phone dark><DriverStart theme="dark" /></Phone>
+          </DCArtboard>
+          <DCArtboard id="drv-timing" label="Timing · Live" width={W} height={H} style={boardStyle}>
+            <Phone dark><DriverTiming theme="dark" /></Phone>
+          </DCArtboard>
+          <DCArtboard id="drv-holding" label="Timing · Holding LAP" width={W} height={H} style={boardStyle}>
+            <Phone dark><DriverTiming theme="dark" holding /></Phone>
+          </DCArtboard>
+          <DCArtboard id="drv-complete" label="Complete · Splits" width={W} height={H} style={boardStyle}>
+            <Phone dark><DriverComplete theme="dark" /></Phone>
+          </DCArtboard>
+          <DCArtboard id="drv-timing-light" label="Timing · Light" width={W} height={H} style={boardStyle}>
+            <Phone><DriverTiming theme="light" /></Phone>
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

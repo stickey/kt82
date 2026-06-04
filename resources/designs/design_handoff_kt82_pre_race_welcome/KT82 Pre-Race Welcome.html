@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KT82 — Pre-Race Welcome</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; background: #0d0b07; min-height: 100vh; }
+  * { box-sizing: border-box; }
+  body { font-family: 'Hanken Grotesk', system-ui, sans-serif; }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+  @keyframes pulse-ring { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.35); } }
+  .blink { animation: blink 1.5s ease-in-out infinite; }
+  .pulse-ring { animation: pulse-ring 2s ease-in-out infinite; }
+
+  .canvas {
+    display: flex;
+    gap: 48px;
+    padding: 64px 64px 80px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .artboard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+  .artboard-label {
+    font-family: 'Hanken Grotesk', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #6a6053;
+    text-align: center;
+  }
+  /* iPhone shell */
+  .phone {
+    width: 390px;
+    height: 844px;
+    background: #1a1612;
+    border-radius: 54px;
+    border: 1.5px solid rgba(255,240,220,0.13);
+    box-shadow: 0 0 0 8px #111, 0 32px 80px rgba(0,0,0,0.7);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .phone-notch {
+    position: absolute;
+    top: 0; left: 50%; transform: translateX(-50%);
+    width: 120px; height: 34px;
+    background: #111;
+    border-radius: 0 0 22px 22px;
+    z-index: 10;
+  }
+  .phone-screen {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-top: 52px;
+    scrollbar-width: none;
+  }
+  .phone-screen::-webkit-scrollbar { display: none; }
+
+  /* design annotation */
+  .note {
+    background: rgba(255,174,59,0.13);
+    border: 1px solid rgba(255,174,59,0.35);
+    border-radius: 8px;
+    padding: 10px 14px;
+    max-width: 390px;
+    font-family: 'Hanken Grotesk', sans-serif;
+    font-size: 11px;
+    color: #ffae3b;
+    line-height: 1.5;
+  }
+
+  /* page header strip */
+  .design-header {
+    padding: 36px 64px 28px;
+    border-bottom: 1px solid rgba(255,240,220,0.07);
+    margin-bottom: 0;
+  }
+  .design-header h1 {
+    font-family: 'Anton', sans-serif;
+    font-size: 42px;
+    color: #fbf6ee;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    margin: 0 0 6px;
+  }
+  .design-header p {
+    font-family: 'Hanken Grotesk', sans-serif;
+    font-size: 13px;
+    color: #a99e8c;
+    margin: 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="design-header">
+  <h1>Pre-Race Welcome</h1>
+  <p>KT82 Tracker · Team view before the race starts · Two states: start time set vs. not set</p>
+</div>
+
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+// ─── Design tokens (dark theme — primary) ───────────────────────────────────
+const T = {
+  bg:     '#13110a',
+  panel:  '#1d1810',
+  panel2: '#241d12',
+  line:   'rgba(255,240,220,0.10)',
+  line2:  'rgba(255,240,220,0.055)',
+  text:   '#fbf6ee',
+  mut:    '#a99e8c',
+  faint:  '#6a6053',
+  accent: '#ff5a1f',
+  green:  '#37d27a',
+  red:    '#ff4d2e',
+  amber:  '#ffae3b',
+  ink:    '#13110a',
+};
+
+// ─── Mock race data ──────────────────────────────────────────────────────────
+// Race date: June 14, 2026. Team start time: 7:00 AM local
+const RACE_DATE = '2026-06-14';
+const START_TIME_ISO = `${RACE_DATE}T07:00:00`; // 7:00 AM
+
+// Static course legs — start/end coords from COURSE_LEGS in shared/course.ts
+const COURSE = [
+  { n: 1,  start: 'Maryland Heights Aquaport',    sLat: 38.72545,   sLng: -90.44608,  end: 'Lakehouse 364',                    eLat: 38.7009544, eLng: -90.496994,  mi: 5.10 },
+  { n: 2,  start: 'Lakehouse 364',                sLat: 38.7009544, sLng: -90.496994, end: '364 Access',                        eLat: 38.741153,  eLng: -90.524274,  mi: 3.93 },
+  { n: 3,  start: '364 Access',                   sLat: 38.741153,  sLng: -90.524274, end: 'Greens Bottom Road Trailhead',      eLat: 38.714401,  eLng: -90.56675,   mi: 3.20 },
+  { n: 4,  start: 'Greens Bottom Road Trailhead', sLat: 38.714401,  sLng: -90.56675,  end: 'MO Research Park',                  eLat: 38.6946466, eLng: -90.6843187, mi: 7.24 },
+  { n: 5,  start: 'MO Research Park',             sLat: 38.6946466, sLng: -90.6843187,end: 'Lewis & Clark Trailhead',           eLat: 38.69111,   eLng: -90.72442,   mi: 4.72 },
+  { n: 6,  start: 'Lewis & Clark Trailhead',      sLat: 38.69111,   sLng: -90.72442,  end: 'Weldon Spring Trailhead',           eLat: 38.659962,  eLng: -90.743787,  mi: 5.89 },
+  { n: 7,  start: 'Weldon Spring Trailhead',      sLat: 38.659962,  sLng: -90.743787, end: 'Weldon Spring (Lost Valley)',       eLat: 38.6614265, eLng: -90.75767,   mi: 5.73 },
+  { n: 8,  start: 'Weldon Spring (Lost Valley)',  sLat: 38.6614265, sLng: -90.75767,  end: 'Matson',                           eLat: 38.608612,  eLng: -90.79485,   mi: 4.43 },
+  { n: 9,  start: 'Matson',                       sLat: 38.608612,  sLng: -90.79485,  end: 'Klondike Park',                    eLat: 38.58024,   eLng: -90.83944,   mi: 3.61 },
+  { n: 10, start: 'Klondike Park',                sLat: 38.58024,   sLng: -90.83944,  end: 'Augusta',                          eLat: 38.569882,  eLng: -90.881067,  mi: 2.58 },
+  { n: 11, start: 'Augusta',                      sLat: 38.569882,  sLng: -90.881067, end: 'Dutzow',                           eLat: 38.602628,  eLng: -90.999058,  mi: 7.56 },
+  { n: 12, start: 'Dutzow',                       sLat: 38.602628,  sLng: -90.999058, end: 'Marthasville',                     eLat: 38.627633,  eLng: -91.060658,  mi: 3.67 },
+  { n: 13, start: 'Marthasville',                 sLat: 38.627633,  sLng: -91.060658, end: 'Treloar',                          eLat: 38.643583,  eLng: -91.188267,  mi: 6.96 },
+  { n: 14, start: 'Treloar',                      sLat: 38.643583,  sLng: -91.188267, end: 'Bernheimer Road',                  eLat: 38.66808,   eLng: -91.25537,   mi: 4.17 },
+  { n: 15, start: 'Bernheimer Road',              sLat: 38.66808,   sLng: -91.25537,  end: 'Gore-Case Community Center',       eLat: 38.72521,   eLng: -91.34014,   mi: 6.14 },
+  { n: 16, start: 'Gore-Case Community Center',   sLat: 38.72521,   sLng: -91.34014,  end: 'Case Road',                        eLat: 38.73476,   eLng: -91.37289,   mi: 2.69 },
+  { n: 17, start: 'Case Road',                    sLat: 38.73476,   sLng: -91.37289,  end: 'McKittrick',                       eLat: 38.73410,   eLng: -91.44449,   mi: 3.89 },
+  { n: 18, start: 'McKittrick',                   sLat: 38.73410,   sLng: -91.44449,  end: 'Hermann & Finish!!',               eLat: 38.70396,   eLng: -91.43376,   mi: 3.15 },
+];
+
+// Timeline items with assignments (some unassigned to demo chain-break)
+const RUNNERS = ['Alex R.','Jordan M.','Casey T.','Sam W.','Riley K.','Morgan B.'];
+const PACES = [540,525,510,555,540,510,525,540,510,525,540,510,555,525,510,540,525,510];
+
+function makeTimeline(withAssignments = true) {
+  return COURSE.map((leg, i) => {
+    // Legs 12–13 intentionally unassigned to demo chain-break
+    const unassigned = withAssignments && (i === 11 || i === 12);
+    return {
+      leg: { id: `leg-${i}`, legNumber: leg.n, name: leg.end, distanceMiles: leg.mi,
+             handoff: { id: `hoff-${i}`, legId: `leg-${i}`, name: leg.end,
+                        lat: leg.eLat, lng: leg.eLng } },
+      assignment: unassigned ? null : {
+        id: `asgn-${i}`, targetPaceSecPerMile: PACES[i],
+        teamMember: { id: `m-${i % 6}`, name: RUNNERS[i % 6] },
+      },
+      runner: unassigned ? null : { id: `m-${i % 6}`, name: RUNNERS[i % 6] },
+      status: 'not-started',
+      result: null,
+      eta: null,
+    };
+  });
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+function fmtTime(ms) {
+  const d = new Date(ms);
+  const h = d.getHours() % 12 || 12;
+  const m = d.getMinutes().toString().padStart(2, '0');
+  const ap = d.getHours() < 12 ? 'AM' : 'PM';
+  return `${h}:${m} ${ap}`;
+}
+
+function fmtCountdown(diffMs) {
+  if (diffMs <= 0) return '0:00:00';
+  const s = Math.floor(diffMs / 1000);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  return `${h}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+}
+
+function initials(name) {
+  return name.split(' ').slice(0,2).map(w => w[0] || '').join('').toUpperCase();
+}
+
+function mapPoint(lat, lng) {
+  return `https://www.google.com/maps?q=${lat},${lng}`;
+}
+
+// Compute per-leg handoff ETAs from startTimeMs
+function computeETAs(timeline, startTimeMs) {
+  let anchor = startTimeMs;
+  return timeline.map(item => {
+    if (!item.assignment) return null; // chain broken
+    const durMs = item.assignment.targetPaceSecPerMile * item.leg.distanceMiles * 1000;
+    anchor += durMs;
+    return anchor;
+  });
+}
+
+// ─── Map Pin icon ─────────────────────────────────────────────────────────────
+function PinLink({ lat, lng, label }) {
+  if (lat == null || lng == null) return <span style={{ width: 30 }} />;
+  return (
+    <a
+      href={mapPoint(lat, lng)}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={e => e.stopPropagation()}
+      title={label}
+      style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        width: 30, height: 30, borderRadius: '50%',
+        background: T.panel2, border: `1px solid ${T.line}`,
+        flexShrink: 0, textDecoration: 'none',
+      }}
+    >
+      <svg width="11" height="14" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2C8.1 2 5 5.1 5 9c0 4.9 7 13 7 13s7-8.1 7-13c0-3.9-3.1-7-7-7z" fill={T.faint} />
+        <circle cx="12" cy="9" r="2.6" fill={T.panel2} />
+      </svg>
+    </a>
+  );
+}
+
+// ─── Countdown ────────────────────────────────────────────────────────────────
+function Countdown({ startTimeMs }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const diff = startTimeMs - now;
+  const isPast = diff <= 0;
+
+  if (isPast) {
+    return (
+      <div style={{ textAlign: 'center', padding: '8px 0 4px' }}>
+        <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 13, fontWeight: 700,
+          color: T.amber, letterSpacing: '0.04em' }}>
+          Race time has passed — check with your driver
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ textAlign: 'center', padding: '4px 0' }}>
+      <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9, fontWeight: 800,
+        letterSpacing: '0.14em', color: T.mut, textTransform: 'uppercase', marginBottom: 6 }}>
+        Your race starts in
+      </div>
+      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 46, fontWeight: 700,
+        color: T.accent, lineHeight: 1, letterSpacing: '-0.02em' }}>
+        {fmtCountdown(diff)}
+      </div>
+    </div>
+  );
+}
+
+// ─── Pre-Race Screen ──────────────────────────────────────────────────────────
+function PreRaceScreen({ teamName, startTimeMs, timeline, onBack }) {
+  const hasStartTime = startTimeMs != null;
+
+  // Build ETA list — null out chain after first gap
+  let etaMs = hasStartTime ? computeETAs(timeline, startTimeMs) : [];
+  let chainBroken = false;
+  const etas = timeline.map((item, i) => {
+    if (chainBroken || !item.assignment) { chainBroken = true; return null; }
+    return etaMs[i];
+  });
+
+  // Estimated finish = last non-null ETA
+  const finishMs = [...etas].reverse().find(e => e != null) ?? null;
+
+  return (
+    <div style={{ minHeight: '100%', background: T.bg, color: T.text, display: 'flex', flexDirection: 'column' }}>
+
+      {/* Top bar */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '12px 18px', borderBottom: `1px solid ${T.line}` }}>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer',
+          fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 12, fontWeight: 800,
+          letterSpacing: '0.08em', textTransform: 'uppercase', color: T.mut,
+          minHeight: 44, display: 'flex', alignItems: 'center', padding: 0 }}>
+          ← All Teams
+        </button>
+        <button style={{ background: 'none', border: 'none', cursor: 'pointer',
+          fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 12, fontWeight: 800,
+          letterSpacing: '0.08em', textTransform: 'uppercase', color: T.mut,
+          minHeight: 44, display: 'flex', alignItems: 'center', padding: 0 }}>
+          Share ↗
+        </button>
+      </div>
+
+      <div style={{ maxWidth: 640, margin: '0 auto', padding: '16px 18px 48px', width: '100%' }}>
+
+        {/* RACE DAY badge + countdown */}
+        <div style={{ textAlign: 'center', marginBottom: 20 }}>
+          {/* Race Day pill */}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7,
+            background: `${T.accent}18`, border: `1px solid ${T.accent}44`,
+            borderRadius: 999, padding: '5px 12px', marginBottom: 14 }}>
+            <span className="pulse-ring" style={{
+              display: 'inline-block', width: 7, height: 7, borderRadius: '50%',
+              background: T.accent }} />
+            <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9, fontWeight: 800,
+              letterSpacing: '0.14em', textTransform: 'uppercase', color: T.accent }}>
+              Race Day
+            </span>
+          </div>
+
+          {/* Countdown or no-start-time notice */}
+          {hasStartTime ? (
+            <Countdown startTimeMs={startTimeMs} />
+          ) : (
+            <div style={{ padding: '12px 0 4px' }}>
+              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 13, fontWeight: 700,
+                color: T.mut }}>Start time not yet set</div>
+              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 11, color: T.faint,
+                marginTop: 4 }}>Check with your race coordinator</div>
+            </div>
+          )}
+        </div>
+
+        {/* Hero card */}
+        <div style={{
+          background: T.panel,
+          border: `1.5px solid ${hasStartTime ? T.accent + '55' : T.line}`,
+          borderRadius: 22,
+          padding: '18px 20px 16px',
+          marginBottom: 24,
+          boxShadow: hasStartTime ? `0 0 32px ${T.accent}18` : 'none',
+        }}>
+          {/* Eyebrow */}
+          <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 10, fontWeight: 800,
+            letterSpacing: '0.12em', textTransform: 'uppercase', color: T.accent, marginBottom: 4 }}>
+            KT82 · Katy Trail Relay
+          </div>
+          {/* Team name */}
+          <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 48, lineHeight: 0.9,
+            textTransform: 'uppercase', color: T.text, marginBottom: 16 }}>
+            {teamName}
+          </div>
+
+          {/* Start + Finish row */}
+          <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+            <div style={{ flex: 1, background: T.panel2, borderRadius: 14, padding: '12px 14px' }}>
+              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 8.5, fontWeight: 800,
+                letterSpacing: '0.12em', textTransform: 'uppercase', color: T.faint, marginBottom: 4 }}>
+                Start
+              </div>
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 22, fontWeight: 700,
+                color: hasStartTime ? T.accent : T.mut, lineHeight: 1 }}>
+                {hasStartTime ? fmtTime(startTimeMs) : '—'}
+              </div>
+              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 10, color: T.faint,
+                marginTop: 3 }}>Maryland Heights</div>
+            </div>
+            <div style={{ flex: 1, background: T.panel2, borderRadius: 14, padding: '12px 14px' }}>
+              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 8.5, fontWeight: 800,
+                letterSpacing: '0.12em', textTransform: 'uppercase', color: T.faint, marginBottom: 4 }}>
+                Est. Finish
+              </div>
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 22, fontWeight: 700,
+                color: hasStartTime && finishMs ? T.green : T.mut, lineHeight: 1 }}>
+                {hasStartTime && finishMs ? fmtTime(finishMs) : '—'}
+              </div>
+              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 10, color: T.faint,
+                marginTop: 3 }}>Hermann</div>
+            </div>
+          </div>
+
+          <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 10, color: T.faint,
+            fontStyle: 'italic', textAlign: 'center' }}>
+            Estimates based on target pace — actual times will vary
+          </div>
+        </div>
+
+        {/* Leg Schedule section */}
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+          marginBottom: 4 }}>
+          <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 24, textTransform: 'uppercase',
+            lineHeight: 1, color: T.text }}>
+            Leg Schedule
+          </div>
+          <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 10, fontWeight: 800,
+            letterSpacing: '0.1em', textTransform: 'uppercase', color: T.faint }}>
+            {timeline.length} Legs
+          </div>
+        </div>
+
+        {/* Column headers */}
+        <div style={{ display: 'grid', gridTemplateColumns: '28px 1fr 68px 30px 30px',
+          gap: 8, padding: '6px 10px 6px 14px', marginBottom: 2 }}>
+          {['LEG','RUNNER','ETA','→','↗'].map((h, i) => (
+            <div key={i} style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 8, fontWeight: 800,
+              letterSpacing: '0.1em', color: T.faint, textAlign: i >= 2 ? 'right' : 'left',
+              textTransform: 'uppercase' }}>{h}</div>
+          ))}
+        </div>
+
+        {/* Leg rows */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {timeline.map((item, i) => {
+            const eta = etas[i];
+            const noRunner = !item.assignment;
+            const courseLeg = COURSE[i];
+            return (
+              <div key={item.leg.id} style={{
+                display: 'grid', gridTemplateColumns: '28px 1fr 68px 30px 30px',
+                gap: 8, alignItems: 'center',
+                padding: '11px 10px 11px 14px',
+                borderRadius: 10,
+                background: noRunner ? 'transparent' : 'transparent',
+                opacity: noRunner ? 0.45 : 1,
+                borderBottom: i < timeline.length - 1 ? `1px solid ${T.line2}` : 'none',
+              }}>
+                {/* Leg number */}
+                <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 18,
+                  color: noRunner ? T.faint : T.faint, lineHeight: 1, textAlign: 'center' }}>
+                  {item.leg.legNumber}
+                </div>
+
+                {/* Runner */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                  <div style={{
+                    width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+                    background: noRunner ? T.panel2 : T.panel2,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9, fontWeight: 800,
+                    color: noRunner ? T.faint : T.mut,
+                  }}>
+                    {item.runner ? initials(item.runner.name) : '?'}
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 13,
+                      fontWeight: 800, color: noRunner ? T.faint : T.text, lineHeight: 1.2,
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {item.runner ? item.runner.name : '—'}
+                    </div>
+                    <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9.5,
+                      color: T.faint, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap' }}>
+                      {item.leg.name} · {item.leg.distanceMiles} mi
+                    </div>
+                  </div>
+                </div>
+
+                {/* ETA */}
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13,
+                    fontWeight: 700, color: eta ? T.text : T.faint }}>
+                    {eta ? `~${fmtTime(eta)}` : '—'}
+                  </div>
+                  {eta && (
+                    <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 8.5,
+                      color: T.faint, letterSpacing: '0.06em', textTransform: 'uppercase', marginTop: 1 }}>
+                      est.
+                    </div>
+                  )}
+                </div>
+
+                {/* Start pin */}
+                <PinLink lat={courseLeg.sLat} lng={courseLeg.sLng} label={`Start: ${courseLeg.start}`} />
+                {/* End pin */}
+                <PinLink lat={courseLeg.eLat} lng={courseLeg.eLng} label={`Finish: ${courseLeg.end}`} />
+              </div>
+            );
+          })}
+        </div>
+
+        {/* "estimates only" footer note */}
+        <div style={{ marginTop: 20, padding: '12px 16px',
+          background: T.panel2, borderRadius: 12, border: `1px solid ${T.line}` }}>
+          <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 10.5,
+            color: T.faint, lineHeight: 1.5 }}>
+            ETAs are based on each runner's target pace and will shift once the race is underway. This view is only visible before the race starts.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Canvas ───────────────────────────────────────────────────────────────────
+function Phone({ children }) {
+  return (
+    <div className="phone">
+      <div className="phone-notch" />
+      <div className="phone-screen">{children}</div>
+    </div>
+  );
+}
+
+// Offset the demo start time so the countdown shows something plausible
+// (prototype shows ~2 h 34 m to go from "now" in the prototype)
+const DEMO_NOW = Date.now();
+const DEMO_START_MS = DEMO_NOW + (2 * 3600 + 34 * 60) * 1000; // ~2h 34m from now
+
+const timelineWithAssignments = makeTimeline(true);
+const timelineNoStart = makeTimeline(true);
+
+function App() {
+  return (
+    <div className="canvas">
+      <div className="artboard">
+        <div className="artboard-label">Start time set · 7:00 AM<br/>Legs 12–13 unassigned (chain break demo)</div>
+        <Phone>
+          <PreRaceScreen
+            teamName="RunGMC"
+            startTimeMs={DEMO_START_MS}
+            timeline={timelineWithAssignments}
+            onBack={() => {}}
+          />
+        </Phone>
+      </div>
+
+      <div className="artboard">
+        <div className="artboard-label">Start time not yet set</div>
+        <Phone>
+          <PreRaceScreen
+            teamName="RunGMC"
+            startTimeMs={null}
+            timeline={timelineNoStart}
+            onBack={() => {}}
+          />
+        </Phone>
+        <div className="note">
+          When no start time is configured, the countdown is replaced with a notice.<br/>
+          Hero times show "—" and the leg table ETAs are all "—".
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

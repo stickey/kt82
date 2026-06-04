@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KT82 — Interactive Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; background: #e7e4de; }
+  * { box-sizing: border-box; }
+  body { font-family: 'Hanken Grotesk', system-ui, sans-serif; }
+  @keyframes a-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+  .a-blink { animation: a-blink 1.5s ease-in-out infinite; }
+  .seg-btn { font-family: 'Hanken Grotesk', sans-serif; font-weight: 800; font-size: 13px; letter-spacing: 0.04em;
+    border: none; cursor: pointer; padding: 9px 20px; border-radius: 999px; transition: all 0.15s; background: transparent; color: #6b6356; }
+  .seg-btn.active { background: #1a160f; color: #fff; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" fill="#13110a"/>
+    <rect x="28" y="28" width="44" height="44" rx="8" fill="#ff5a1f"/>
+    <text x="50" y="59" font-family="Arial" font-size="22" font-weight="bold" fill="#13110a" text-anchor="middle">KT</text>
+  </svg>
+</template>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script src="kt82-data.js"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="prototype.jsx"></script>
+
+<script type="text/babel">
+  const { useState, useEffect } = React;
+  const { IOSDevice, TrackerGrid, TrackerDetail, DriverApp,
+    useTweaks, TweaksPanel, TweakSection, TweakRadio, TweakColor, TweakButton } = window;
+
+  const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+    "theme": "light",
+    "accent": "#ff2e63"
+  }/*EDITMODE-END*/;
+
+  const ACCENTS = ['#ff5a1f', '#ff2e63', '#2b6fff', '#7a5af0'];
+  const DW = 402, DH = 874;
+
+  function Segmented({ value, onChange }) {
+    return (
+      <div style={{ display: 'flex', gap: 4, background: '#fff', padding: 4, borderRadius: 999,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.05)' }}>
+        {['tracker', 'driver'].map(a => (
+          <button key={a} className={`seg-btn ${value === a ? 'active' : ''}`} onClick={() => onChange(a)}>
+            {a === 'tracker' ? 'Tracker' : 'Driver'}
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  function Shell() {
+    const [tw, setTweak] = useTweaks(TWEAK_DEFAULTS);
+    const [app, setApp] = useState('tracker');
+    const [view, setView] = useState('grid');
+    const [team, setTeam] = useState(null);
+    const [tick, setTick] = useState(0);
+    const [driverKey, setDriverKey] = useState(0);
+    const [scale, setScale] = useState(1);
+    const t = window.tok(tw.theme, tw.accent);
+    const dark = tw.theme === 'dark';
+
+    useEffect(() => { const id = setInterval(() => setTick(x => x + 1), 1000); return () => clearInterval(id); }, []);
+    useEffect(() => {
+      const fit = () => setScale(Math.min(1, (window.innerHeight - 150) / DH));
+      fit(); window.addEventListener('resize', fit); return () => window.removeEventListener('resize', fit);
+    }, []);
+
+    let screen;
+    if (app === 'tracker') {
+      screen = view === 'grid'
+        ? <TrackerGrid teams={window.KT82.teams} t={t} sinceSec={tick % 31}
+            onSelect={(tm) => { setTeam(tm); setView('detail'); }} />
+        : <TrackerDetail team={team} t={t} tick={tick} onBack={() => setView('grid')} />;
+    } else {
+      screen = <DriverApp t={t} resetKey={driverKey} />;
+    }
+
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 16px 36px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+          <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 12,
+            letterSpacing: '0.16em', color: '#9a9183', textTransform: 'uppercase' }}>KT82 · Interactive Prototype</div>
+          <Segmented value={app} onChange={setApp} />
+        </div>
+        <div style={{ width: DW * scale, height: DH * scale }}>
+          <div style={{ width: DW, height: DH, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+            <IOSDevice dark={dark} width={DW} height={DH}>{screen}</IOSDevice>
+          </div>
+        </div>
+
+        <TweaksPanel>
+          <TweakSection label="Appearance" />
+          <TweakRadio label="Theme" value={tw.theme} options={['dark', 'light']}
+            onChange={(v) => setTweak('theme', v)} />
+          <TweakColor label="Accent" value={tw.accent} options={ACCENTS}
+            onChange={(v) => setTweak('accent', v)} />
+          <TweakSection label="Driver demo" />
+          <TweakButton label="Restart driver race"
+            onClick={() => { setDriverKey(k => k + 1); setApp('driver'); }} />
+        </TweaksPanel>
+      </div>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<Shell />);
+</script>
+</body>
+</html>
