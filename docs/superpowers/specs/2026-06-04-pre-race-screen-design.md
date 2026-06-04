@@ -18,27 +18,55 @@ When a team has not yet started the race (no legs in-progress or completed), the
 
 **Changes to existing files:**
 - `App.tsx`: pass `raceDate={race.date}` to `<TeamDetail>`
-- `TeamDetail.tsx`: add `raceDate: string` to props interface; add early-return gate after timeline loads
+- `TeamDetail.tsx`: add `raceDate: string` to props interface; compute `assignedStartTime` here (not in PreRaceScreen) so the gate can use it; add early-return gate after timeline loads
 
-**Gate condition (in TeamDetail):** After the timeline has loaded, if no leg has status `in-progress` or `completed`, render `<PreRaceScreen>` and return. This covers both the zero-assignments case (empty timeline) and the all-not-started case.
+**`assignedStartTime` computation (in TeamDetail):**
+
+`assignedStartTime` moves up to `TeamDetail` so both the gate and `PreRaceScreen` share the same value:
+
+```ts
+const params = useMemo(() => new URLSearchParams(window.location.search), [])
+const startOffsetMs = params.has('startoffset') ? Number(params.get('startoffset')) : null
+
+const assignedStartTime = useMemo(() => {
+  if (startOffsetMs !== null) return new Date(Date.now() + startOffsetMs)
+  const d = new Date(raceDate)
+  d.setHours(7, 0, 0, 0)
+  return d
+}, [startOffsetMs, raceDate])
+```
+
+**Gate condition (in TeamDetail):** Uses `tick` (already in state, increments every second) to re-evaluate each second. Shows pre-race when the team hasn't started OR when a dev override is active and the start time hasn't been reached yet.
 
 ```tsx
-const forcePreRace = new URLSearchParams(window.location.search).has('prerace')
+void tick // already in TeamDetail state — forces re-render every second
 const hasStarted = timeline.some(t => t.status === 'in-progress' || t.status === 'completed')
-if (forcePreRace || !hasStarted) return (
-  <PreRaceScreen teamName={teamName} raceDate={raceDate} timeline={timeline} onBack={onBack} />
+const forcePreRace = params.has('prerace') || startOffsetMs !== null
+const startTimeReached = Date.now() >= assignedStartTime.getTime()
+const showPreRace = !hasStarted || (forcePreRace && !startTimeReached)
+
+if (showPreRace) return (
+  <PreRaceScreen
+    teamName={teamName}
+    assignedStartTime={assignedStartTime}
+    timeline={timeline}
+    onBack={onBack}
+  />
 )
 ```
 
-**Manual testing:** Append `?prerace` to any team URL (e.g. `http://localhost:5173/#team/clx123abc?prerace`) to force the pre-race screen regardless of race state. The polling loop still runs so removing the param and refreshing returns to the live view.
+**Manual testing:**
+- `?prerace` — forces pre-race screen regardless of race state; stays until param is removed
+- `?startoffset=30000` — sets start time to 30 seconds from now; pre-race shows with a live countdown, then automatically transitions to the live view once the clock passes zero (assuming `hasStarted` is true from the real DB by then)
+- Both params can be combined: `?prerace&startoffset=30000`
 
-**Automatic transition to live view:** Because `PreRaceScreen` is an early-return inside `TeamDetail` (not a separate mounted component), `TeamDetail`'s existing 30-second polling loop (`/teams/${teamId}/timeline`) continues to run while the pre-race screen is displayed. When a leg transitions to `in-progress` or `completed`, the next poll updates `timeline`, `hasStarted` flips to `true`, the gate no longer fires, and the user automatically sees the live race view — no extra polling or transition logic required in `PreRaceScreen`.
+**Automatic transition to live view:** Because `PreRaceScreen` is an early-return inside `TeamDetail` (not a separate mounted component), `TeamDetail`'s existing 30-second polling loop (`/teams/${teamId}/timeline`) continues to run while the pre-race screen is displayed. When a leg transitions to `in-progress` or `completed`, the next poll updates `timeline`, `hasStarted` flips to `true`, the gate no longer fires, and the user automatically sees the live race view. With `?startoffset`, the gate also releases when the clock passes `assignedStartTime` (re-evaluated each second via `tick`).
 
 **PreRaceScreen props:**
 ```ts
 interface Props {
   teamName: string
-  raceDate: string       // ISO date string from race.date
+  assignedStartTime: Date   // computed in TeamDetail; stable reference
   timeline: LegTimelineItem[]
   onBack: () => void
 }
@@ -48,15 +76,7 @@ interface Props {
 
 ## Assigned Start Time
 
-Hardcoded at **7:00 AM on the race date** (only one team uses this feature currently):
-
-```ts
-const assignedStartTime = useMemo(() => {
-  const d = new Date(raceDate)
-  d.setHours(7, 0, 0, 0)
-  return d
-}, [raceDate])
-```
+Hardcoded at **7:00 AM on the race date** (only one team uses this feature currently). Computed in `TeamDetail` and passed to `PreRaceScreen` as a stable `Date` prop. The `?startoffset=<ms>` query param overrides this for testing.
 
 Document this in `apps/tracker/README.md` when complete.
 
@@ -64,18 +84,20 @@ Document this in `apps/tracker/README.md` when complete.
 
 ## ETA Algorithm
 
-Walk `COURSE_LEGS` in order, accumulating from `assignedStartTime`:
+Walk `COURSE_LEGS` in order, accumulating from `assignedStartTime` (passed as a prop — already a stable `Date`):
 
 ```ts
-let ms = assignedStartTime.getTime()
-const schedule = COURSE_LEGS.map(courseLeg => {
-  const item = timeline.find(t => t.leg.legNumber === courseLeg.legNumber)
-  const legStartMs = ms
-  if (item?.assignment) {
-    ms += item.assignment.targetPaceSecPerMile * courseLeg.miles * 1000
-  }
-  return { courseLeg, item, legStartMs, legEndMs: ms }
-})
+const schedule = useMemo(() => {
+  let ms = assignedStartTime.getTime()
+  return COURSE_LEGS.map(courseLeg => {
+    const item = timeline.find(t => t.leg.legNumber === courseLeg.legNumber)
+    const legStartMs = ms
+    if (item?.assignment) {
+      ms += item.assignment.targetPaceSecPerMile * courseLeg.miles * 1000
+    }
+    return { courseLeg, item, legStartMs, legEndMs: ms }
+  })
+}, [assignedStartTime, timeline])
 const finishTime = new Date(schedule[schedule.length - 1].legEndMs)
 ```
 
