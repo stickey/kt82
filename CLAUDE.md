@@ -83,8 +83,9 @@ In production, Express serves built app bundles as static files under path prefi
 ## Shared Package (`packages/shared`)
 
 - `types.ts` — all domain interfaces (no Prisma imports)
-- `eta.ts` — `calculateETA(assignment, result, leg, now)` → `{ eta, secondsRemaining, status }`
+- `eta.ts` — `calculateETA(assignment, result, leg, now)` → `{ eta, secondsRemaining, status }`; `lpEstimates(startedAtMs, nowMs, distMiles, targetPaceSecPerMile)` → 5-element array of pace-scenario estimates used by LegProgressScreen and LegMapScreen
 - `api.ts` — `createApiClient(baseUrl, getHeaders)` factory
+- `course.ts` — `COURSE_LEGS: CourseLeg[]` (static course data); `lerpAlongPolyline(coords, frac)` maps a 0–1 fraction to a `[lat, lng]` position along a polyline
 
 ## Race Format Details
 
@@ -129,6 +130,31 @@ The git-backed runtime had irreconcilable build-environment differences: devDepe
 `@kt82/shared` uses `"main": "src/index.ts"` (TypeScript source). Node.js can't load TypeScript at runtime. esbuild inlines shared code at build time so the container only needs to run plain JavaScript. Do not change `main` in `packages/shared/package.json` to a compiled path — it breaks Vite's Rollup bundler during SPA builds (CJS re-exports aren't statically analyzable by Rollup).
 
 **Vercel was attempted and abandoned** — see `docs/deployment-notes.md` for details. Don't suggest Vercel as an alternative without reading that document first.
+
+## Leg Map Feature
+
+Driver and Tracker both have a `LegMapScreen` component (`apps/{driver,tracker}/src/components/LegMapScreen.tsx`) that shows a full-screen Leaflet.js map of the current leg with a moving runner icon.
+
+**Key implementation details:**
+- Uses CartoDB Dark Matter tiles; all map interactions disabled (non-interactive, no zoom/pan)
+- Runner position computed via `lerpAlongPolyline(routeCoords, ests[2].frac)` — `ests[2]` is the on-pace estimate from `lpEstimates`
+- Map initialised once on mount; runner marker + range band + end-marker ETA updated every second via `setLatLng`/`setIcon` (NOT by remounting the map)
+- `leaflet` + `@types/leaflet` are dependencies of both `apps/driver` and `apps/tracker`
+
+**Adding GPS routes for legs:**
+Leg routes live in `packages/shared/src/course.ts` as `routeCoords: [number, number][]` (`[lat, lng]` pairs) on each `CourseLeg`. GeoJSON source files are in `resources/race/geojson/leg{N}.json`.
+
+To add or update a leg route:
+1. Draw the route in geojson.io and save to `resources/race/geojson/leg{N}.json`
+2. Extract coords (GeoJSON uses `[lng, lat]`; Leaflet needs `[lat, lng]`):
+   ```bash
+   node -e "const gj = require('./resources/race/geojson/leg{N}.json'); console.log(JSON.stringify(gj.features.flatMap(f => f.geometry.coordinates.map(([lng, lat]) => [lat, lng]))))"
+   ```
+3. Paste the result into the `routeCoords` field for that leg in `course.ts`
+
+Legs 1–11 have real GPS routes. Legs 12–18 still use straight-line placeholder coords (start → end).
+
+**Docker TypeScript note:** Docker's `@types/leaflet` is stricter than local — avoid Leaflet `MapOptions` properties not in the type definitions (e.g. `tap` was removed for this reason).
 
 ## Key Constraints
 

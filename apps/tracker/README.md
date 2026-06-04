@@ -55,6 +55,32 @@ Reachable from the team detail page by tapping the **Est. Arrival** time in the 
 
 Back button returns to the team detail.
 
+## Leg Map Screen
+
+Reachable two ways from the team detail page:
+- Tap the **🗺 MAP** button in the hero card (next to Est. Arrival) — only appears when the runner has an assignment
+- Tap **MAP** at the bottom of the Leg Progress screen
+
+Shows a full-screen, non-interactive map of the current leg with the runner's estimated position updated every second.
+
+**What it shows:**
+- **CartoDB Dark Matter** tile map (Leaflet.js) — no pan or zoom; bounds auto-fit to the leg route
+- **Route polyline** — orange line tracing the actual road route
+- **Green dot** at the start, **red dot** at the finish
+- **Start label** floating below the green dot; **destination label** (name + on-pace ETA) floating above the red dot, updating each second
+- **Runner icon** (🏃 orange circle) at the estimated position with a leg elapsed time chip below it
+- **Range band** — translucent orange segment spanning the position spread
+- **Top chrome:** back button, runner name, leg/team info, RACE elapsed time, pulsing LIVE dot
+- **Bottom chrome** — estimates table:
+
+  | PACE | ARRIVES | LEG TIME |
+  |---|---|---|
+  | Pace scenario | Estimated arrival | Estimated total leg duration |
+
+**Auto-exit on lap:** When the 30-second poll detects a new active result (leg changed), the map view closes automatically and the team detail refreshes.
+
+Back button returns to the team detail.
+
 ## Course Overview Screen
 
 Reachable from a team's detail page by tapping **"THE COURSE / ALL 18 LEGS →"** in the section header. Shows the entire 18-leg course on one scrollable screen, contextualised to the viewing team's current position.
@@ -85,8 +111,9 @@ src/
   api.ts              — public API client, TeamStatus type, formatTime helper
   App.tsx             — hash router, race auto-detect on mount
   components/
-    TeamGrid.tsx      — polling grid of all teams; "Updated Xs ago" counter
-    TeamDetail.tsx    — hero section (current runner + ETA, tappable for leg progress) + full leg timeline
+    TeamGrid.tsx          — polling grid of all teams; "Updated Xs ago" counter
+    TeamDetail.tsx        — hero section (current runner + ETA, MAP button, leg progress) + full leg timeline
     LegProgressScreen.tsx — pace-swept progress bar + arrival table for the live leg
-    CourseScreen.tsx  — all-18-legs course overview with map links and live clock
+    LegMapScreen.tsx      — full-screen Leaflet map with runner position, route, ETA label, estimates table
+    CourseScreen.tsx      — all-18-legs course overview with map links and live clock
 ```

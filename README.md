@@ -28,6 +28,7 @@ The KT82 is an 82-mile multi-leg road relay race held in rural Missouri. Teams o
 - View all teams and their current leg/runner
 - Estimated arrival time at the next handoff based on pace + elapsed time
 - Timeline view of completed and upcoming legs for a team
+- **Leg Map view** — full-screen Leaflet map showing the runner moving along the actual course route in real time, with pace-spread estimates table
 - Shareable team link so spectators can bookmark a specific team
 - Auto-refresh (polling, not WebSocket — keep it simple)
 - No login required; read-only
@@ -76,6 +77,8 @@ The KT82 is an 82-mile multi-leg road relay race held in rural Missouri. Teams o
 - START / LAP / STOP stopwatch controls
   - LAP: records the leg time, advances to next runner/leg
 - Displays ETA of the current runner based on pace and elapsed time
+- **Leg Map view** — full-screen Leaflet map showing the runner moving along the actual course route, with live leg/race timers and a pace-spread estimates table
+- **Leg Progress view** — pace-sweep arrival table with progress bar, showing min/target/max arrival times
 - One-tap navigation to the next handoff (opens Google Maps / Apple Maps with the destination pre-filled from handoff lat/lng or address)
 - Clear, glanceable display suitable for use in a moving vehicle
 
@@ -106,7 +109,7 @@ kt82/
 | Backend | Node.js + Express |
 | Database | PostgreSQL + Prisma ORM |
 | Auth | PIN-based (no JWT complexity needed for MVP) |
-| Maps | Google Maps URL deep link or Apple Maps URL (no Maps SDK needed) |
+| Maps | Leaflet.js (in-app leg map) + Google Maps URL deep links for navigation |
 | Hosting | Deployable to Railway, Render, or Fly.io |
 
 ### Shared Package
@@ -327,5 +330,5 @@ node -e "const b = require('bcryptjs'); b.hash('your-password', 10).then(console
 - Push notifications
 - Multi-race management (one race at a time is fine)
 - User accounts / OAuth
-- In-app maps rendering (deep links to Google/Apple Maps only)
+- ~~In-app maps rendering~~ — implemented via Leaflet.js for the leg map view
 - Historical race archives

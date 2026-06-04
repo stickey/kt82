@@ -49,6 +49,38 @@ Reachable from the timing screen via the **"WHEN DO THEY ARRIVE?"** button — a
 
 Back button returns to the timing screen. No data is fetched — all values are derived from the runner's start timestamp and target pace already in view state.
 
+## Leg Map Screen
+
+Reachable two ways:
+- From the **timing screen** via the **MAP** button (below "WHEN DO THEY ARRIVE?") — only appears when the runner's target pace is known
+- From the **Leg Progress screen** via the **MAP** button at the bottom
+
+Shows a full-screen, non-interactive map of the current leg with the runner's estimated position updated every second.
+
+**What it shows:**
+- **CartoDB Dark Matter** tile map (Leaflet.js) — no pan or zoom; bounds auto-fit to the leg route with padding for chrome
+- **Route polyline** — orange line tracing the actual road route for the leg
+- **Green dot** at the start, **red dot** at the finish
+- **Start label** (leg start name) floating below the green dot
+- **Destination label** (leg end name + on-pace ETA) floating above the red dot, updating each second
+- **Runner icon** (🏃 orange circle) moving along the route at the estimated position; a leg elapsed time chip sits just below it, ticking every second
+- **Range band** — wide translucent orange segment spanning the min–max position spread across pace scenarios
+- **Top chrome overlay** (gradient from top):
+  - Back button (← TIMING or ← LEG PROGRESS depending on entry point)
+  - RACE elapsed time in JetBrains Mono + pulsing LIVE dot
+  - Runner name, leg number, destination, distance
+- **Bottom chrome overlay** (gradient from bottom) — compact estimates table:
+
+  | PACE | ARRIVES | LEG TIME |
+  |---|---|---|
+  | Pace for each scenario | Estimated clock arrival | Estimated total leg duration |
+
+  5 rows spanning target pace ±30 s/mi. Target row highlighted in orange.
+
+**Auto-refresh on lap:** Polls the server every 15 seconds while on this screen. If the active leg changes (another device pressed LAP), automatically navigates to the racing view with fresh state.
+
+Back button returns to the screen that launched the map (timing or leg progress).
+
 ## Course Overview Screen
 
 Reachable from the timing screen by tapping **"VIEW ALL 18 LEGS · THE COURSE →"** (a secondary button below the navigation link). Shows the entire 18-leg course on one scrollable screen while keeping the race clock running.
@@ -79,15 +111,16 @@ Back button returns to the timing screen. The timing state (current leg, elapsed
 ```
 src/
   api.ts              — PIN-bearing API client factory, format helpers (formatElapsed, formatTime, formatDuration, buildNavUrl)
-  App.tsx             — discriminated union state machine (loading → auth → start → racing → course → complete)
+  App.tsx             — discriminated union state machine (loading → auth → start → racing → leg-progress → leg-map → course → complete)
   components/
-    LongPressButton.tsx — reusable hold-to-activate button with rAF fill animation
-    AuthScreen.tsx    — team selection dropdown + PIN entry
-    StartScreen.tsx   — first leg info + START long-press
-    TimingScreen.tsx  — elapsed clock, ETA poll, navigation link, WHEN DO THEY ARRIVE button, LAP/STOP, VIEW ALL LEGS button
+    LongPressButton.tsx   — reusable hold-to-activate button with rAF fill animation
+    AuthScreen.tsx        — team selection dropdown + PIN entry
+    StartScreen.tsx       — first leg info + START long-press
+    TimingScreen.tsx      — elapsed clock, ETA poll, navigation link, WHEN DO THEY ARRIVE / MAP buttons, LAP/STOP, VIEW ALL LEGS button
     LegProgressScreen.tsx — pace-swept progress bar + arrival table for the live leg
-    CourseScreen.tsx  — all-18-legs course overview with map links and live clock
-    CompleteScreen.tsx — total time + leg-by-leg splits
+    LegMapScreen.tsx      — full-screen Leaflet map with runner position, route, ETA label, estimates table
+    CourseScreen.tsx      — all-18-legs course overview with map links and live clock
+    CompleteScreen.tsx    — total time + leg-by-leg splits
 ```
 
 ## Offline / Connectivity Loss
