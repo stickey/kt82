@@ -6,6 +6,7 @@ import { TimingScreen } from './components/TimingScreen'
 import { CompleteScreen } from './components/CompleteScreen'
 import { CourseScreen } from './components/CourseScreen'
 import { LegProgressScreen } from './components/LegProgressScreen'
+import { LegMapScreen } from './components/LegMapScreen'
 import { enqueue, peek, dequeue, type PendingAction } from './pendingActions'
 import type { Race, TeamSummary, Leg, Handoff, CurrentState, CurrentStateInProgress } from './api'
 
@@ -17,6 +18,7 @@ type View =
   | { type: 'racing'; race: Race; team: TeamSummary; pin: string; resultId: string | null; leg: Leg; startedAt: string; nextHandoff: Handoff | null; currentRunner: string | null; raceStartedAt: string | null; nextRunner: string | null; nextLeg: Leg | null; nextRunnerEta: string | null; targetPaceSecPerMile: number | null }
   | { type: 'course'; race: Race; team: TeamSummary; pin: string; resultId: string | null; leg: Leg; startedAt: string; nextHandoff: Handoff | null; currentRunner: string | null; raceStartedAt: string | null; nextRunner: string | null; nextLeg: Leg | null; nextRunnerEta: string | null; targetPaceSecPerMile: number | null }
   | { type: 'leg-progress'; race: Race; team: TeamSummary; pin: string; resultId: string | null; leg: Leg; startedAt: string; nextHandoff: Handoff | null; currentRunner: string | null; raceStartedAt: string | null; nextRunner: string | null; nextLeg: Leg | null; nextRunnerEta: string | null; targetPaceSecPerMile: number | null }
+  | { type: 'leg-map'; from: 'racing' | 'leg-progress'; race: Race; team: TeamSummary; pin: string; resultId: string | null; leg: Leg; startedAt: string; nextHandoff: Handoff | null; currentRunner: string | null; raceStartedAt: string | null; nextRunner: string | null; nextLeg: Leg | null; nextRunnerEta: string | null; targetPaceSecPerMile: number | null }
   | { type: 'complete'; race: Race; team: TeamSummary; pin: string }
 
 export default function App() {
@@ -176,6 +178,16 @@ export default function App() {
     setView(prev => prev.type === 'leg-progress' ? { ...prev, type: 'racing' } : prev)
   }
 
+  function handleViewLegMapFromRacing() {
+    setView(prev => prev.type === 'racing' ? { ...prev, type: 'leg-map', from: 'racing' } : prev)
+  }
+  function handleViewLegMapFromLegProgress() {
+    setView(prev => prev.type === 'leg-progress' ? { ...prev, type: 'leg-map', from: 'leg-progress' } : prev)
+  }
+  function handleBackFromLegMap() {
+    setView(prev => prev.type !== 'leg-map' ? prev : { ...prev, type: prev.from })
+  }
+
   // Retry queued LAP actions (while racing with null resultId, or after last-leg optimistic complete)
   useEffect(() => {
     if (!pendingAction) return
@@ -247,6 +259,7 @@ export default function App() {
       nextRunner={view.nextRunner} nextLeg={view.nextLeg} nextRunnerEta={view.nextRunnerEta}
       onViewCourse={handleViewCourse}
       onViewLegProgress={view.targetPaceSecPerMile !== null ? handleViewLegProgress : null}
+      onViewLegMap={view.targetPaceSecPerMile !== null ? handleViewLegMapFromRacing : null}
     />
   )
   if (view.type === 'course') return (
@@ -270,6 +283,21 @@ export default function App() {
       teamName={view.team.name}
       backLabel="← TIMING"
       onBack={handleBackFromLegProgress}
+      onViewLegMap={handleViewLegMapFromLegProgress}
+    />
+  )
+  if (view.type === 'leg-map') return (
+    <LegMapScreen
+      runner={view.currentRunner ?? 'Runner'}
+      town={view.nextHandoff?.name ?? view.leg.name}
+      legN={view.leg.legNumber}
+      totalLegs={18}
+      distMiles={view.leg.distanceMiles}
+      startedAtMs={new Date(view.startedAt).getTime()}
+      targetPaceSecPerMile={view.targetPaceSecPerMile!}
+      teamName={view.team.name}
+      backLabel={view.from === 'leg-progress' ? '← LEG PROGRESS' : '← TIMING'}
+      onBack={handleBackFromLegMap}
     />
   )
   return <CompleteScreen race={view.race} team={view.team} pin={view.pin} />

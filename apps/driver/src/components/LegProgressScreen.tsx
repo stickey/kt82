@@ -45,12 +45,13 @@ interface Props {
   teamName: string
   backLabel: string
   onBack: () => void
+  onViewLegMap?: () => void
 }
 
 export function LegProgressScreen({
   runner, town, legN, totalLegs, distMiles,
   startedAtMs, targetPaceSecPerMile, teamName,
-  backLabel, onBack,
+  backLabel, onBack, onViewLegMap,
 }: Props) {
   const [nowMs, setNowMs] = useState(() => Date.now())
 
@@ -215,6 +216,21 @@ export function LegProgressScreen({
         <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: 10.5, color: 'var(--faint)', marginTop: 10, lineHeight: 1.4 }}>
           Position barely shifts with pace — but arrival can swing several minutes. Plan warm-ups off the spread, not a single time.
         </div>
+        {onViewLegMap && (
+          <button
+            onClick={onViewLegMap}
+            className="flex items-center justify-between w-full"
+            style={{ border: '1px solid var(--line)', borderRadius: 14, background: 'var(--panel2)',
+              cursor: 'pointer', padding: '13px 18px', minHeight: 52,
+              textAlign: 'left', marginTop: 16, width: '100%' }}
+          >
+            <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 14,
+              letterSpacing: '0.02em', lineHeight: 1, color: 'var(--text)', whiteSpace: 'nowrap' }}>
+              MAP
+            </span>
+            <span style={{ fontSize: 20, color: 'var(--accent)', flexShrink: 0 }}>→</span>
+          </button>
+        )}
       </div>
     </div>
   )

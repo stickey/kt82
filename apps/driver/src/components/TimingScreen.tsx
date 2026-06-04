@@ -19,13 +19,14 @@ interface Props {
   nextRunnerEta: string | null
   onViewCourse: () => void
   onViewLegProgress: (() => void) | null
+  onViewLegMap: (() => void) | null
 }
 
 function initials(name: string): string {
   return name.split(' ').slice(0, 2).map(w => w[0] ?? '').join('').toUpperCase()
 }
 
-export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff, currentRunner, raceStartedAt, onLapPress, onComplete, nextRunner, nextLeg, nextRunnerEta, onViewCourse, onViewLegProgress }: Props) {
+export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff, currentRunner, raceStartedAt, onLapPress, onComplete, nextRunner, nextLeg, nextRunnerEta, onViewCourse, onViewLegProgress, onViewLegMap }: Props) {
   const [elapsed, setElapsed] = useState(0)
   const [raceElapsed, setRaceElapsed] = useState(0)
   const [eta, setEta]         = useState<{ eta: string; secondsRemaining: number; status: 'on-pace' | 'ahead' | 'overdue' } | null>(null)
@@ -178,6 +179,28 @@ export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff,
               </span>
             </span>
             <span style={{ fontSize: 20, color: 'var(--ink)', flexShrink: 0 }}>→</span>
+          </button>
+        )}
+
+        {onViewLegMap && (
+          <button
+            onClick={onViewLegMap}
+            className="flex items-center justify-between w-full"
+            style={{ borderRadius: 14, background: 'var(--panel2)',
+              border: '1px solid var(--line)', cursor: 'pointer',
+              padding: '13px 18px', minHeight: 52, textAlign: 'left', marginTop: 8 }}
+          >
+            <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+              <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 14,
+                letterSpacing: '0.02em', lineHeight: 1, color: 'var(--text)', whiteSpace: 'nowrap' }}>
+                MAP
+              </span>
+              <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: 10,
+                letterSpacing: '0.06em', lineHeight: 1, color: 'var(--mut)', whiteSpace: 'nowrap' }}>
+                RUNNER POSITION
+              </span>
+            </span>
+            <span style={{ fontSize: 20, color: 'var(--accent)', flexShrink: 0 }}>→</span>
           </button>
         )}
 
