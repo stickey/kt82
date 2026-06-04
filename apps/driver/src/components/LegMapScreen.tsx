@@ -47,10 +47,27 @@ function makeRunnerIcon(): L.DivIcon {
   })
 }
 
-function makeEndpointIcon(label: string, eta?: string): L.DivIcon {
+function makeEndpointIcon(label: string): L.DivIcon {
   return L.divIcon({
     className: '',
     html: `<div style="
+      background:#1d1810;border:2px solid ${ACCENT};border-radius:6px;
+      padding:2px 7px;white-space:nowrap;
+      font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:10px;
+      letter-spacing:0.06em;color:#fbf6ee;
+    ">${label}</div>`,
+    iconSize: undefined,
+    iconAnchor: [0, 0],
+  })
+}
+
+// Destination label floats above the coordinate, centered horizontally
+function makeDestinationIcon(label: string, eta?: string): L.DivIcon {
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      display:inline-block;
+      transform:translate(-50%, calc(-100% - 6px));
       background:#1d1810;border:2px solid ${ACCENT};border-radius:6px;
       padding:2px 7px;white-space:nowrap;
       font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:10px;
@@ -102,7 +119,7 @@ export function LegMapScreen({
         icon: makeEndpointIcon(courseLeg.startName.split(' ').slice(0, 2).join(' ')),
       }).addTo(map)
       endMarkerRef.current = L.marker([courseLeg.endLat, courseLeg.endLng], {
-        icon: makeEndpointIcon(endLabel),
+        icon: makeDestinationIcon(endLabel),
       }).addTo(map)
     }
 
@@ -146,7 +163,7 @@ export function LegMapScreen({
 
     if (endMarkerRef.current) {
       const c = lpClock(ests[2].finishMs)
-      endMarkerRef.current.setIcon(makeEndpointIcon(endLabel, `${c.full} ${c.ap}`))
+      endMarkerRef.current.setIcon(makeDestinationIcon(endLabel, `${c.full} ${c.ap}`))
     }
   }, [nowMs]) // eslint-disable-line react-hooks/exhaustive-deps
 
