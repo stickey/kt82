@@ -24,6 +24,7 @@ type View =
 export default function App() {
   const [view, setView] = useState<View>({ type: 'loading' })
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(() => peek())
+  const [legMapLastUpdatedMs, setLegMapLastUpdatedMs] = useState<number | undefined>(undefined)
 
   useEffect(() => {
     publicApi.get<Race>('/races/active')
@@ -191,11 +192,13 @@ export default function App() {
   // Poll for leg changes while on leg-map (can't press LAP from there)
   useEffect(() => {
     if (view.type !== 'leg-map') return
+    setLegMapLastUpdatedMs(undefined)
     const { pin, team, race, resultId } = view
     const api = createDriverApi(pin)
     const id = setInterval(async () => {
       try {
         const state = await api.get<CurrentState>(`/teams/${team.id}/current`)
+        setLegMapLastUpdatedMs(Date.now())
         if (state.status === 'not-started') {
           if (!state.nextLeg) return
           setView({ type: 'start', race, team, pin, nextLeg: state.nextLeg, nextRunner: state.nextRunner?.name ?? null })
@@ -330,6 +333,7 @@ export default function App() {
       teamName={view.team.name}
       backLabel={view.from === 'leg-progress' ? '← LEG PROGRESS' : '← TIMING'}
       onBack={handleBackFromLegMap}
+      lastUpdatedMs={legMapLastUpdatedMs}
     />
   )
   return <CompleteScreen race={view.race} team={view.team} pin={view.pin} />
