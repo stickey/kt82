@@ -175,12 +175,12 @@ export function LegMapScreen({
     const minPos = lerpAlongPolyline(routeCoords, ests[ests.length - 1].frac)
     const maxPos = lerpAlongPolyline(routeCoords, ests[0].frac)
 
-    const legTime = fmtElapsed(ests[2].remain * 1000)
+    const countdown = fmtElapsed(ests[2].remain * 1000)
     if (runnerMarkerRef.current) {
       runnerMarkerRef.current.setLatLng(targetPos)
-      runnerMarkerRef.current.setIcon(makeRunnerIcon(legTime))
+      runnerMarkerRef.current.setIcon(makeRunnerIcon(countdown))
     } else {
-      runnerMarkerRef.current = L.marker(targetPos, { icon: makeRunnerIcon(legTime), zIndexOffset: 1000 }).addTo(map)
+      runnerMarkerRef.current = L.marker(targetPos, { icon: makeRunnerIcon(countdown), zIndexOffset: 1000 }).addTo(map)
     }
 
     if (rangeLineRef.current) {
