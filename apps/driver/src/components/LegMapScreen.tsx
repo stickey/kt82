@@ -47,12 +47,24 @@ function makeRunnerIcon(): L.DivIcon {
   })
 }
 
-const DOT_OPTIONS = {
-  radius: 6,
-  fillColor: '#e84040',
-  color: '#fff',
-  weight: 2,
-  fillOpacity: 1,
+const START_DOT = { radius: 6, fillColor: '#22c55e', color: '#fff', weight: 2, fillOpacity: 1 }
+const END_DOT   = { radius: 6, fillColor: '#e84040', color: '#fff', weight: 2, fillOpacity: 1 }
+
+// Start label floats below the coordinate, centered horizontally
+function makeStartIcon(label: string): L.DivIcon {
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      display:inline-block;
+      transform:translate(-50%, 8px);
+      background:#1d1810;border:2px solid #22c55e;border-radius:6px;
+      padding:2px 7px;white-space:nowrap;
+      font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:10px;
+      letter-spacing:0.06em;color:#fbf6ee;
+    ">${label}</div>`,
+    iconSize: undefined,
+    iconAnchor: [0, 0],
+  })
 }
 
 // Destination label floats above the coordinate, centered horizontally
@@ -109,8 +121,11 @@ export function LegMapScreen({
     L.polyline(routeCoords, { color: ACCENT, weight: 4, opacity: 0.85 }).addTo(map)
 
     if (courseLeg) {
-      L.circleMarker([courseLeg.startLat, courseLeg.startLng], DOT_OPTIONS).addTo(map)
-      L.circleMarker([courseLeg.endLat, courseLeg.endLng], DOT_OPTIONS).addTo(map)
+      L.circleMarker([courseLeg.startLat, courseLeg.startLng], START_DOT).addTo(map)
+      L.marker([courseLeg.startLat, courseLeg.startLng], {
+        icon: makeStartIcon(courseLeg.startName.split(' ').slice(0, 2).join(' ')),
+      }).addTo(map)
+      L.circleMarker([courseLeg.endLat, courseLeg.endLng], END_DOT).addTo(map)
       endMarkerRef.current = L.marker([courseLeg.endLat, courseLeg.endLng], {
         icon: makeDestinationIcon(endLabel),
       }).addTo(map)
