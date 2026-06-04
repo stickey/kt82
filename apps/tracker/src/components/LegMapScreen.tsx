@@ -41,16 +41,26 @@ function lpClock(ms: number): { full: string; ap: string } {
   return { full: `${h}:${m}`, ap: d.getHours() < 12 ? 'AM' : 'PM' }
 }
 
-function makeRunnerIcon(): L.DivIcon {
+function makeRunnerIcon(legTime: string): L.DivIcon {
   return L.divIcon({
     className: '',
-    html: `<div style="
-      width:28px;height:28px;border-radius:50%;
-      background:${ACCENT};border:3px solid #fff;
-      box-shadow:0 0 8px rgba(255,90,31,0.7);
-      display:flex;align-items:center;justify-content:center;
-      font-size:14px;line-height:1;
-    ">🏃</div>`,
+    html: `<div style="position:relative;width:28px;height:28px;">
+      <div style="
+        width:28px;height:28px;border-radius:50%;
+        background:${ACCENT};border:3px solid #fff;
+        box-shadow:0 0 8px rgba(255,90,31,0.7);
+        display:flex;align-items:center;justify-content:center;
+        font-size:14px;line-height:1;
+      ">🏃</div>
+      <div style="
+        position:absolute;top:32px;left:50%;transform:translateX(-50%);
+        white-space:nowrap;
+        background:rgba(19,17,10,0.88);border:1px solid rgba(255,90,31,0.5);border-radius:4px;
+        padding:1px 5px;
+        font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11px;
+        color:#fbf6ee;letter-spacing:0.02em;
+      ">${legTime}</div>
+    </div>`,
     iconSize: [28, 28],
     iconAnchor: [14, 14],
   })
@@ -164,10 +174,12 @@ export function LegMapScreen({
     const minPos = lerpAlongPolyline(routeCoords, ests[ests.length - 1].frac)
     const maxPos = lerpAlongPolyline(routeCoords, ests[0].frac)
 
+    const legTime = fmtElapsed(nowMs - startedAtMs)
     if (runnerMarkerRef.current) {
       runnerMarkerRef.current.setLatLng(targetPos)
+      runnerMarkerRef.current.setIcon(makeRunnerIcon(legTime))
     } else {
-      runnerMarkerRef.current = L.marker(targetPos, { icon: makeRunnerIcon(), zIndexOffset: 1000 }).addTo(map)
+      runnerMarkerRef.current = L.marker(targetPos, { icon: makeRunnerIcon(legTime), zIndexOffset: 1000 }).addTo(map)
     }
 
     if (rangeLineRef.current) {
@@ -216,18 +228,12 @@ export function LegMapScreen({
             {backLabel}
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ textAlign: 'right' }}>
+            {raceStartedAtMs !== null && (
               <div>
-                <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 8, letterSpacing: '0.08em', color: 'rgba(251,246,238,0.4)' }}>LEG </span>
-                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 12, color: 'rgba(251,246,238,0.85)' }}>{fmtElapsed(nowMs - startedAtMs)}</span>
+                <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 8, letterSpacing: '0.08em', color: 'rgba(251,246,238,0.4)' }}>RACE </span>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 12, color: 'rgba(251,246,238,0.85)' }}>{fmtElapsed(nowMs - raceStartedAtMs)}</span>
               </div>
-              {raceStartedAtMs !== null && (
-                <div>
-                  <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 8, letterSpacing: '0.08em', color: 'rgba(251,246,238,0.4)' }}>RACE </span>
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 12, color: 'rgba(251,246,238,0.85)' }}>{fmtElapsed(nowMs - raceStartedAtMs)}</span>
-                </div>
-              )}
-            </div>
+            )}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <div className="live-dot" style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--green)', flexShrink: 0 }} />
               <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: '0.1em', color: 'rgba(251,246,238,0.7)' }}>LIVE</span>
