@@ -192,6 +192,7 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
       totalLegs={timeline.length || 18}
       distMiles={activeItem.leg.distanceMiles}
       startedAtMs={new Date(activeItem.result.startedAt).getTime()}
+      raceStartedAtMs={raceStartedAt ? new Date(raceStartedAt).getTime() : null}
       targetPaceSecPerMile={activeItem.assignment.targetPaceSecPerMile}
       teamName={teamName}
       backLabel={`← ${teamName}`}

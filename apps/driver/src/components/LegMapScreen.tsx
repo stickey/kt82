@@ -10,6 +10,7 @@ interface Props {
   totalLegs: number
   distMiles: number
   startedAtMs: number
+  raceStartedAtMs: number | null
   targetPaceSecPerMile: number
   teamName: string
   backLabel: string
@@ -23,6 +24,14 @@ function lpPace(sec: number): string {
   const m = Math.floor(totalSec / 60)
   const s = totalSec % 60
   return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+function fmtElapsed(ms: number): string {
+  const s = Math.max(0, Math.floor(ms / 1000))
+  const h = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  const ss = (s % 60).toString().padStart(2, '0')
+  return h > 0 ? `${h}:${m.toString().padStart(2, '0')}:${ss}` : `${m}:${ss}`
 }
 
 function lpClock(ms: number): { full: string; ap: string } {
@@ -86,7 +95,7 @@ function makeDestinationIcon(label: string, eta?: string): L.DivIcon {
 
 export function LegMapScreen({
   runner, town, legN, totalLegs, distMiles,
-  startedAtMs, targetPaceSecPerMile, teamName, backLabel, onBack,
+  startedAtMs, raceStartedAtMs, targetPaceSecPerMile, teamName, backLabel, onBack,
 }: Props) {
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<L.Map | null>(null)
@@ -206,9 +215,23 @@ export function LegMapScreen({
           >
             {backLabel}
           </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div className="live-dot" style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--green)', flexShrink: 0 }} />
-            <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: '0.1em', color: 'rgba(251,246,238,0.7)' }}>LIVE</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ textAlign: 'right' }}>
+              <div>
+                <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 8, letterSpacing: '0.08em', color: 'rgba(251,246,238,0.4)' }}>LEG </span>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 12, color: 'rgba(251,246,238,0.85)' }}>{fmtElapsed(nowMs - startedAtMs)}</span>
+              </div>
+              {raceStartedAtMs !== null && (
+                <div>
+                  <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 8, letterSpacing: '0.08em', color: 'rgba(251,246,238,0.4)' }}>RACE </span>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 12, color: 'rgba(251,246,238,0.85)' }}>{fmtElapsed(nowMs - raceStartedAtMs)}</span>
+                </div>
+              )}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div className="live-dot" style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--green)', flexShrink: 0 }} />
+              <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: '0.1em', color: 'rgba(251,246,238,0.7)' }}>LIVE</span>
+            </div>
           </div>
         </div>
         <div style={{ marginTop: 4 }}>

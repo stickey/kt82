@@ -325,6 +325,7 @@ export default function App() {
       totalLegs={18}
       distMiles={view.leg.distanceMiles}
       startedAtMs={new Date(view.startedAt).getTime()}
+      raceStartedAtMs={view.raceStartedAt ? new Date(view.raceStartedAt).getTime() : null}
       targetPaceSecPerMile={view.targetPaceSecPerMile!}
       teamName={view.team.name}
       backLabel={view.from === 'leg-progress' ? '← LEG PROGRESS' : '← TIMING'}
