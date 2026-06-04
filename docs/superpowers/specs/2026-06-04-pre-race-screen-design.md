@@ -29,6 +29,8 @@ if (!hasStarted) return (
 )
 ```
 
+**Automatic transition to live view:** Because `PreRaceScreen` is an early-return inside `TeamDetail` (not a separate mounted component), `TeamDetail`'s existing 30-second polling loop (`/teams/${teamId}/timeline`) continues to run while the pre-race screen is displayed. When a leg transitions to `in-progress` or `completed`, the next poll updates `timeline`, `hasStarted` flips to `true`, the gate no longer fires, and the user automatically sees the live race view — no extra polling or transition logic required in `PreRaceScreen`.
+
 **PreRaceScreen props:**
 ```ts
 interface Props {
