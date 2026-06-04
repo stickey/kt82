@@ -9,4 +9,7 @@ public/
 .superpowers/
 .claude/settings.local.json
 .claude/worktrees/
+.claude/skills/
+.agents/
+.copilot/
 .DS_Store
