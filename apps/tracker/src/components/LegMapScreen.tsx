@@ -71,7 +71,6 @@ export function LegMapScreen({
       doubleClickZoom: false,
       keyboard: false,
       touchZoom: false,
-      tap: false,
       attributionControl: true,
     })
 
