@@ -18,6 +18,20 @@ interface Props {
 
 const ACCENT = '#ff5a1f'
 
+function lpPace(sec: number): string {
+  const totalSec = Math.round(sec)
+  const m = Math.floor(totalSec / 60)
+  const s = totalSec % 60
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+function lpClock(ms: number): { full: string; ap: string } {
+  const d = new Date(ms)
+  const h = d.getHours() % 12 || 12
+  const m = d.getMinutes().toString().padStart(2, '0')
+  return { full: `${h}:${m}`, ap: d.getHours() < 12 ? 'AM' : 'PM' }
+}
+
 function makeRunnerIcon(): L.DivIcon {
   return L.divIcon({
     className: '',
@@ -33,7 +47,7 @@ function makeRunnerIcon(): L.DivIcon {
   })
 }
 
-function makeEndpointIcon(label: string): L.DivIcon {
+function makeEndpointIcon(label: string, eta?: string): L.DivIcon {
   return L.divIcon({
     className: '',
     html: `<div style="
@@ -41,7 +55,7 @@ function makeEndpointIcon(label: string): L.DivIcon {
       padding:2px 7px;white-space:nowrap;
       font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:10px;
       letter-spacing:0.06em;color:#fbf6ee;
-    ">${label}</div>`,
+    ">${label}${eta ? `<span style="display:block;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:${ACCENT};letter-spacing:0.02em;margin-top:2px;">${eta}</span>` : ''}</div>`,
     iconSize: undefined,
     iconAnchor: [0, 0],
   })
@@ -55,10 +69,12 @@ export function LegMapScreen({
   const mapRef = useRef<L.Map | null>(null)
   const runnerMarkerRef = useRef<L.Marker | null>(null)
   const rangeLineRef = useRef<L.Polyline | null>(null)
+  const endMarkerRef = useRef<L.Marker | null>(null)
   const [nowMs, setNowMs] = useState(() => Date.now())
 
   const courseLeg = COURSE_LEGS.find(l => l.legNumber === legN)
   const routeCoords: [number, number][] = courseLeg?.routeCoords ?? [[0, 0], [0, 0]]
+  const endLabel = courseLeg ? courseLeg.endName.split(' ').slice(0, 2).join(' ') : town
 
   // Initialize map once on mount
   useEffect(() => {
@@ -79,22 +95,19 @@ export function LegMapScreen({
       maxZoom: 19,
     }).addTo(map)
 
-    // Route polyline
     L.polyline(routeCoords, { color: ACCENT, weight: 4, opacity: 0.85 }).addTo(map)
 
-    // Start marker
     if (courseLeg) {
       L.marker([courseLeg.startLat, courseLeg.startLng], {
         icon: makeEndpointIcon(courseLeg.startName.split(' ').slice(0, 2).join(' ')),
       }).addTo(map)
-      L.marker([courseLeg.endLat, courseLeg.endLng], {
-        icon: makeEndpointIcon(courseLeg.endName.split(' ').slice(0, 2).join(' ')),
+      endMarkerRef.current = L.marker([courseLeg.endLat, courseLeg.endLng], {
+        icon: makeEndpointIcon(endLabel),
       }).addTo(map)
     }
 
-    // Fit to route with padding to leave room for chrome overlay
     const bounds = L.latLngBounds(routeCoords)
-    map.fitBounds(bounds, { paddingTopLeft: [20, 100], paddingBottomRight: [20, 40] })
+    map.fitBounds(bounds, { paddingTopLeft: [20, 100], paddingBottomRight: [20, 160] })
 
     mapRef.current = map
 
@@ -103,10 +116,11 @@ export function LegMapScreen({
       mapRef.current = null
       runnerMarkerRef.current = null
       rangeLineRef.current = null
+      endMarkerRef.current = null
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Update runner position and range segment every tick
+  // Update runner position, range segment, and end marker ETA every tick
   useEffect(() => {
     const map = mapRef.current
     if (!map) return
@@ -129,6 +143,11 @@ export function LegMapScreen({
         color: ACCENT, weight: 10, opacity: 0.25,
       }).addTo(map)
     }
+
+    if (endMarkerRef.current) {
+      const c = lpClock(ests[2].finishMs)
+      endMarkerRef.current.setIcon(makeEndpointIcon(endLabel, `${c.full} ${c.ap}`))
+    }
   }, [nowMs]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // 1-second clock tick
@@ -137,18 +156,18 @@ export function LegMapScreen({
     return () => clearInterval(id)
   }, [])
 
+  const ests = lpEstimates(startedAtMs, nowMs, distMiles, targetPaceSecPerMile)
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100dvh', background: '#13110a' }}>
-      {/* Map fills full viewport */}
       <div ref={mapContainerRef} style={{ width: '100%', height: '100%' }} />
 
-      {/* Chrome overlay */}
+      {/* Top chrome */}
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1000,
         background: 'linear-gradient(to bottom, rgba(19,17,10,0.85) 0%, rgba(19,17,10,0) 100%)',
         padding: '8px 18px 32px',
       }}>
-        {/* Top bar */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <button
             onClick={onBack}
@@ -167,8 +186,6 @@ export function LegMapScreen({
             <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: '0.1em', color: 'rgba(251,246,238,0.7)' }}>LIVE</span>
           </div>
         </div>
-
-        {/* Runner info */}
         <div style={{ marginTop: 4 }}>
           <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: '0.13em', color: ACCENT, textTransform: 'uppercase' }}>
             LEG {legN} OF {totalLegs} · {teamName.toUpperCase()}
@@ -180,6 +197,35 @@ export function LegMapScreen({
             → {town.toUpperCase()} · {distMiles.toFixed(1)} MI
           </div>
         </div>
+      </div>
+
+      {/* Bottom chrome — estimates table */}
+      <div style={{
+        position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 1000,
+        background: 'linear-gradient(to top, rgba(19,17,10,0.92) 0%, rgba(19,17,10,0) 100%)',
+        padding: '40px 18px 20px',
+      }}>
+        <div style={{ display: 'flex', marginBottom: 4, paddingBottom: 5, borderBottom: '1px solid rgba(251,246,238,0.1)' }}>
+          <span style={{ flex: '0 0 56px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 8, letterSpacing: '0.1em', color: 'rgba(251,246,238,0.35)' }}>PACE</span>
+          <span style={{ flex: 1, textAlign: 'right', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 8, letterSpacing: '0.1em', color: 'rgba(251,246,238,0.35)' }}>ARRIVES</span>
+        </div>
+        {ests.map((e, i) => {
+          const isTarget = e.off === 0
+          const c = lpClock(e.finishMs)
+          return (
+            <div key={e.off} style={{
+              display: 'flex', alignItems: 'center', padding: '4px 0',
+              borderBottom: i < ests.length - 1 ? '1px solid rgba(251,246,238,0.06)' : 'none',
+            }}>
+              <span style={{ flex: '0 0 56px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 13, color: isTarget ? ACCENT : 'rgba(251,246,238,0.75)' }}>
+                {lpPace(e.p)}
+              </span>
+              <span style={{ flex: 1, textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 13, color: isTarget ? ACCENT : 'rgba(251,246,238,0.75)' }}>
+                {c.full}<span style={{ fontSize: 9, color: 'rgba(251,246,238,0.4)', marginLeft: 3 }}>{c.ap}</span>
+              </span>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
