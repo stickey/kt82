@@ -15,6 +15,7 @@ interface Props {
   teamName: string
   backLabel: string
   onBack: () => void
+  lastUpdatedMs?: number
 }
 
 const ACCENT = '#ff5a1f'
@@ -106,6 +107,7 @@ function makeDestinationIcon(label: string, eta?: string): L.DivIcon {
 export function LegMapScreen({
   runner, town, legN, totalLegs, distMiles,
   startedAtMs, raceStartedAtMs, targetPaceSecPerMile, teamName, backLabel, onBack,
+  lastUpdatedMs,
 }: Props) {
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<L.Map | null>(null)
@@ -235,9 +237,18 @@ export function LegMapScreen({
                 <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 12, color: 'rgba(251,246,238,0.85)' }}>{fmtElapsed(nowMs - raceStartedAtMs)}</span>
               </div>
             )}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <div className="live-dot" style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--green)', flexShrink: 0 }} />
-              <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: '0.1em', color: 'rgba(251,246,238,0.7)' }}>LIVE</span>
+            <div>
+              <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 8, letterSpacing: '0.08em', color: 'rgba(251,246,238,0.4)' }}>LEG </span>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 12, color: 'rgba(251,246,238,0.85)' }}>{fmtElapsed(nowMs - startedAtMs)}</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div className="live-dot" style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--green)', flexShrink: 0 }} />
+                <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: '0.1em', color: 'rgba(251,246,238,0.7)' }}>LIVE</span>
+              </div>
+              {lastUpdatedMs !== undefined && Math.floor((nowMs - lastUpdatedMs) / 1000) > 0 && (
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 10, color: 'rgba(251,246,238,0.35)' }}>{Math.floor((nowMs - lastUpdatedMs) / 1000)}s ago</span>
+              )}
             </div>
           </div>
         </div>
