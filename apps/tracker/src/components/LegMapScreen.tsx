@@ -206,6 +206,7 @@ export function LegMapScreen({
   }, [])
 
   const ests = lpEstimates(startedAtMs, nowMs, distMiles, targetPaceSecPerMile)
+  const secsAgo = lastUpdatedMs !== undefined ? Math.floor((nowMs - lastUpdatedMs) / 1000) : 0
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100dvh', background: '#13110a' }}>
@@ -246,8 +247,8 @@ export function LegMapScreen({
                 <div className="live-dot" style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--green)', flexShrink: 0 }} />
                 <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: '0.1em', color: 'rgba(251,246,238,0.7)' }}>LIVE</span>
               </div>
-              {lastUpdatedMs !== undefined && Math.floor((nowMs - lastUpdatedMs) / 1000) > 0 && (
-                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 10, color: 'rgba(251,246,238,0.35)' }}>{Math.floor((nowMs - lastUpdatedMs) / 1000)}s ago</span>
+              {secsAgo > 0 && (
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 10, color: 'rgba(251,246,238,0.35)' }}>{secsAgo}s ago</span>
               )}
             </div>
           </div>
