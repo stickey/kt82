@@ -121,7 +121,19 @@ Shown when a team has not yet started leg 1 — replaces the live race view. Onc
 **Testing the pre-race screen:**
 - `?prerace` — forces the pre-race screen regardless of race state. Remove param + refresh to return to live view.
 - `?startoffset=<ms>` — sets the start time to `now + <ms>` milliseconds. Pre-race shows with a live countdown; when it reaches zero the screen automatically transitions to the live view (assuming the race has started in the DB). Implies `?prerace` behavior for the duration.
-- Example: `http://localhost:5173/#team/<id>?startoffset=30000` — shows a 30-second countdown then transitions.
+
+The query param goes **before** the `#`, e.g.:
+```
+# Force pre-race (production)
+https://kt82.onrender.com/tracker/?prerace#team/<teamId>
+
+# 60-second countdown then auto-transition (production)
+https://kt82.onrender.com/tracker/?startoffset=60000#team/<teamId>
+
+# Local dev
+http://localhost:5173/?prerace#team/<teamId>
+http://localhost:5173/?startoffset=60000#team/<teamId>
+```
 
 ## File Structure
 
