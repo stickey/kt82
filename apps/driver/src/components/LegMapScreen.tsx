@@ -17,7 +17,6 @@ interface Props {
 }
 
 const ACCENT = '#ff5a1f'
-const ROUTE_COLOR = '#ff5a1f'
 
 function makeRunnerIcon(): L.DivIcon {
   return L.divIcon({
@@ -59,11 +58,7 @@ export function LegMapScreen({
   const [nowMs, setNowMs] = useState(() => Date.now())
 
   const courseLeg = COURSE_LEGS.find(l => l.legNumber === legN)
-  const routeCoords: [number, number][] = courseLeg?.routeCoords ?? (
-    courseLeg
-      ? [[courseLeg.startLat, courseLeg.startLng], [courseLeg.endLat, courseLeg.endLng]]
-      : [[0, 0], [0, 0]]
-  )
+  const routeCoords: [number, number][] = courseLeg?.routeCoords ?? [[0, 0], [0, 0]]
 
   // Initialize map once on mount
   useEffect(() => {
@@ -86,7 +81,7 @@ export function LegMapScreen({
     }).addTo(map)
 
     // Route polyline
-    L.polyline(routeCoords, { color: ROUTE_COLOR, weight: 4, opacity: 0.85 }).addTo(map)
+    L.polyline(routeCoords, { color: ACCENT, weight: 4, opacity: 0.85 }).addTo(map)
 
     // Start marker
     if (courseLeg) {
