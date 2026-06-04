@@ -173,7 +173,7 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
       teamName={teamName}
       backLabel={`← ${teamName}`}
       onBack={() => setShowLegProgress(false)}
-      onViewLegMap={() => setShowLegMap(true)}
+      onViewLegMap={() => { setShowLegProgress(false); setShowLegMap(true) }}
     />
   )
 
