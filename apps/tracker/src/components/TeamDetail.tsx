@@ -222,6 +222,7 @@ export function TeamDetail({ teamId, teamName, raceDate, onBack }: Props) {
       teamName={teamName}
       backLabel={`← ${teamName}`}
       onBack={() => setShowLegMap(false)}
+      lastUpdatedMs={lastUpdatedRef.current?.getTime()}
     />
   )
 
