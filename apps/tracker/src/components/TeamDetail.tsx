@@ -98,6 +98,13 @@ export function TeamDetail({ teamId, teamName, onBack }: Props) {
   const activeItem = timeline.find(t => t.status === 'in-progress')
   const sorted     = [...timeline].sort((a, b) => a.leg.legNumber - b.leg.legNumber)
 
+  // Auto-exit map/progress views when the active leg changes
+  const activeResultId = activeItem?.result?.id ?? null
+  useEffect(() => {
+    setShowLegMap(false)
+    setShowLegProgress(false)
+  }, [activeResultId])
+
   // Race timestamps
   const raceStartedAt = sorted.find(t => t.result?.startedAt)?.result?.startedAt ?? null
   const allDone       = timeline.length > 0 && timeline.every(t => t.status === 'completed')

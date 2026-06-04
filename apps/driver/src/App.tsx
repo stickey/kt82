@@ -188,6 +188,37 @@ export default function App() {
     setView(prev => prev.type !== 'leg-map' ? prev : { ...prev, type: prev.from })
   }
 
+  // Poll for leg changes while on leg-map (can't press LAP from there)
+  useEffect(() => {
+    if (view.type !== 'leg-map') return
+    const { pin, team, race, resultId } = view
+    const api = createDriverApi(pin)
+    const id = setInterval(async () => {
+      try {
+        const state = await api.get<CurrentState>(`/teams/${team.id}/current`)
+        if (state.status === 'not-started') {
+          if (!state.nextLeg) return
+          setView({ type: 'start', race, team, pin, nextLeg: state.nextLeg, nextRunner: state.nextRunner?.name ?? null })
+        } else if (state.result.id !== resultId) {
+          setView({
+            type: 'racing', race, team, pin,
+            resultId: state.result.id,
+            leg: state.currentLeg,
+            startedAt: state.result.startedAt,
+            nextHandoff: state.nextHandoff,
+            currentRunner: state.currentRunner?.name ?? null,
+            raceStartedAt: state.raceStartedAt ?? null,
+            nextRunner: state.nextRunner?.name ?? null,
+            nextLeg: state.nextLeg ?? null,
+            nextRunnerEta: state.nextRunnerEta ?? null,
+            targetPaceSecPerMile: state.targetPaceSecPerMile ?? null,
+          })
+        }
+      } catch { /* ignore, keep polling */ }
+    }, 15_000)
+    return () => clearInterval(id)
+  }, [view.type]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Retry queued LAP actions (while racing with null resultId, or after last-leg optimistic complete)
   useEffect(() => {
     if (!pendingAction) return
