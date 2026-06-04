@@ -70,7 +70,7 @@ const START_DOT = { radius: 6, fillColor: '#22c55e', color: '#fff', weight: 2, f
 const END_DOT   = { radius: 6, fillColor: '#e84040', color: '#fff', weight: 2, fillOpacity: 1 }
 
 // Start label floats below the coordinate, centered horizontally
-function makeStartIcon(label: string): L.DivIcon {
+function makeStartIcon(label: string, startTime?: string): L.DivIcon {
   return L.divIcon({
     className: '',
     html: `<div style="
@@ -80,7 +80,7 @@ function makeStartIcon(label: string): L.DivIcon {
       padding:2px 7px;white-space:nowrap;
       font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:10px;
       letter-spacing:0.06em;color:#fbf6ee;
-    ">${label}</div>`,
+    ">${label}${startTime ? `<span style="display:block;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#22c55e;letter-spacing:0.02em;margin-top:2px;">${startTime}</span>` : ''}</div>`,
     iconSize: undefined,
     iconAnchor: [0, 0],
   })
@@ -140,9 +140,10 @@ export function LegMapScreen({
     L.polyline(routeCoords, { color: ACCENT, weight: 4, opacity: 0.85 }).addTo(map)
 
     if (courseLeg) {
+      const sc = lpClock(startedAtMs)
       L.circleMarker([courseLeg.startLat, courseLeg.startLng], START_DOT).addTo(map)
       L.marker([courseLeg.startLat, courseLeg.startLng], {
-        icon: makeStartIcon(courseLeg.startName.split(' ').slice(0, 2).join(' ')),
+        icon: makeStartIcon(courseLeg.startName.split(' ').slice(0, 2).join(' '), `${sc.full} ${sc.ap}`),
       }).addTo(map)
       L.circleMarker([courseLeg.endLat, courseLeg.endLng], END_DOT).addTo(map)
       endMarkerRef.current = L.marker([courseLeg.endLat, courseLeg.endLng], {
