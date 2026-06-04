@@ -180,7 +180,6 @@ export function TeamDetail({ teamId, teamName, raceDate, onBack }: Props) {
       teamName={teamName}
       assignedStartTime={assignedStartTime}
       timeline={timeline}
-      onBack={onBack}
     />
   )
 

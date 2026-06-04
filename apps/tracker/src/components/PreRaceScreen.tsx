@@ -6,7 +6,6 @@ interface Props {
   teamName: string
   assignedStartTime: Date
   timeline: LegTimelineItem[]
-  onBack: () => void
 }
 
 function prClock(d: Date) {
@@ -177,14 +176,13 @@ function TrailLeg({ legN, runnerName, miles, mapUrl }: TrailLegProps) {
   )
 }
 
-export function PreRaceScreen({ teamName, assignedStartTime, timeline, onBack }: Props) {
+export function PreRaceScreen({ teamName, assignedStartTime, timeline }: Props) {
   const [nowMs, setNowMs] = useState(Date.now())
   useEffect(() => {
     const id = setInterval(() => setNowMs(Date.now()), 1000)
     return () => clearInterval(id)
   }, [])
 
-  // ETA schedule — placeholder until Task 3 fills in the Hero + Trail
   const schedule = useMemo(() => {
     let ms = assignedStartTime.getTime()
     return COURSE_LEGS.map(courseLeg => {
