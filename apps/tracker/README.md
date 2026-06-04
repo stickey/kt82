@@ -104,6 +104,25 @@ Reachable from a team's detail page by tapping **"THE COURSE / ALL 18 LEGS →"*
 
 Back button returns to the team detail. The course data (coordinates, difficulty, mileage) is static — it reflects the fixed KT82 course, independent of what legs have been seeded into the database.
 
+## Pre-Race Screen
+
+Shown when a team has not yet started leg 1 — replaces the live race view. Once the team starts, the 30-second poll detects the change and automatically shows the live view.
+
+**What it shows:**
+- **Header** — team name, `PRE-RACE · ESTIMATES ONLY` status, `YOUR START` card with gun time
+- **Countdown** — live `HH:MM:SS` timer to the team's start time; turns green and reads `RACE IN PROGRESS` once started
+- **Hero** — orange card with team start time, estimated finish time in Hermann, total miles/legs
+- **The Route** — full 18-leg trail timeline: start node, alternating leg segments (runner, distance, route link) and handoff nodes (estimated time, location, map link), finish node
+
+**Start time:** Hardcoded at **7:00 AM on the race date** (`race.date` with hours set to 7 local time). This is a hardcode for the single team currently using this feature — revisit if multiple teams with different start times need support.
+
+**Estimated handoff times** are computed by walking `COURSE_LEGS` in order and accumulating `targetPaceSecPerMile × distanceMiles` from the start time. Legs with no assignment contribute 0 duration (times after them are still shown but may be wrong).
+
+**Testing the pre-race screen:**
+- `?prerace` — forces the pre-race screen regardless of race state. Remove param + refresh to return to live view.
+- `?startoffset=<ms>` — sets the start time to `now + <ms>` milliseconds. Pre-race shows with a live countdown; when it reaches zero the screen automatically transitions to the live view (assuming the race has started in the DB). Implies `?prerace` behavior for the duration.
+- Example: `http://localhost:5173/#team/<id>?startoffset=30000` — shows a 30-second countdown then transitions.
+
 ## File Structure
 
 ```
@@ -116,4 +135,5 @@ src/
     LegProgressScreen.tsx — pace-swept progress bar + arrival table for the live leg
     LegMapScreen.tsx      — full-screen Leaflet map with runner position, route, ETA label, estimates table
     CourseScreen.tsx      — all-18-legs course overview with map links and live clock
+    PreRaceScreen.tsx     — pre-race landing page: countdown, hero, trail timeline (shown before leg 1 starts)
 ```
