@@ -175,7 +175,7 @@ export function LegMapScreen({
     const minPos = lerpAlongPolyline(routeCoords, ests[ests.length - 1].frac)
     const maxPos = lerpAlongPolyline(routeCoords, ests[0].frac)
 
-    const legTime = fmtElapsed(nowMs - startedAtMs)
+    const legTime = fmtElapsed(ests[2].remain * 1000)
     if (runnerMarkerRef.current) {
       runnerMarkerRef.current.setLatLng(targetPos)
       runnerMarkerRef.current.setIcon(makeRunnerIcon(legTime))
