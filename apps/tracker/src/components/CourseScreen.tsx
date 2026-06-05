@@ -91,7 +91,7 @@ function LegRow({ leg, state, isNextUp, isLast, runnerName, startTime, endTime, 
       columnGap: 12, padding: '9px 12px 9px 16px', background: rowBg,
       borderRadius: isNow ? 16 : isDone ? 12 : 0,
       border: isNow ? '1px solid var(--accent)' : 'none',
-      borderBottom: (isNow || isDone || isLast) ? 'none' : '1px solid var(--line2)' }}>
+      borderBottom: isNow ? undefined : (isDone || isLast) ? 'none' : '1px solid var(--line2)' }}>
 
       {/* Left status stripe */}
       <div style={{ position: 'absolute', left: 0,
