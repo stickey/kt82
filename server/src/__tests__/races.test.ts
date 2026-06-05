@@ -102,6 +102,44 @@ describe('DELETE /api/races/:id/results', () => {
   })
 })
 
+describe('DELETE /api/races/:id/assignments', () => {
+  it('returns 401 without admin password', async () => {
+    const race = await createRace()
+    const res = await request(app).delete(`/api/races/${race.id}/assignments`)
+    expect(res.status).toBe(401)
+  })
+
+  it('returns 404 for unknown race', async () => {
+    const res = await request(app)
+      .delete('/api/races/nonexistent/assignments')
+      .set(ADMIN)
+    expect(res.status).toBe(404)
+  })
+
+  it('deletes all assignments and results, unlocks teams, leaves legs and members intact', async () => {
+    const race = await createRace()
+    const leg = await createLeg(race.id, 1)
+    const team = await createTeam(race.id)
+    const member = await createMember(team.id)
+    await createAssignment(team.id, leg.id, member.id)
+    await createLegResult(team.id, leg.id)
+    await prisma.team.update({ where: { id: team.id }, data: { locked: true } })
+
+    const res = await request(app)
+      .delete(`/api/races/${race.id}/assignments`)
+      .set(ADMIN)
+    expect(res.status).toBe(200)
+    expect(res.body).toEqual({ ok: true })
+
+    expect(await prisma.legAssignment.count()).toBe(0)
+    expect(await prisma.legResult.count()).toBe(0)
+    const updatedTeam = await prisma.team.findUnique({ where: { id: team.id } })
+    expect(updatedTeam?.locked).toBe(false)
+    expect(await prisma.leg.count({ where: { raceId: race.id } })).toBe(1)
+    expect(await prisma.teamMember.count({ where: { teamId: team.id } })).toBe(1)
+  })
+})
+
 describe('DELETE /api/races/:id', () => {
   it('returns 401 without admin password', async () => {
     const race = await createRace()
