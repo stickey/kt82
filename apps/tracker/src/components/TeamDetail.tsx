@@ -126,7 +126,6 @@ export function TeamDetail({ teamId, teamName, raceDate, onBack }: Props) {
 
   // Status helpers
   const etaStatus  = activeItem?.eta?.status ?? 'on-pace'
-  const heroColor  = etaStatus === 'overdue' ? 'var(--red)' : 'var(--green)'
   const heroBg     = etaStatus === 'overdue' ? '#ff4d2e' : '#37d27a'
 
   function buildNavUrl(handoff: LegTimelineItem['leg']['handoff']): string {
