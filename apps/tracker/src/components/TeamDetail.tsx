@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { api, formatTime, formatElapsed, formatRaceTime } from '../api'
 import type { LegTimelineItem } from '../api'
 import { CourseScreen } from './CourseScreen'
-import { LegProgressScreen } from './LegProgressScreen'
 import { LegMapScreen } from './LegMapScreen'
 import { PreRaceScreen } from './PreRaceScreen'
 import { COURSE_LEGS } from '@kt82/shared'
@@ -18,25 +17,6 @@ function initials(name: string): string {
   return name.split(' ').slice(0, 2).map(w => w[0] ?? '').join('').toUpperCase()
 }
 
-function NavPin({ url }: { url: string }) {
-  if (!url) return null
-  return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={e => e.stopPropagation()}
-      title="Directions"
-      className="flex items-center justify-center flex-shrink-0"
-      style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--panel2)', border: '1px solid var(--line)' }}
-    >
-      <svg width="11" height="14" viewBox="0 0 24 24" fill="none">
-        <path d="M12 2C8.1 2 5 5.1 5 9c0 4.9 7 13 7 13s7-8.1 7-13c0-3.9-3.1-7-7-7z" fill="var(--faint)" />
-        <circle cx="12" cy="9" r="2.6" fill="var(--panel2)" />
-      </svg>
-    </a>
-  )
-}
 
 export function TeamDetail({ teamId, teamName, raceDate, onBack }: Props) {
   const [timeline, setTimeline] = useState<LegTimelineItem[]>([])
@@ -46,8 +26,6 @@ export function TeamDetail({ teamId, teamName, raceDate, onBack }: Props) {
   const [tick, setTick] = useState(0)
   const lastUpdatedRef = useRef<Date | null>(null)
   const notFoundRef = useRef(false)
-  const [showCourse, setShowCourse] = useState(false)
-  const [showLegProgress, setShowLegProgress] = useState(false)
   const [showLegMap, setShowLegMap] = useState(false)
 
   const params = useMemo(() => new URLSearchParams(window.location.search), [])
@@ -114,7 +92,6 @@ export function TeamDetail({ teamId, teamName, raceDate, onBack }: Props) {
   const activeResultId = activeItem?.result?.id ?? null
   useEffect(() => {
     setShowLegMap(false)
-    setShowLegProgress(false)
   }, [activeResultId])
 
   // Race timestamps
@@ -180,32 +157,6 @@ export function TeamDetail({ teamId, teamName, raceDate, onBack }: Props) {
       teamName={teamName}
       assignedStartTime={assignedStartTime}
       timeline={timeline}
-    />
-  )
-
-  if (showCourse) return (
-    <CourseScreen
-      currentLegNumber={allDone ? COURSE_LEGS.length + 1 : (activeItem?.leg.legNumber ?? 0)}
-      raceStartedAt={raceStartedAt}
-      teamName={teamName}
-      backLabel={`← ${teamName}`}
-      onBack={() => setShowCourse(false)}
-    />
-  )
-
-  if (showLegProgress && activeItem && activeItem.runner && activeItem.assignment && activeItem.result) return (
-    <LegProgressScreen
-      runner={activeItem.runner.name}
-      town={activeItem.leg.handoff?.name ?? activeItem.leg.name}
-      legN={activeItem.leg.legNumber}
-      totalLegs={timeline.length || 18}
-      distMiles={activeItem.leg.distanceMiles}
-      startedAtMs={new Date(activeItem.result.startedAt).getTime()}
-      targetPaceSecPerMile={activeItem.assignment.targetPaceSecPerMile}
-      teamName={teamName}
-      backLabel={`← ${teamName}`}
-      onBack={() => setShowLegProgress(false)}
-      onViewLegMap={() => { setShowLegProgress(false); setShowLegMap(true) }}
     />
   )
 
@@ -319,12 +270,9 @@ export function TeamDetail({ teamId, teamName, raceDate, onBack }: Props) {
 
             {/* Three readouts */}
             <div className="flex mb-3">
-              <button
-                onClick={() => setShowLegProgress(true)}
-                style={{ flex: '1 1 0', background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                  textAlign: 'center', minHeight: 44, display: 'flex', flexDirection: 'column',
-                  alignItems: 'center', justifyContent: 'center' }}
-              >
+              <div style={{ flex: '1 1 0', padding: 0,
+                textAlign: 'center', minHeight: 44, display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center' }}>
                 <div className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', color: 'rgba(19,17,10,0.55)', marginBottom: 2 }}>Est. Arrival</div>
                 <div className="font-mono" style={{ fontSize: 34, fontWeight: 700, color: 'var(--ink)', lineHeight: 1 }}>
                   {formatTime(String(activeItem.eta.eta))}
@@ -332,11 +280,8 @@ export function TeamDetail({ teamId, teamName, raceDate, onBack }: Props) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 5 }}>
                   <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: 10,
                     opacity: 0.85, letterSpacing: '0.06em', color: 'var(--ink)' }}>BY PACE</span>
-                  <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 9,
-                    letterSpacing: '0.06em', background: 'rgba(0,0,0,0.18)', padding: '2px 7px',
-                    borderRadius: 20, color: 'var(--ink)' }}>→</span>
                 </div>
-              </button>
+              </div>
               {activeItem.assignment && (
                 <button
                   onClick={() => setShowLegMap(true)}
@@ -409,17 +354,13 @@ export function TeamDetail({ teamId, teamName, raceDate, onBack }: Props) {
         )}
 
         {/* The Course */}
-        <button
-          onClick={() => setShowCourse(true)}
-          className="flex items-center justify-between w-full min-h-[44px] mb-0"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}
-        >
+        <div className="flex items-center justify-between w-full min-h-[44px] mb-0">
           <span className="font-display uppercase" style={{ fontSize: 24 }}>Arrivals</span>
           <span className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 11,
             fontWeight: 800, letterSpacing: '0.08em', color: 'var(--accent)' }}>
-            ALL {COURSE_LEGS.length} LEGS →
+            ALL {COURSE_LEGS.length} LEGS
           </span>
-        </button>
+        </div>
         <div className="uppercase mb-3" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 10,
           fontWeight: 800, letterSpacing: '0.1em', color: 'var(--faint)' }}>
           {timeline.length} Handoffs
@@ -434,7 +375,6 @@ export function TeamDetail({ teamId, teamName, raceDate, onBack }: Props) {
               const isActive  = item.status === 'in-progress'
               const isNext    = onDeckItem?.leg.id === item.leg.id
               const iStatus   = isActive ? (etaStatus === 'overdue' ? 'var(--red)' : 'var(--green)') : 'var(--mut)'
-              const navUrl    = buildNavUrl(item.leg.handoff)
 
               // Delta for done rows
               let deltaLabel: string | null = null
@@ -502,8 +442,6 @@ export function TeamDetail({ teamId, teamName, raceDate, onBack }: Props) {
                     )}
                   </div>
 
-                  {/* Nav pin */}
-                  <NavPin url={navUrl} />
                 </div>
               )
             })}
