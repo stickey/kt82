@@ -329,8 +329,8 @@ export function CourseScreen({ currentLegNumber, raceStartedAt, teamName, backLa
         </div>
       )}
 
-      {/* Race clock + progress (only shown while racing) */}
-      {isRacing ? (
+      {/* Race clock + progress (only shown while racing, and only in standalone mode) */}
+      {onBack && isRacing ? (
         <div style={{ padding: '16px 18px 18px' }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
             marginBottom: 9 }}>
@@ -411,13 +411,13 @@ export function CourseScreen({ currentLegNumber, raceStartedAt, teamName, backLa
             </div>
           </div>
         </div>
-      ) : (
+      ) : onBack ? (
         <div style={{ padding: '16px 18px 18px' }}>
           <p style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 13, color: 'var(--mut)' }}>
             Race not started.
           </p>
         </div>
-      )}
+      ) : null}
 
       {/* Leg list */}
       <div style={{ padding: '0 8px 36px', display: 'flex', flexDirection: 'column', gap: 2 }}>
