@@ -302,6 +302,8 @@ export default function App() {
       currentLegNumber={view.leg.legNumber}
       raceStartedAt={view.raceStartedAt}
       teamName={view.team.name}
+      teamId={view.team.id}
+      raceDate={view.race.date}
       backLabel="← TIMING"
       onBack={handleBackFromCourse}
     />
