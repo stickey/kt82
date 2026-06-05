@@ -76,9 +76,9 @@ The KT82 is an 82-mile multi-leg road relay race held in rural Missouri. Teams o
 - Shows current runner and leg
 - START / LAP / STOP stopwatch controls
   - LAP: records the leg time, advances to next runner/leg
-- Displays ETA of the current runner based on pace and elapsed time
+- Three-pill timing display: elapsed time + estimated distance done, time remaining + estimated distance left, and ETA — all updating every second
 - **Leg Map view** — full-screen Leaflet map showing the runner moving along the actual course route, with live leg/race timers and a pace-spread estimates table
-- **Leg Progress view** — pace-sweep arrival table with progress bar, showing min/target/max arrival times
+- **Leg Progress view** — pace-sweep arrival table with progress bar (runner icon marks best-estimate position), showing min/target/max arrival times
 - One-tap navigation to the next handoff (opens Google Maps / Apple Maps with the destination pre-filled from handoff lat/lng or address)
 - Clear, glanceable display suitable for use in a moving vehicle
 

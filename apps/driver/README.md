@@ -6,7 +6,7 @@ Race-day timing app used by the driver/timekeeper in the support vehicle to star
 
 - Authenticates with a team PIN, then detects whether the race has started
 - **Start screen:** Displays the first leg info; hold the START button (~500ms) to begin the race
-- **Timing screen:** Ticking elapsed clock + server-polled ETA side by side; navigate to the next handoff point; tap **"WHEN DO THEY ARRIVE?"** for a pace-sweep arrival detail (see below); tap **"VIEW ALL 18 LEGS · THE COURSE →"** for a full course overview (see below); hold LAP (~1500ms) to record a handoff and advance to the next leg; hold "End race early" (~1500ms) to stop
+- **Timing screen:** Three equal pills — **Leg Time** (elapsed + estimated distance completed), **Time Left** (countdown + estimated distance remaining), and **ETA** (clock time + pace status) — all updating every second when target pace is set, or two pills (Leg Time + ETA) when pace is unavailable; navigate to the next handoff point; tap **"WHEN DO THEY ARRIVE?"** for a pace-sweep arrival detail (see below); tap **"VIEW ALL 18 LEGS · THE COURSE →"** for a full course overview (see below); hold LAP (~1500ms) to record a handoff and advance to the next leg; hold "End race early" (~1500ms) to stop
 - **Complete screen:** Total race time + per-leg splits for all completed legs
 - All timing buttons use long-press (hold-to-activate) to prevent accidental taps in a moving vehicle
 - Timestamps are captured client-side at the moment of button activation
@@ -36,7 +36,7 @@ Dev credential: `1234` (after creating a team in Manager or via the test suite).
 Reachable from the timing screen via the **"WHEN DO THEY ARRIVE?"** button — a full-width button directly below the twin ETA/elapsed panels, colored green (on pace) or red (behind pace) to match the current status. Only appears once the runner's target pace is known from the server.
 
 **What it shows:**
-- **Progress bar** — estimated position on the current leg right now, with an I-beam range marker spanning the ±30 s/mi uncertainty. The track fills solid to the near edge of the range; the range span is shown at ~40% opacity; a white notch marks the best estimate. Label above shows `≈X.X OF Y.Y MI` and below shows `likely range · ≈N% in`
+- **Progress bar** — estimated position on the current leg right now, with an I-beam range marker spanning the ±30 s/mi uncertainty. The track fills solid to the near edge of the range; the range span is shown at ~40% opacity; a 🏃 runner icon (orange circle) marks the best estimate. Label above shows `≈X.X OF Y.Y MI` and below shows `likely range · ≈N% in`
 - **Arrival by pace table** — 5 rows, fastest arrival first:
 
   | PACE | ARRIVES | IN | Δ | LEG TIME |
