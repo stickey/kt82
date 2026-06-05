@@ -11,6 +11,7 @@ interface Props {
 
 type Confirm =
   | { type: 'clearResults' }
+  | { type: 'clearAssignments' }
   | { type: 'deleteTeam'; team: Team }
   | { type: 'wipeAll' }
 
@@ -54,6 +55,9 @@ export function DangerTab({ race, on401, onRaceWipe }: Props) {
       if (confirm.type === 'clearResults') {
         await api.delete(`/races/${race.id}/results`)
         setSuccess('Timing data cleared.')
+      } else if (confirm.type === 'clearAssignments') {
+        await api.delete(`/races/${race.id}/assignments`)
+        setSuccess('Assignments cleared.')
       } else if (confirm.type === 'deleteTeam') {
         await api.delete(`/teams/${confirm.team.id}`)
         await loadTeams(race.id)
@@ -97,6 +101,20 @@ export function DangerTab({ race, on401, onRaceWipe }: Props) {
           className="bg-red-700 hover:bg-red-600 text-white text-sm font-medium rounded-lg px-4 py-2 transition-colors min-h-[44px]"
         >
           Clear Results
+        </button>
+      </div>
+
+      {/* Clear assignments */}
+      <div className="bg-gray-900 rounded-xl p-4 border border-red-900/40">
+        <p className="text-xs font-medium text-red-400 uppercase tracking-wider mb-1">Clear Assignments</p>
+        <p className="text-gray-400 text-sm mb-4">
+          Deletes all leg assignments for every team. Timing data is also cleared since it depends on assignments. Teams are unlocked so assignments can be re-entered.
+        </p>
+        <button
+          onClick={() => openConfirm({ type: 'clearAssignments' })}
+          className="bg-red-700 hover:bg-red-600 text-white text-sm font-medium rounded-lg px-4 py-2 transition-colors min-h-[44px]"
+        >
+          Clear Assignments
         </button>
       </div>
 
@@ -147,6 +165,15 @@ export function DangerTab({ race, on401, onRaceWipe }: Props) {
           title="Clear Results"
           message={`Clear all leg results for ${race.name}? The race can be re-run but all recorded times will be lost.`}
           confirmLabel={busy ? 'Clearing…' : 'Clear Results'}
+          onConfirm={handleConfirm}
+          onCancel={() => setConfirm(null)}
+        />
+      )}
+      {confirm?.type === 'clearAssignments' && (
+        <ConfirmDialog
+          title="Clear Assignments"
+          message={`Clear all assignments for ${race.name}? Timing data will also be deleted. Teams will be unlocked.`}
+          confirmLabel={busy ? 'Clearing…' : 'Clear Assignments'}
           onConfirm={handleConfirm}
           onCancel={() => setConfirm(null)}
         />
