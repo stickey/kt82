@@ -6,7 +6,7 @@ Race-day timing app used by the driver/timekeeper in the support vehicle to star
 
 - Authenticates with a team PIN, then detects whether the race has started
 - **Start screen:** Displays the first leg info; hold the START button (~500ms) to begin the race
-- **Timing screen:** Three equal pills — **Leg Time** (elapsed + estimated distance completed), **Time Left** (countdown + estimated distance remaining), and **ETA** (clock time + pace status) — all updating every second when target pace is set, or two pills (Leg Time + ETA) when pace is unavailable; navigate to the next handoff point; tap **"WHEN DO THEY ARRIVE?"** for a pace-sweep arrival detail (see below); tap **"VIEW ALL 18 LEGS · THE COURSE →"** for a full course overview (see below); hold LAP (~1500ms) to record a handoff and advance to the next leg; hold "End race early" (~1500ms) to stop
+- **Timing screen:** Three equal pills — **Leg Time** (elapsed + estimated distance completed), **Time Left** (countdown + estimated distance remaining), and **ETA** (clock time + pace status) — all updating every second when target pace is set, or two pills (Leg Time + ETA) when pace is unavailable; navigate to the next handoff point; tap **"WHEN DO THEY ARRIVE?"** for a pace-sweep arrival detail (see below); tap **"VIEW ALL 18 LEGS · THE COURSE →"** for a full course overview with runner names and times (see below); hold LAP (~1500ms) to record a handoff and advance to the next leg; hold "End race early" (~1500ms) to stop
 - **Complete screen:** Total race time + per-leg splits for all completed legs
 - All timing buttons use long-press (hold-to-activate) to prevent accidental taps in a moving vehicle
 - Timestamps are captured client-side at the moment of button activation
@@ -91,20 +91,16 @@ Reachable from the timing screen by tapping **"VIEW ALL 18 LEGS · THE COURSE �
 - Tally pills: `✓ N DONE`, `● ON LEG N`, `N TO GO`
 - "Race in Progress" callout with the current leg's start → finish names
 - All 18 leg rows with done / active / upcoming status styling:
-  - **Done** — green-washed background, ✓ DONE badge
+  - **Done** — green-washed background, green left stripe
   - **Active** — accent-highlighted background with border, LIVE badge
   - **Next** — NEXT outlined badge
-- Per-leg **difficulty chip** (Easy / Medium / Difficult, with Distance or Single Track note where applicable)
-- Per-leg **mileage** in monospace
-
-**Map links:** Every leg row has three tappable Google Maps links — all open in a new tab:
-- **START** — drops a pin at the leg's start coordinates
-- **FINISH** — drops a pin at the leg's finish coordinates
-- **FULL DIRECTIONS ↗** — turn-by-turn route from start to finish
+- Per-leg **runner name** (or `—` if unassigned) and **mileage**
+- Per-leg **start time** and **finish time or ETA** in monospace — completed legs show actual times, the active leg shows ETA, and upcoming legs show projected times based on target pace
+- Two tappable map links per leg (**START** / **FINISH**) that open Google Maps in a new tab
 
 Back button returns to the timing screen. The timing state (current leg, elapsed clock, resultId) is fully preserved — nothing resets on back.
 
-**Offline note:** The course data is entirely static (bundled in the app). Opening the course overview requires no network request.
+**Note:** Runner names and times are fetched from the server when the screen opens (`/teams/:id/timeline`). The static course data (coordinates, mileage) is bundled in the app.
 
 ## File Structure
 
@@ -119,7 +115,7 @@ src/
     TimingScreen.tsx      — elapsed clock, ETA poll, navigation link, WHEN DO THEY ARRIVE / MAP buttons, LAP/STOP, VIEW ALL LEGS button
     LegProgressScreen.tsx — pace-swept progress bar + arrival table for the live leg
     LegMapScreen.tsx      — full-screen Leaflet map with runner position, route, ETA label, estimates table
-    CourseScreen.tsx      — all-18-legs course overview with map links and live clock
+    CourseScreen.tsx      — all-18-legs course overview with runner names, start/finish times, map links, and live clock; fetches timeline on open
     CompleteScreen.tsx    — total time + leg-by-leg splits
 ```
 

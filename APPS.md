@@ -15,7 +15,7 @@ Used by the van driver during the race to start legs, time runners, and navigate
 | **TimingScreen** | `components/TimingScreen.tsx` | Active leg: elapsed time, ETA pill, runner + next-runner chips, LAP and FINISH long-press buttons, links to Course / Leg Progress / Leg Map |
 | **LegProgressScreen** | `components/LegProgressScreen.tsx` | Pace-scenario table (5 rows: fast → slow) showing projected finish time and delta vs target for the current leg |
 | **LegMapScreen** | `components/LegMapScreen.tsx` | Full-screen Leaflet map of current leg route with moving runner icon; range band showing pace scenarios |
-| **CourseScreen** | `components/CourseScreen.tsx` | Scrollable list of all course legs with distance, difficulty, start/finish nav links, and race elapsed time |
+| **CourseScreen** | `components/CourseScreen.tsx` | Scrollable list of all course legs: runner name, mileage, start/finish times or ETA, START/FINISH map links, and live race clock |
 | **CompleteScreen** | `components/CompleteScreen.tsx` | Race finished: final timeline of all legs with split times, paces, and total elapsed |
 
 ### Driver shared components
@@ -34,10 +34,10 @@ Public, no-auth view of all teams' live race progress.
 |--------|------|---------------|
 | **TeamGrid** | `components/TeamGrid.tsx` | Top-level list of all teams; each card shows current runner, current leg, ETA, and pace status (ON PACE / AHEAD / BEHIND) |
 | **TeamDetail** | `components/TeamDetail.tsx` | Wrapper that owns the selected team's timeline and sub-screen navigation; renders one of the sub-screens below |
-| ↳ **PreRaceScreen** | `components/PreRaceScreen.tsx` | Shown before race start: countdown clock, assigned start time, full leg schedule with projected splits |
-| ↳ **LegProgressScreen** | `components/LegProgressScreen.tsx` | **No longer accessible from Tracker UI** (file retained; accessible in Driver via TimingScreen) |
+| ↳ **PreRaceScreen** | `components/PreRaceScreen.tsx` | Shown before race start: countdown clock, assigned start time, hero card with estimated finish time, and embedded CourseScreen with projected leg times |
+| ↳ **LegProgressScreen** | `components/LegProgressScreen.tsx` | **Not reachable from Tracker UI** (file retained; pace table accessible in Driver via TimingScreen) |
 | ↳ **LegMapScreen** | `components/LegMapScreen.tsx` | Same Leaflet map view as Driver's |
-| ↳ **CourseScreen** | `components/CourseScreen.tsx` | Same course overview as Driver's |
+| ↳ **CourseScreen** | `components/CourseScreen.tsx` | Embedded inline in TeamDetail and PreRaceScreen; same leg list as Driver's with runner names and times |
 
 ---
 
@@ -86,9 +86,9 @@ Admin tool for race setup and teardown. Auth via admin password.
 ## How to scope a change
 
 - **"on the Timing screen"** → `apps/driver/src/components/TimingScreen.tsx`
-- **"the pace table"** → `LegProgressScreen` in both `apps/driver` and `apps/tracker` (identical component, separate files)
+- **"the pace table"** → `LegProgressScreen` in `apps/driver` only (Tracker's is retained but not reachable)
 - **"the map"** → `LegMapScreen` in both `apps/driver` and `apps/tracker`
-- **"the course overview"** → `CourseScreen` in both `apps/driver` and `apps/tracker`
+- **"the course overview"** → `CourseScreen` in both `apps/driver` and `apps/tracker` (embedded in Tracker's TeamDetail/PreRaceScreen; separate screen in Driver)
 - **"the pre-race countdown"** → `apps/tracker/src/components/PreRaceScreen.tsx` (Tracker only)
 - **"the team list"** → `apps/tracker/src/components/TeamGrid.tsx`
 - **"roster management"** → `apps/captain/src/tabs/RosterTab.tsx`

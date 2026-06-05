@@ -6,9 +6,7 @@ Public read-only race status board for spectators and team supporters.
 
 - Shows all teams' current status at a glance (2-column card grid)
 - Displays live ETA, current runner, and pace status (on pace / ahead / overdue) for each in-progress team
-- Tap a team card to see the full leg-by-leg timeline
-- Tap the **Est. Arrival** time in the hero card to open the leg progress screen (see below)
-- Tap **"ALL 18 LEGS →"** on the team detail to open the full course overview (see below)
+- Tap a team card to see the full leg-by-leg timeline with embedded course overview (all 18 legs with runner names, start/finish times, and map links)
 - Share a direct link to a team's view via native share sheet or clipboard copy
 - Auto-detects the active race — no configuration needed
 - Polls for updates every 30 seconds; shows "Unable to refresh" on network loss without clearing stale data
@@ -39,21 +37,7 @@ These URLs are shareable and bookmarkable. Opening a direct team link works with
 
 ## Leg Progress Screen
 
-Reachable from the team detail page by tapping the **Est. Arrival** time in the hero card. A **"BY PACE →"** pill appears beneath the arrival time to indicate it's tappable.
-
-**What it shows:**
-- **Runner name**, leg number, destination, and target pace in the header
-- **Progress bar** — estimated position on the current leg, with an I-beam range marker spanning the ±30 s/mi uncertainty. A white notch marks the best estimate; the range fill shows the spread at ~40% opacity
-- **Arrival by pace table** — 5 rows spanning the runner's target pace ±30 s/mi in 15 s steps, fastest first:
-
-  | PACE | ARRIVES | IN | Δ | LEG TIME |
-  |---|---|---|---|---|
-  | Scenario pace | Estimated clock time | Countdown | ±min:sec vs target | Total leg duration |
-
-  The target-pace row is highlighted. Δ is red if slower than target, green if faster.
-- All numbers tick every second. No API calls — derived from existing timeline data.
-
-Back button returns to the team detail.
+**No longer accessible from the Tracker UI.** The file (`LegProgressScreen.tsx`) is retained but not reachable from any navigation path in Tracker. The equivalent view is available in the Driver app via the **"WHEN DO THEY ARRIVE?"** button on the Timing screen.
 
 ## Leg Map Screen
 
@@ -81,28 +65,19 @@ Shows a full-screen, non-interactive map of the current leg with the runner's es
 
 Back button returns to the team detail.
 
-## Course Overview Screen
+## Course Overview
 
-Reachable from a team's detail page by tapping **"THE COURSE / ALL 18 LEGS →"** in the section header. Shows the entire 18-leg course on one scrollable screen, contextualised to the viewing team's current position.
+Embedded directly in the team detail page — no separate screen or tap required. Shows the entire 18-leg course scrollable below the hero card, contextualised to the viewing team's current position.
 
 **What it shows:**
-- Live race clock (ticking every second) and a blinking **LIVE** indicator
-- Progress bar with a position marker dot showing how far through the course the team is
-- Tally pills: `✓ N DONE`, `● ON LEG N`, `N TO GO`
-- "Race in Progress" callout with the current leg's start → finish names
 - All 18 leg rows with done / active / upcoming status styling:
-  - **Done** — green-washed background, green left stripe, ✓ DONE badge
+  - **Done** — green-washed background, green left stripe
   - **Active** — accent-highlighted background with border, LIVE badge
   - **Next** — NEXT outlined badge; remaining legs are unstyled
-- Per-leg **difficulty chip** (Easy / Medium / Difficult, with Distance or Single Track note where applicable)
-- Per-leg **mileage** in monospace
+- Per-leg **runner name** (or `—` if unassigned), **mileage**, and two tappable **map links** (START / FINISH) that open Google Maps in a new tab
+- Per-leg **start time** and **finish time or ETA** in monospace — completed legs show actual times, the active leg shows ETA, and upcoming legs show projected times based on target pace
 
-**Map links (the main feature):** Every leg row has three tappable Google Maps links — all open in a new tab:
-- **START** — drops a pin at the leg's start coordinates
-- **FINISH** — drops a pin at the leg's finish coordinates
-- **FULL DIRECTIONS ↗** — turn-by-turn route from start to finish
-
-Back button returns to the team detail. The course data (coordinates, difficulty, mileage) is static — it reflects the fixed KT82 course, independent of what legs have been seeded into the database.
+The course data (coordinates, mileage) is static. Runner names and times come from the team's live timeline.
 
 ## Pre-Race Screen
 
@@ -112,7 +87,7 @@ Shown when a team has not yet started leg 1 — replaces the live race view. Onc
 - **Header** — team name, `PRE-RACE · ESTIMATES ONLY` status, `YOUR START` card with gun time
 - **Countdown** — live `HH:MM:SS` timer to the team's start time; turns green and reads `RACE IN PROGRESS` once started
 - **Hero** — orange card with team start time, estimated finish time in Hermann, total miles/legs
-- **The Route** — full 18-leg trail timeline: start node, alternating leg segments (runner, distance, route link) and handoff nodes (estimated time, location, map link), finish node
+- **Course overview** — all 18 legs embedded below the hero, showing each runner, projected start/finish times based on target pace, and START/FINISH map links
 
 **Start time:** Hardcoded at **7:00 AM on the race date** (`race.date` with hours set to 7 local time). This is a hardcode for the single team currently using this feature — revisit if multiple teams with different start times need support.
 
@@ -143,9 +118,9 @@ src/
   App.tsx             — hash router, race auto-detect on mount
   components/
     TeamGrid.tsx          — polling grid of all teams; "Updated Xs ago" counter
-    TeamDetail.tsx        — hero section (current runner + ETA, MAP button, leg progress) + full leg timeline
-    LegProgressScreen.tsx — pace-swept progress bar + arrival table for the live leg
+    TeamDetail.tsx        — hero section (current runner + ETA, MAP button) + embedded CourseScreen with runner names and times
+    LegProgressScreen.tsx — pace-swept progress bar + arrival table (not reachable from Tracker UI; retained for reference)
     LegMapScreen.tsx      — full-screen Leaflet map with runner position, route, ETA label, estimates table
-    CourseScreen.tsx      — all-18-legs course overview with map links and live clock
-    PreRaceScreen.tsx     — pre-race landing page: countdown, hero, trail timeline (shown before leg 1 starts)
+    CourseScreen.tsx      — all-18-legs course overview with runner names, start/finish times, and map links; embedded in TeamDetail and PreRaceScreen
+    PreRaceScreen.tsx     — pre-race landing page: countdown, hero, embedded CourseScreen with projected times (shown before leg 1 starts)
 ```
