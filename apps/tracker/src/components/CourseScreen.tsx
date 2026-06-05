@@ -135,6 +135,10 @@ function LegRow({ leg, state, isNextUp, isLast, runnerName, startTime, endTime, 
           color: runnerName ? nameColor : 'var(--faint)' }}>
           {runnerName ?? '—'}
         </span>
+        <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: 11,
+          color: 'var(--faint)', flexShrink: 0 }}>
+          {leg.miles} mi
+        </span>
       </div>
 
       {/* Col 2, row 2: start → finish map links */}
@@ -384,7 +388,7 @@ export function CourseScreen({ currentLegNumber, raceStartedAt, teamName, backLa
       ) : null}
 
       {/* Leg list */}
-      <div style={{ padding: '0 8px 36px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <div style={{ padding: '0 8px 36px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         {COURSE_LEGS.map((leg, i) => {
           const data = legDataMap.get(leg.legNumber)
           return (
