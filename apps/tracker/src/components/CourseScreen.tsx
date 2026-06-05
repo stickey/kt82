@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { COURSE_LEGS, TOTAL_COURSE_MILES, LEG_DIFFICULTY, mapPoint, mapRoute } from '@kt82/shared'
+import { COURSE_LEGS, TOTAL_COURSE_MILES, LEG_DIFFICULTY, mapPoint } from '@kt82/shared'
 import type { CourseLeg } from '@kt82/shared'
 import { formatRaceTime, formatTime } from '../api'
 import type { LegTimelineItem } from '../api'
@@ -42,7 +42,7 @@ function MapLink({ kind, name, url, dotColor, nameColor, filled }: {
       rel="noopener noreferrer"
       onClick={e => e.stopPropagation()}
       style={{ display: 'grid', gridTemplateColumns: '12px 1fr auto', alignItems: 'center',
-        columnGap: 10, textDecoration: 'none', color: 'inherit', padding: '3px 0', minHeight: 44 }}
+        columnGap: 10, textDecoration: 'none', color: 'inherit', padding: '3px 0', minHeight: 36 }}
     >
       <span style={{ width: 9, height: 9, borderRadius: '50%', justifySelf: 'center',
         background: filled ? dotColor : 'transparent', border: `2px solid ${dotColor}` }} />
@@ -112,7 +112,7 @@ function LegRow({ leg, state, isNextUp, isLast, runnerName, startTime, endTime, 
     <div style={{ position: 'relative', display: 'grid',
       gridTemplateColumns: '40px 1fr auto',
       gridTemplateRows: 'auto auto',
-      columnGap: 12, padding: '13px 12px 13px 16px', background: rowBg,
+      columnGap: 12, padding: '9px 12px 9px 16px', background: rowBg,
       borderRadius: isNow ? 16 : isDone ? 12 : 0,
       border: isNow ? '1px solid var(--accent)' : 'none',
       borderBottom: (isNow || isDone || isLast) ? 'none' : '1px solid var(--line2)' }}>
@@ -156,7 +156,7 @@ function LegRow({ leg, state, isNextUp, isLast, runnerName, startTime, endTime, 
       {/* Cols 2–3, row 1: runner name + difficulty chip */}
       <div style={{ gridColumn: '2 / 4', gridRow: 1,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        paddingBottom: 7 }}>
+        paddingBottom: 5 }}>
         <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 14, fontWeight: 800,
           color: runnerName ? nameColor : 'var(--faint)' }}>
           {runnerName ?? '—'}
@@ -174,22 +174,12 @@ function LegRow({ leg, state, isNextUp, isLast, runnerName, startTime, endTime, 
         <MapLink kind="finish" name={leg.endName}
           url={mapPoint(leg.endLat, leg.endLng)}
           dotColor={dotColor} nameColor={mapNameColor} filled={isNow || isDone} />
-        <a
-          href={mapRoute({ lat: leg.startLat, lng: leg.startLng }, { lat: leg.endLat, lng: leg.endLng })}
-          target="_blank" rel="noopener noreferrer"
-          onClick={e => e.stopPropagation()}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 7,
-            textDecoration: 'none', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800,
-            fontSize: 9.5, letterSpacing: '0.08em', color: isNow ? 'var(--accent)' : 'var(--mut)',
-            minHeight: 44 }}>
-          FULL DIRECTIONS <span style={{ fontSize: 11 }}>↗</span>
-        </a>
       </div>
 
-      {/* Col 3, row 2: start time + ETA/finish time */}
-      <div style={{ gridColumn: 3, gridRow: 2,
-        display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 1, minWidth: 58 }}>
-        <div style={{ textAlign: 'right' }}>
+      {/* Col 3, row 2: start time + ETA/finish time — heights mirror col 2 for label alignment */}
+      <div style={{ gridColumn: 3, gridRow: 2, display: 'flex', flexDirection: 'column', minWidth: 58 }}>
+        <div style={{ minHeight: 36, display: 'flex', flexDirection: 'column',
+          justifyContent: 'center', textAlign: 'right' }}>
           <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 8,
             letterSpacing: '0.12em', color: 'var(--faint)', textTransform: 'uppercase' }}>Start</div>
           <div style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 14,
@@ -197,7 +187,9 @@ function LegRow({ leg, state, isNextUp, isLast, runnerName, startTime, endTime, 
             {startTime ?? '—'}
           </div>
         </div>
-        <div style={{ textAlign: 'right' }}>
+        <div style={{ height: 9 }} />
+        <div style={{ minHeight: 36, display: 'flex', flexDirection: 'column',
+          justifyContent: 'center', textAlign: 'right' }}>
           <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 8,
             letterSpacing: '0.12em', color: 'var(--faint)', textTransform: 'uppercase' }}>
             {endLabel ?? 'ETA'}
