@@ -75,25 +75,27 @@ function LegRow({ leg, state, isNextUp, isLast, runnerName, startTime, endTime, 
   const isDone = state === 'done'
   const isNow  = state === 'now'
 
-  const stripeColor  = isNow ? 'var(--accent)' : 'var(--faint)'
-  const rowBg        = isNow ? 'color-mix(in srgb, var(--accent) 11%, transparent)' : 'transparent'
-  const legNumColor  = isNow ? 'var(--accent)' : 'var(--faint)'
-  const nameColor    = isNow ? 'var(--accent)' : isDone ? 'var(--faint)' : 'var(--mut)'
-  const dotColor     = isNow ? 'var(--accent)' : 'var(--faint)'
-  const mapNameColor = isDone ? 'var(--faint)' : 'var(--text)'
+  const stripeColor  = isNow ? 'var(--accent)' : isDone ? 'var(--green)' : 'var(--line)'
+  const rowBg        = isNow ? 'color-mix(in srgb, var(--accent) 11%, transparent)'
+                     : isDone ? 'color-mix(in srgb, var(--green) 6%, transparent)'
+                     : 'transparent'
+  const legNumColor  = isNow ? 'var(--accent)' : isDone ? 'var(--mut)' : 'var(--faint)'
+  const nameColor    = isNow ? 'var(--accent)' : isDone ? 'var(--mut)' : 'var(--text)'
+  const dotColor     = isNow ? 'var(--accent)' : isDone ? 'var(--green)' : 'var(--faint)'
+  const mapNameColor = isDone ? 'var(--mut)' : 'var(--text)'
 
   return (
     <div style={{ position: 'relative', display: 'grid',
       gridTemplateColumns: '40px 1fr auto',
       gridTemplateRows: 'auto auto',
       columnGap: 12, padding: '9px 12px 9px 16px', background: rowBg,
-      borderRadius: isNow ? 16 : 0,
+      borderRadius: isNow ? 16 : isDone ? 12 : 0,
       border: isNow ? '1px solid var(--accent)' : 'none',
-      borderBottom: (isNow || isLast) ? 'none' : '1px solid var(--line2)' }}>
+      borderBottom: (isNow || isDone || isLast) ? 'none' : '1px solid var(--line2)' }}>
 
       {/* Left status stripe */}
       <div style={{ position: 'absolute', left: 0,
-        top: isNow ? 6 : 0, bottom: isNow ? 6 : 0,
+        top: (isNow || isDone) ? 6 : 0, bottom: (isNow || isDone) ? 6 : 0,
         width: 3, borderRadius: 3, background: stripeColor }} />
 
       {/* Col 1, rows 1+2: leg number + state badge */}
@@ -111,9 +113,9 @@ function LegRow({ leg, state, isNextUp, isLast, runnerName, startTime, endTime, 
         {isDone && (
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 3, marginTop: 5,
             fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 7.5,
-            letterSpacing: '0.08em', color: 'var(--faint)' }}>
-            <span style={{ width: 13, height: 13, borderRadius: '50%', background: 'var(--faint)',
-              color: 'var(--bg)', display: 'inline-flex', alignItems: 'center',
+            letterSpacing: '0.08em', color: 'var(--green)' }}>
+            <span style={{ width: 13, height: 13, borderRadius: '50%', background: 'var(--green)',
+              color: 'var(--ink)', display: 'inline-flex', alignItems: 'center',
               justifyContent: 'center', fontSize: 9 }}>✓</span>
             DONE
           </div>
@@ -146,10 +148,11 @@ function LegRow({ leg, state, isNextUp, isLast, runnerName, startTime, endTime, 
         <MapLink kind="start" name={leg.startName}
           url={mapPoint(leg.startLat, leg.startLng)}
           dotColor={dotColor} nameColor={mapNameColor} filled={false} />
-        <div style={{ width: 2, height: 9, marginLeft: 5, background: 'var(--line)' }} />
+        <div style={{ width: 2, height: 9, marginLeft: 5,
+          background: isDone ? 'color-mix(in srgb, var(--green) 40%, transparent)' : 'var(--line)' }} />
         <MapLink kind="finish" name={leg.endName}
           url={mapPoint(leg.endLat, leg.endLng)}
-          dotColor={dotColor} nameColor={mapNameColor} filled={isNow} />
+          dotColor={dotColor} nameColor={mapNameColor} filled={isNow || isDone} />
       </div>
 
       {/* Col 3, row 2: start time + ETA/finish time — heights mirror col 2 for label alignment */}
