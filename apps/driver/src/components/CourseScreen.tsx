@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { COURSE_LEGS, TOTAL_COURSE_MILES, LEG_DIFFICULTY, mapPoint, mapRoute } from '@kt82/shared'
+import { COURSE_LEGS, TOTAL_COURSE_MILES, mapPoint } from '@kt82/shared'
 import type { CourseLeg } from '@kt82/shared'
 import { formatRaceTime } from '../api'
 
@@ -35,7 +35,7 @@ function MapLink({ kind, name, url, dotColor, nameColor, filled }: {
       rel="noopener noreferrer"
       onClick={e => e.stopPropagation()}
       style={{ display: 'grid', gridTemplateColumns: '12px 1fr auto', alignItems: 'center',
-        columnGap: 10, textDecoration: 'none', color: 'inherit', padding: '3px 0', minHeight: 44 }}
+        columnGap: 10, textDecoration: 'none', color: 'inherit', padding: '3px 0', minHeight: 36 }}
     >
       <span style={{ width: 9, height: 9, borderRadius: '50%', justifySelf: 'center',
         background: filled ? dotColor : 'transparent', border: `2px solid ${dotColor}` }} />
@@ -54,30 +54,6 @@ function MapLink({ kind, name, url, dotColor, nameColor, filled }: {
   )
 }
 
-function DiffChip({ legNumber }: { legNumber: number }) {
-  const diff = LEG_DIFFICULTY[legNumber]
-  const c = diff.tier === 'easy' ? 'var(--green)' : diff.tier === 'medium' ? 'var(--amber)' : 'var(--red)'
-  const label = diff.tier === 'easy' ? 'EASY' : diff.tier === 'medium' ? 'MEDIUM' : 'DIFFICULT'
-  const noteLabel = diff.note === 'distance' ? 'DISTANCE' : diff.note === 'single-track' ? 'SINGLE TRACK' : null
-  return (
-    <div style={{ textAlign: 'right' }}>
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5,
-        fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 9,
-        letterSpacing: '0.06em', color: c,
-        background: `color-mix(in srgb, ${c} 13%, transparent)`,
-        padding: '4px 8px', borderRadius: 999, whiteSpace: 'nowrap' }}>
-        <span style={{ width: 5, height: 5, borderRadius: '50%', background: c }} />
-        {label}
-      </span>
-      {noteLabel && (
-        <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: 8.5,
-          letterSpacing: '0.04em', color: 'var(--faint)', marginTop: 4, textTransform: 'uppercase' }}>
-          {noteLabel}
-        </div>
-      )}
-    </div>
-  )
-}
 
 function LegRow({ leg, state, isNextUp, isLast }: {
   leg: CourseLeg
@@ -98,10 +74,10 @@ function LegRow({ leg, state, isNextUp, isLast }: {
 
   return (
     <div style={{ position: 'relative', display: 'grid', gridTemplateColumns: '40px 1fr auto',
-      columnGap: 12, padding: '13px 12px 13px 16px', background: rowBg,
+      columnGap: 12, padding: '9px 12px 9px 16px', background: rowBg,
       borderRadius: isNow ? 16 : isDone ? 12 : 0,
       border: isNow ? '1px solid var(--accent)' : 'none',
-      borderBottom: (isNow || isDone || isLast) ? 'none' : '1px solid var(--line2)' }}>
+      borderBottom: isNow ? undefined : (isDone || isLast) ? 'none' : '1px solid var(--line2)' }}>
 
       {/* Left status stripe */}
       <div style={{ position: 'absolute', left: 0,
@@ -149,23 +125,12 @@ function LegRow({ leg, state, isNextUp, isLast }: {
         <MapLink kind="finish" name={leg.endName}
           url={mapPoint(leg.endLat, leg.endLng)}
           dotColor={dotColor} nameColor={nameColor} filled={isNow || isDone} />
-        <a
-          href={mapRoute({ lat: leg.startLat, lng: leg.startLng }, { lat: leg.endLat, lng: leg.endLng })}
-          target="_blank" rel="noopener noreferrer"
-          onClick={e => e.stopPropagation()}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 7,
-            textDecoration: 'none', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800,
-            fontSize: 9.5, letterSpacing: '0.08em', color: isNow ? 'var(--accent)' : 'var(--mut)',
-            minHeight: 44 }}>
-          FULL DIRECTIONS <span style={{ fontSize: 11 }}>↗</span>
-        </a>
       </div>
 
-      {/* Difficulty chip + mileage */}
-      <div style={{ paddingTop: 2, minWidth: 56 }}>
-        <DiffChip legNumber={leg.legNumber} />
+      {/* Mileage */}
+      <div style={{ paddingTop: 2, minWidth: 48, textAlign: 'right' }}>
         <div style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 16,
-          color: isDone ? 'var(--mut)' : 'var(--text)', marginTop: 8, textAlign: 'right' }}>
+          color: isDone ? 'var(--mut)' : 'var(--text)' }}>
           {leg.miles.toFixed(2)}<span style={{ fontSize: 10, color: 'var(--mut)' }}> mi</span>
         </div>
       </div>
@@ -322,11 +287,11 @@ export function CourseScreen({ currentLegNumber, raceStartedAt, teamName, backLa
         fontSize: 9, letterSpacing: '0.1em', color: 'var(--faint)', textTransform: 'uppercase' }}>
         <span style={{ textAlign: 'center' }}>Leg</span>
         <span>Start → Finish</span>
-        <span style={{ textAlign: 'right' }}>Diff · Mi</span>
+        <span style={{ textAlign: 'right' }}>Mi</span>
       </div>
 
       {/* Leg list */}
-      <div style={{ padding: '0 8px 36px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <div style={{ padding: '0 8px 36px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         {COURSE_LEGS.map((leg, i) => (
           <LegRow
             key={leg.legNumber}
