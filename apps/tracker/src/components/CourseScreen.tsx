@@ -1,14 +1,21 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { COURSE_LEGS, TOTAL_COURSE_MILES, LEG_DIFFICULTY, mapPoint, mapRoute } from '@kt82/shared'
 import type { CourseLeg } from '@kt82/shared'
-import { formatRaceTime } from '../api'
+import { formatRaceTime, formatTime } from '../api'
+import type { LegTimelineItem } from '../api'
 
 interface CourseScreenProps {
   currentLegNumber: number   // 0 = not started; >18 = all done
   raceStartedAt: string | null
   teamName: string
-  backLabel: string
-  onBack: () => void
+  backLabel?: string
+  onBack?: () => void        // absent = embedded mode (no top bar / title)
+  timeline?: LegTimelineItem[]
+  assignedStartTime?: Date
+}
+
+function fmtMs(ms: number): string {
+  return formatTime(new Date(ms).toISOString())
 }
 
 function MapPin({ color }: { color: string }) {
@@ -79,25 +86,32 @@ function DiffChip({ legNumber }: { legNumber: number }) {
   )
 }
 
-function LegRow({ leg, state, isNextUp, isLast }: {
+function LegRow({ leg, state, isNextUp, isLast, runnerName, startTime, endTime, endLabel }: {
   leg: CourseLeg
   state: 'done' | 'now' | 'upcoming'
   isNextUp: boolean
   isLast: boolean
+  runnerName?: string | null
+  startTime?: string | null
+  endTime?: string | null
+  endLabel?: 'Finish' | 'ETA'
 }) {
   const isDone = state === 'done'
   const isNow  = state === 'now'
 
-  const stripeColor = isNow ? 'var(--accent)' : isDone ? 'var(--green)' : 'var(--line)'
-  const rowBg       = isNow ? 'color-mix(in srgb, var(--accent) 11%, transparent)'
-                    : isDone ? 'color-mix(in srgb, var(--green) 6%, transparent)'
-                    : 'transparent'
-  const legNumColor = isNow ? 'var(--accent)' : isDone ? 'var(--mut)' : 'var(--faint)'
-  const nameColor   = isDone ? 'var(--mut)' : 'var(--text)'
-  const dotColor    = isNow ? 'var(--accent)' : isDone ? 'var(--green)' : 'var(--faint)'
+  const stripeColor  = isNow ? 'var(--accent)' : isDone ? 'var(--green)' : 'var(--line)'
+  const rowBg        = isNow ? 'color-mix(in srgb, var(--accent) 11%, transparent)'
+                     : isDone ? 'color-mix(in srgb, var(--green) 6%, transparent)'
+                     : 'transparent'
+  const legNumColor  = isNow ? 'var(--accent)' : isDone ? 'var(--mut)' : 'var(--faint)'
+  const nameColor    = isNow ? 'var(--accent)' : isDone ? 'var(--mut)' : 'var(--text)'
+  const dotColor     = isNow ? 'var(--accent)' : isDone ? 'var(--green)' : 'var(--faint)'
+  const mapNameColor = isDone ? 'var(--mut)' : 'var(--text)'
 
   return (
-    <div style={{ position: 'relative', display: 'grid', gridTemplateColumns: '40px 1fr auto',
+    <div style={{ position: 'relative', display: 'grid',
+      gridTemplateColumns: '40px 1fr auto',
+      gridTemplateRows: 'auto auto',
       columnGap: 12, padding: '13px 12px 13px 16px', background: rowBg,
       borderRadius: isNow ? 16 : isDone ? 12 : 0,
       border: isNow ? '1px solid var(--accent)' : 'none',
@@ -108,8 +122,8 @@ function LegRow({ leg, state, isNextUp, isLast }: {
         top: (isNow || isDone) ? 6 : 0, bottom: (isNow || isDone) ? 6 : 0,
         width: 3, borderRadius: 3, background: stripeColor }} />
 
-      {/* Leg number + state badge */}
-      <div style={{ textAlign: 'center', paddingTop: 2 }}>
+      {/* Col 1, rows 1+2: leg number + state badge */}
+      <div style={{ gridColumn: 1, gridRow: '1 / 3', textAlign: 'center', paddingTop: 2 }}>
         <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 30, lineHeight: 0.8, color: legNumColor }}>
           {String(leg.legNumber).padStart(2, '0')}
         </div>
@@ -139,16 +153,27 @@ function LegRow({ leg, state, isNextUp, isLast }: {
         )}
       </div>
 
-      {/* Start → Finish map links */}
-      <div style={{ minWidth: 0 }}>
+      {/* Cols 2–3, row 1: runner name + difficulty chip */}
+      <div style={{ gridColumn: '2 / 4', gridRow: 1,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        paddingBottom: 7 }}>
+        <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 14, fontWeight: 800,
+          color: runnerName ? nameColor : 'var(--faint)' }}>
+          {runnerName ?? '—'}
+        </span>
+        <DiffChip legNumber={leg.legNumber} />
+      </div>
+
+      {/* Col 2, row 2: start → finish map links */}
+      <div style={{ gridColumn: 2, gridRow: 2, minWidth: 0 }}>
         <MapLink kind="start" name={leg.startName}
           url={mapPoint(leg.startLat, leg.startLng)}
-          dotColor={dotColor} nameColor={nameColor} filled={false} />
+          dotColor={dotColor} nameColor={mapNameColor} filled={false} />
         <div style={{ width: 2, height: 9, marginLeft: 5,
           background: isDone ? 'color-mix(in srgb, var(--green) 40%, transparent)' : 'var(--line)' }} />
         <MapLink kind="finish" name={leg.endName}
           url={mapPoint(leg.endLat, leg.endLng)}
-          dotColor={dotColor} nameColor={nameColor} filled={isNow || isDone} />
+          dotColor={dotColor} nameColor={mapNameColor} filled={isNow || isDone} />
         <a
           href={mapRoute({ lat: leg.startLat, lng: leg.startLng }, { lat: leg.endLat, lng: leg.endLng })}
           target="_blank" rel="noopener noreferrer"
@@ -161,19 +186,33 @@ function LegRow({ leg, state, isNextUp, isLast }: {
         </a>
       </div>
 
-      {/* Difficulty chip + mileage */}
-      <div style={{ paddingTop: 2, minWidth: 56 }}>
-        <DiffChip legNumber={leg.legNumber} />
-        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 16,
-          color: isDone ? 'var(--mut)' : 'var(--text)', marginTop: 8, textAlign: 'right' }}>
-          {leg.miles.toFixed(2)}<span style={{ fontSize: 10, color: 'var(--mut)' }}> mi</span>
+      {/* Col 3, row 2: start time + ETA/finish time */}
+      <div style={{ gridColumn: 3, gridRow: 2,
+        display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 1, minWidth: 58 }}>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 8,
+            letterSpacing: '0.12em', color: 'var(--faint)', textTransform: 'uppercase' }}>Start</div>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 14,
+            color: isNow ? 'var(--green)' : 'var(--mut)', lineHeight: 1.1 }}>
+            {startTime ?? '—'}
+          </div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 8,
+            letterSpacing: '0.12em', color: 'var(--faint)', textTransform: 'uppercase' }}>
+            {endLabel ?? 'ETA'}
+          </div>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 14,
+            color: isNow ? 'var(--accent)' : 'var(--mut)', lineHeight: 1.1 }}>
+            {endTime ?? '—'}
+          </div>
         </div>
       </div>
     </div>
   )
 }
 
-export function CourseScreen({ currentLegNumber, raceStartedAt, teamName, backLabel, onBack }: CourseScreenProps) {
+export function CourseScreen({ currentLegNumber, raceStartedAt, teamName, backLabel, onBack, timeline, assignedStartTime }: CourseScreenProps) {
   const [tick, setTick] = useState(0)
 
   useEffect(() => {
@@ -184,6 +223,61 @@ export function CourseScreen({ currentLegNumber, raceStartedAt, teamName, backLa
 
   void tick
 
+  type LegData = { runnerName: string | null; startTime: string | null; endTime: string | null; endLabel: 'Finish' | 'ETA' }
+
+  const legDataMap = useMemo<Map<number, LegData>>(() => {
+    const map = new Map<number, LegData>()
+    if (!timeline?.length) return map
+
+    const sorted = [...timeline].sort((a, b) => a.leg.legNumber - b.leg.legNumber)
+
+    for (const item of sorted) {
+      const runnerName = item.runner?.name ?? null
+      if (item.status === 'completed' && item.result?.startedAt && item.result?.finishedAt) {
+        map.set(item.leg.legNumber, {
+          runnerName,
+          startTime: formatTime(item.result.startedAt),
+          endTime: formatTime(item.result.finishedAt),
+          endLabel: 'Finish',
+        })
+      } else if (item.status === 'in-progress' && item.result?.startedAt && item.eta?.eta) {
+        map.set(item.leg.legNumber, {
+          runnerName,
+          startTime: formatTime(item.result.startedAt),
+          endTime: `~${formatTime(String(item.eta.eta))}`,
+          endLabel: 'ETA',
+        })
+      } else {
+        map.set(item.leg.legNumber, { runnerName, startTime: null, endTime: null, endLabel: 'ETA' })
+      }
+    }
+
+    // Project start + end times for not-started legs
+    const activeItem = sorted.find(t => t.status === 'in-progress')
+    const anchorDate = activeItem?.eta?.eta
+      ? new Date(String(activeItem.eta.eta))
+      : assignedStartTime ?? null
+
+    if (anchorDate) {
+      let anchor = anchorDate.getTime()
+      for (const item of sorted.filter(t => t.status === 'not-started')) {
+        if (!item.assignment) continue
+        const startMs = anchor
+        const durationMs = item.assignment.targetPaceSecPerMile * item.leg.distanceMiles * 1000
+        anchor = startMs + durationMs
+        const existing = map.get(item.leg.legNumber)
+        map.set(item.leg.legNumber, {
+          runnerName: existing?.runnerName ?? null,
+          startTime: `~${fmtMs(startMs)}`,
+          endTime: `~${fmtMs(anchor)}`,
+          endLabel: 'ETA',
+        })
+      }
+    }
+
+    return map
+  }, [timeline, assignedStartTime])
+
   const milesDone  = Math.round(COURSE_LEGS.filter(l => l.legNumber < currentLegNumber).reduce((s, l) => s + l.miles, 0) * 10) / 10
   const pct        = Math.min(100, Math.round((milesDone / TOTAL_COURSE_MILES) * 100))
   const doneCount  = Math.max(0, currentLegNumber - 1)
@@ -192,44 +286,50 @@ export function CourseScreen({ currentLegNumber, raceStartedAt, teamName, backLa
   const raceElapsedMs = raceStartedAt ? Math.max(0, Date.now() - new Date(raceStartedAt).getTime()) : 0
   const isRacing   = raceStartedAt !== null && currentLegNumber >= 1 && currentLegNumber <= COURSE_LEGS.length
 
+  const activeRunner = timeline?.find(t => t.status === 'in-progress')?.runner?.name ?? null
+
   const stateOf = (n: number): 'done' | 'now' | 'upcoming' =>
     n < currentLegNumber ? 'done' : n === currentLegNumber ? 'now' : 'upcoming'
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--bg)', color: 'var(--text)',
+    <div className={onBack ? 'min-h-screen' : ''} style={{ background: 'var(--bg)', color: 'var(--text)',
       fontFamily: "'Hanken Grotesk', sans-serif" }}>
 
-      {/* Top bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '8px 18px' }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer',
-          color: 'var(--mut)', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800,
-          fontSize: 12, letterSpacing: '0.04em', padding: 0, whiteSpace: 'nowrap', minHeight: 44, minWidth: 44 }}>
-          {backLabel}
-        </button>
-        {isRacing && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div className="live-dot" style={{ width: 7, height: 7, borderRadius: '50%',
-              background: 'var(--green)' }} />
-            <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: 11,
-              letterSpacing: '0.1em', color: 'var(--mut)' }}>LIVE</span>
+      {/* Top bar — hidden in embedded mode */}
+      {onBack && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '8px 18px' }}>
+          <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer',
+            color: 'var(--mut)', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800,
+            fontSize: 12, letterSpacing: '0.04em', padding: 0, whiteSpace: 'nowrap', minHeight: 44, minWidth: 44 }}>
+            {backLabel}
+          </button>
+          {isRacing && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div className="live-dot" style={{ width: 7, height: 7, borderRadius: '50%',
+                background: 'var(--green)' }} />
+              <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: 11,
+                letterSpacing: '0.1em', color: 'var(--mut)' }}>LIVE</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Title — hidden in embedded mode */}
+      {onBack && (
+        <div style={{ padding: '4px 18px 0' }}>
+          <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: 11,
+            letterSpacing: '0.14em', color: 'var(--accent)', textTransform: 'uppercase' }}>
+            KT82 · Katy Trail Relay{teamName ? ` · ${teamName}` : ''}
           </div>
-        )}
-      </div>
-
-      {/* Title */}
-      <div style={{ padding: '4px 18px 0' }}>
-        <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: 11,
-          letterSpacing: '0.14em', color: 'var(--accent)', textTransform: 'uppercase' }}>
-          KT82 · Katy Trail Relay{teamName ? ` · ${teamName}` : ''}
+          <div className="font-display" style={{ fontSize: 50, lineHeight: 0.84,
+            textTransform: 'uppercase', marginTop: 8 }}>
+            The Course
+          </div>
         </div>
-        <div className="font-display" style={{ fontSize: 50, lineHeight: 0.84,
-          textTransform: 'uppercase', marginTop: 8 }}>
-          The Course
-        </div>
-      </div>
+      )}
 
-      {/* Race clock + position (only shown while racing) */}
+      {/* Race clock + progress (only shown while racing) */}
       {isRacing ? (
         <div style={{ padding: '16px 18px 18px' }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
@@ -303,6 +403,9 @@ export function CourseScreen({ currentLegNumber, raceStartedAt, teamName, backLa
               <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: 13,
                 color: 'var(--text)', marginTop: 3, overflow: 'hidden',
                 textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {activeRunner && (
+                  <span style={{ fontWeight: 800, color: 'var(--accent)' }}>{activeRunner} · </span>
+                )}
                 {curLeg.startName} → {curLeg.endName}
               </div>
             </div>
@@ -316,26 +419,24 @@ export function CourseScreen({ currentLegNumber, raceStartedAt, teamName, backLa
         </div>
       )}
 
-      {/* Column header */}
-      <div style={{ display: 'grid', gridTemplateColumns: '40px 1fr auto', columnGap: 12,
-        padding: '0 30px 6px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800,
-        fontSize: 9, letterSpacing: '0.1em', color: 'var(--faint)', textTransform: 'uppercase' }}>
-        <span style={{ textAlign: 'center' }}>Leg</span>
-        <span>Start → Finish</span>
-        <span style={{ textAlign: 'right' }}>Diff · Mi</span>
-      </div>
-
       {/* Leg list */}
       <div style={{ padding: '0 8px 36px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {COURSE_LEGS.map((leg, i) => (
-          <LegRow
-            key={leg.legNumber}
-            leg={leg}
-            state={stateOf(leg.legNumber)}
-            isNextUp={leg.legNumber === currentLegNumber + 1}
-            isLast={i === COURSE_LEGS.length - 1}
-          />
-        ))}
+        {COURSE_LEGS.map((leg, i) => {
+          const data = legDataMap.get(leg.legNumber)
+          return (
+            <LegRow
+              key={leg.legNumber}
+              leg={leg}
+              state={stateOf(leg.legNumber)}
+              isNextUp={leg.legNumber === currentLegNumber + 1}
+              isLast={i === COURSE_LEGS.length - 1}
+              runnerName={data?.runnerName}
+              startTime={data?.startTime}
+              endTime={data?.endTime}
+              endLabel={data?.endLabel}
+            />
+          )
+        })}
       </div>
     </div>
   )
