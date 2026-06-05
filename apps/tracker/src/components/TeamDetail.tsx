@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { api, formatTime, formatElapsed, formatRaceTime } from '../api'
 import type { LegTimelineItem } from '../api'
-import { CourseScreen } from './CourseScreen'
 import { LegMapScreen } from './LegMapScreen'
 import { PreRaceScreen } from './PreRaceScreen'
 import { COURSE_LEGS } from '@kt82/shared'
