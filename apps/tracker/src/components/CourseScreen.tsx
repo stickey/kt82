@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { COURSE_LEGS, TOTAL_COURSE_MILES, LEG_DIFFICULTY, mapPoint } from '@kt82/shared'
+import { COURSE_LEGS, TOTAL_COURSE_MILES, mapPoint } from '@kt82/shared'
 import type { CourseLeg } from '@kt82/shared'
 import { formatRaceTime, formatTime } from '../api'
 import type { LegTimelineItem } from '../api'
@@ -61,30 +61,6 @@ function MapLink({ kind, name, url, dotColor, nameColor, filled }: {
   )
 }
 
-function DiffChip({ legNumber }: { legNumber: number }) {
-  const diff = LEG_DIFFICULTY[legNumber]
-  const c = diff.tier === 'easy' ? 'var(--green)' : diff.tier === 'medium' ? 'var(--amber)' : 'var(--red)'
-  const label = diff.tier === 'easy' ? 'EASY' : diff.tier === 'medium' ? 'MEDIUM' : 'DIFFICULT'
-  const noteLabel = diff.note === 'distance' ? 'DISTANCE' : diff.note === 'single-track' ? 'SINGLE TRACK' : null
-  return (
-    <div style={{ textAlign: 'right' }}>
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5,
-        fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 9,
-        letterSpacing: '0.06em', color: c,
-        background: `color-mix(in srgb, ${c} 13%, transparent)`,
-        padding: '4px 8px', borderRadius: 999, whiteSpace: 'nowrap' }}>
-        <span style={{ width: 5, height: 5, borderRadius: '50%', background: c }} />
-        {label}
-      </span>
-      {noteLabel && (
-        <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: 8.5,
-          letterSpacing: '0.04em', color: 'var(--faint)', marginTop: 4, textTransform: 'uppercase' }}>
-          {noteLabel}
-        </div>
-      )}
-    </div>
-  )
-}
 
 function LegRow({ leg, state, isNextUp, isLast, runnerName, startTime, endTime, endLabel }: {
   leg: CourseLeg
@@ -159,7 +135,6 @@ function LegRow({ leg, state, isNextUp, isLast, runnerName, startTime, endTime, 
           color: runnerName ? nameColor : 'var(--faint)' }}>
           {runnerName ?? '—'}
         </span>
-        <DiffChip legNumber={leg.legNumber} />
       </div>
 
       {/* Col 2, row 2: start → finish map links */}
