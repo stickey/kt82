@@ -103,6 +103,8 @@ In production, Express serves built app bundles as static files under path prefi
 
 ## Deployment (Production)
 
+**Live URL:** https://kt82.run (domain registered at Namecheap; `www` CNAME → `kt82.onrender.com`, apex A record → `216.24.57.1`; root redirects to `/tracker`)
+
 **Platform:** Render — single Docker web service. Tagged at `v1.1.0`.
 
 **How it works:**

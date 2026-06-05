@@ -280,7 +280,9 @@ cd server && PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH" pnpm test
 
 ## Deployment
 
-KT82 is hosted on [Render](https://render.com) as a single Docker web service. The Express server serves both the API (`/api/*`) and the four SPA bundles as static files under their respective path prefixes (`/tracker`, `/captain`, `/manager`, `/driver`).
+KT82 is live at **[kt82.run](https://kt82.run)** — the domain is registered at Namecheap and DNS points to the Render service (`kt82.onrender.com`). The root redirects to `/tracker`.
+
+The app is hosted on [Render](https://render.com) as a single Docker web service. The Express server serves both the API (`/api/*`) and the four SPA bundles as static files under their respective path prefixes (`/tracker`, `/captain`, `/manager`, `/driver`).
 
 ### Architecture
 
