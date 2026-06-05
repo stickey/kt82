@@ -57,7 +57,7 @@ export function DangerTab({ race, on401, onRaceWipe }: Props) {
         setSuccess('Timing data cleared.')
       } else if (confirm.type === 'clearAssignments') {
         await api.delete(`/races/${race.id}/assignments`)
-        setSuccess('Assignments cleared.')
+        setSuccess('Assignments and timing data cleared.')
       } else if (confirm.type === 'deleteTeam') {
         await api.delete(`/teams/${confirm.team.id}`)
         await loadTeams(race.id)
