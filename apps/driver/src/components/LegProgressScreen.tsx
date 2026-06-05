@@ -139,8 +139,16 @@ export function LegProgressScreen({
           <div style={{ position: 'absolute', top: '50%', left: `${L}%`, transform: 'translate(-50%, -50%)', width: 3.5, height: 26, borderRadius: 2, background: 'var(--accent)' }} />
           {/* Right end-cap */}
           <div style={{ position: 'absolute', top: '50%', left: `${R}%`, transform: 'translate(-50%, -50%)', width: 3.5, height: 26, borderRadius: 2, background: 'var(--accent)' }} />
-          {/* Best-estimate notch (panel = white in dark theme) */}
-          <div style={{ position: 'absolute', top: '50%', left: `${target.frac * 100}%`, transform: 'translate(-50%, -50%)', width: 3, height: 18, borderRadius: 2, background: 'var(--panel)' }} />
+          {/* Runner icon at best-estimate position */}
+          <div style={{
+            position: 'absolute', top: '50%', left: `${target.frac * 100}%`,
+            transform: 'translate(-50%, -50%)',
+            width: 26, height: 26, borderRadius: '50%',
+            background: '#ff5a1f', border: '2.5px solid #fff',
+            boxShadow: '0 0 7px rgba(255,90,31,0.75)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 13, lineHeight: '1',
+          }}>🏃</div>
         </div>
 
         {/* Scale row */}
