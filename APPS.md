@@ -35,7 +35,7 @@ Public, no-auth view of all teams' live race progress.
 | **TeamGrid** | `components/TeamGrid.tsx` | Top-level list of all teams; each card shows current runner, current leg, ETA, and pace status (ON PACE / AHEAD / BEHIND) |
 | **TeamDetail** | `components/TeamDetail.tsx` | Wrapper that owns the selected team's timeline and sub-screen navigation; renders one of the sub-screens below |
 | ↳ **PreRaceScreen** | `components/PreRaceScreen.tsx` | Shown before race start: countdown clock, assigned start time, full leg schedule with projected splits |
-| ↳ **LegProgressScreen** | `components/LegProgressScreen.tsx` | Same pace-scenario table as Driver's; shows projected finish for the active leg |
+| ↳ **LegProgressScreen** | `components/LegProgressScreen.tsx` | **No longer accessible from Tracker UI** (file retained; accessible in Driver via TimingScreen) |
 | ↳ **LegMapScreen** | `components/LegMapScreen.tsx` | Same Leaflet map view as Driver's |
 | ↳ **CourseScreen** | `components/CourseScreen.tsx` | Same course overview as Driver's |
 
