@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { api, formatTime, formatElapsed, formatRaceTime } from '../api'
 import type { LegTimelineItem } from '../api'
+import { CourseScreen } from './CourseScreen'
 import { LegMapScreen } from './LegMapScreen'
 import { PreRaceScreen } from './PreRaceScreen'
-import { COURSE_LEGS } from '@kt82/shared'
 
 interface Props {
   teamId: string
@@ -113,19 +113,6 @@ export function TeamDetail({ teamId, teamName, raceDate, onBack }: Props) {
   const milesDone  = sorted.filter(t => t.status === 'completed').reduce((s, t) => s + t.leg.distanceMiles, 0)
   const totalMiles = sorted.reduce((s, t) => s + t.leg.distanceMiles, 0) || 82
   const milesToGo  = Math.max(0, totalMiles - milesDone)
-
-  // Projected arrival times for not-started legs
-  const projectedTimes = new Map<string, Date>()
-  if (activeItem?.eta?.eta) {
-    let anchor = new Date(String(activeItem.eta.eta))
-    for (const item of sorted.filter(t => t.status === 'not-started')) {
-      if (!item.assignment) continue
-      const durationMs = item.assignment.targetPaceSecPerMile * item.leg.distanceMiles * 1000
-      const arrival    = new Date(anchor.getTime() + durationMs)
-      projectedTimes.set(item.leg.id, arrival)
-      anchor = arrival
-    }
-  }
 
   // On-deck: first not-started leg after the active one
   const onDeckItem = activeItem
@@ -352,100 +339,13 @@ export function TeamDetail({ teamId, teamName, raceDate, onBack }: Props) {
           </div>
         )}
 
-        {/* The Course */}
-        <div className="flex items-center justify-between w-full min-h-[44px] mb-0">
-          <span className="font-display uppercase" style={{ fontSize: 24 }}>Arrivals</span>
-          <span className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 11,
-            fontWeight: 800, letterSpacing: '0.08em', color: 'var(--accent)' }}>
-            ALL {COURSE_LEGS.length} LEGS
-          </span>
-        </div>
-        <div className="uppercase mb-3" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 10,
-          fontWeight: 800, letterSpacing: '0.1em', color: 'var(--faint)' }}>
-          {timeline.length} Handoffs
-        </div>
-
-        {timeline.length === 0 ? (
-          <p style={{ fontSize: 13, color: 'var(--mut)' }}>No assignments yet.</p>
-        ) : (
-          <div className="flex flex-col gap-0.5">
-            {sorted.map(item => {
-              const isDone    = item.status === 'completed'
-              const isActive  = item.status === 'in-progress'
-              const isNext    = onDeckItem?.leg.id === item.leg.id
-              const iStatus   = isActive ? (etaStatus === 'overdue' ? 'var(--red)' : 'var(--green)') : 'var(--mut)'
-
-              // Delta for done rows
-              let deltaLabel: string | null = null
-              if (isDone && item.assignment && item.result?.startedAt && item.result?.finishedAt) {
-                const actualSec = (new Date(item.result.finishedAt).getTime() - new Date(item.result.startedAt).getTime()) / 1000
-                const targetSec = item.assignment.targetPaceSecPerMile * item.leg.distanceMiles
-                const deltaSec  = actualSec - targetSec  // positive = slower (behind)
-                const deltaMin  = Math.round(Math.abs(deltaSec) / 60)
-                if (deltaMin > 0) deltaLabel = deltaSec > 0 ? `+${deltaMin}m` : `-${deltaMin}m`
-              }
-
-              return (
-                <div
-                  key={item.leg.id}
-                  className="flex items-center gap-2.5 px-2.5 py-2"
-                  style={{
-                    borderRadius: 10,
-                    opacity: isDone ? 0.4 : 1,
-                    background: isActive
-                      ? `${heroBg}1e`
-                      : 'transparent',
-                  }}
-                >
-                  {/* Leg number */}
-                  <span className="font-display uppercase flex-shrink-0 text-center" style={{ fontSize: 20, width: 26, color: isActive ? heroColor : 'var(--faint)', lineHeight: 1 }}>
-                    {item.leg.legNumber}
-                  </span>
-
-                  {/* Avatar */}
-                  <div className="flex items-center justify-center flex-shrink-0" style={{ width: 30, height: 30, borderRadius: '50%', background: isActive ? `${heroBg}40` : 'var(--panel2)', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 10, color: isActive ? heroColor : 'var(--mut)' }}>
-                    {item.runner ? initials(item.runner.name) : '?'}
-                  </div>
-
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 15, fontWeight: 800, color: isActive ? iStatus : isDone ? 'var(--faint)' : 'var(--text)', lineHeight: 1.2 }}>
-                      {item.runner?.name ?? '—'}
-                    </div>
-                    <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 10, color: 'var(--faint)', marginTop: 1 }}>
-                      {item.leg.handoff?.name ?? item.leg.name} · {item.leg.distanceMiles} mi
-                    </div>
-                  </div>
-
-                  {/* Time + tags */}
-                  <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
-                    {isActive && (
-                      <span className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 8, fontWeight: 800, letterSpacing: '0.1em', background: heroColor, color: 'var(--ink)', borderRadius: 999, padding: '2px 6px' }}>Live</span>
-                    )}
-                    {isNext && (
-                      <span className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 8, fontWeight: 800, letterSpacing: '0.1em', border: '1px solid var(--line)', color: 'var(--mut)', borderRadius: 999, padding: '2px 6px' }}>On Deck</span>
-                    )}
-                    <span className="font-mono" style={{ fontSize: 14, color: isActive ? iStatus : isDone ? 'var(--faint)' : 'var(--mut)' }}>
-                      {isDone && item.result?.finishedAt
-                        ? formatTime(item.result.finishedAt)
-                        : isActive && item.eta
-                          ? formatTime(String(item.eta.eta))
-                          : projectedTimes.has(item.leg.id)
-                            ? `~${formatTime(projectedTimes.get(item.leg.id)!.toISOString())}`
-                            : '—'}
-                    </span>
-                    {deltaLabel && (
-                      <span className="font-mono" style={{ fontSize: 10, color: deltaLabel.startsWith('+') ? 'var(--red)' : 'var(--green)' }}>
-                        {deltaLabel}
-                      </span>
-                    )}
-                  </div>
-
-                </div>
-              )
-            })}
-          </div>
-        )}
+        <CourseScreen
+          currentLegNumber={allDone ? 19 : (activeItem?.leg.legNumber ?? 0)}
+          raceStartedAt={raceStartedAt}
+          teamName={teamName}
+          timeline={timeline}
+          assignedStartTime={assignedStartTime}
+        />
       </div>
     </div>
   )
