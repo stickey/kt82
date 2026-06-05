@@ -294,6 +294,7 @@ export default function App() {
       onViewCourse={handleViewCourse}
       onViewLegProgress={view.targetPaceSecPerMile !== null ? handleViewLegProgress : null}
       onViewLegMap={view.targetPaceSecPerMile !== null ? handleViewLegMapFromRacing : null}
+      targetPaceSecPerMile={view.targetPaceSecPerMile}
     />
   )
   if (view.type === 'course') return (

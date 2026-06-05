@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { createDriverApi, buildNavUrl, formatElapsed, formatRaceTime, formatTime } from '../api'
+import { lpEstimates } from '@kt82/shared'
 import { LongPressButton } from './LongPressButton'
 import type { TeamSummary, Leg, Handoff, CurrentStateInProgress } from '../api'
 
@@ -20,13 +21,23 @@ interface Props {
   onViewCourse: () => void
   onViewLegProgress: (() => void) | null
   onViewLegMap: (() => void) | null
+  targetPaceSecPerMile: number | null
 }
 
 function initials(name: string): string {
   return name.split(' ').slice(0, 2).map(w => w[0] ?? '').join('').toUpperCase()
 }
 
-export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff, currentRunner, raceStartedAt, onLapPress, onComplete, nextRunner, nextLeg, nextRunnerEta, onViewCourse, onViewLegProgress, onViewLegMap }: Props) {
+function fmtRemain(sec: number): string {
+  const s = Math.max(0, Math.round(sec))
+  const h = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  const ss = (s % 60).toString().padStart(2, '0')
+  const mm = m.toString().padStart(2, '0')
+  return h > 0 ? `${h}:${mm}:${ss}` : `${m}:${ss}`
+}
+
+export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff, currentRunner, raceStartedAt, onLapPress, onComplete, nextRunner, nextLeg, nextRunnerEta, onViewCourse, onViewLegProgress, onViewLegMap, targetPaceSecPerMile }: Props) {
   const [elapsed, setElapsed] = useState(0)
   const [raceElapsed, setRaceElapsed] = useState(0)
   const [eta, setEta]         = useState<{ eta: string; secondsRemaining: number; status: 'on-pace' | 'ahead' | 'overdue' } | null>(null)
@@ -92,6 +103,17 @@ export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff,
   const etaStatus = eta?.status ?? 'on-pace'
   const paceColor = etaStatus === 'overdue' ? 'var(--red)' : 'var(--green)'
 
+  const startedAtMs = new Date(startedAt).getTime()
+  const nowMs = startedAtMs + elapsed
+  const ests = targetPaceSecPerMile !== null
+    ? lpEstimates(startedAtMs, nowMs, leg.distanceMiles, targetPaceSecPerMile)
+    : null
+  const est = ests?.[2] ?? null
+  const distDone = est ? est.frac * leg.distanceMiles : 0
+  const distLeft = est ? (1 - est.frac) * leg.distanceMiles : 0
+  const secLeft = est ? est.remain : 0
+  const pillFontSize = targetPaceSecPerMile !== null ? 28 : 38
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg)', color: 'var(--text)' }}>
 
@@ -139,20 +161,29 @@ export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff,
           </div>
         </div>
 
-        {/* Twin readout panels */}
+        {/* Twin / triple readout panels */}
         <div className="flex gap-2.5">
           <div className="flex-1 text-center" style={{ background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 16, padding: '12px 10px' }}>
             <div className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', color: 'var(--faint)', marginBottom: 4 }}>Leg Time</div>
-            <div className="font-mono" style={{ fontSize: 38, fontWeight: 700, lineHeight: 1 }}>{formatElapsed(elapsed)}</div>
-            <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 10, color: 'var(--faint)', marginTop: 4 }}>{leg.distanceMiles} mi total</div>
-          </div>
-          <div className="flex-1 text-center" style={{ background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 16, padding: '12px 10px' }}>
-            <div className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', color: 'var(--faint)', marginBottom: 4 }}>
-              ETA
+            <div className="font-mono" style={{ fontSize: pillFontSize, fontWeight: 700, lineHeight: 1 }}>{formatElapsed(elapsed)}</div>
+            <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 10, color: 'var(--faint)', marginTop: 4 }}>
+              {est ? `~${distDone.toFixed(2)} mi done` : `${leg.distanceMiles} mi total`}
             </div>
+          </div>
+          {est && (
+            <div className="flex-1 text-center" style={{ background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 16, padding: '12px 10px' }}>
+              <div className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', color: 'var(--faint)', marginBottom: 4 }}>Time Left</div>
+              <div className="font-mono" style={{ fontSize: 28, fontWeight: 700, lineHeight: 1 }}>{fmtRemain(secLeft)}</div>
+              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 10, color: 'var(--faint)', marginTop: 4 }}>
+                ~{distLeft.toFixed(2)} mi left
+              </div>
+            </div>
+          )}
+          <div className="flex-1 text-center" style={{ background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 16, padding: '12px 10px' }}>
+            <div className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', color: 'var(--faint)', marginBottom: 4 }}>ETA</div>
             {eta
-              ? <div className="font-mono" style={{ fontSize: 38, fontWeight: 700, lineHeight: 1, color: paceColor }}>{formatTime(eta.eta)}</div>
-              : <div className="font-mono" style={{ fontSize: 38, color: 'var(--faint)', lineHeight: 1 }}>—</div>
+              ? <div className="font-mono" style={{ fontSize: pillFontSize, fontWeight: 700, lineHeight: 1, color: paceColor }}>{formatTime(eta.eta)}</div>
+              : <div className="font-mono" style={{ fontSize: pillFontSize, color: 'var(--faint)', lineHeight: 1 }}>—</div>
             }
             <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 10, color: 'var(--faint)', marginTop: 4 }}>
               {eta ? (etaStatus === 'overdue' ? 'behind pace' : etaStatus === 'ahead' ? 'ahead of pace' : 'on pace') : 'calculating…'}
