@@ -8,7 +8,7 @@ import { CourseScreen } from './components/CourseScreen'
 import { LegProgressScreen } from './components/LegProgressScreen'
 import { LegMapScreen } from './components/LegMapScreen'
 import { enqueue, peek, dequeue, type PendingAction } from './pendingActions'
-import { saveSession, clearSession } from './sessionCache'
+import { saveSession, readSession, clearSession } from './sessionCache'
 import type { Race, TeamSummary, Leg, Handoff, CurrentState, CurrentStateInProgress } from './api'
 
 type View =
@@ -26,6 +26,8 @@ export default function App() {
   const [view, setView] = useState<View>({ type: 'loading' })
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(() => peek())
   const [legMapLastUpdatedMs, setLegMapLastUpdatedMs] = useState<number | undefined>(undefined)
+  const [restoredFromCache, setRestoredFromCache] = useState(false)
+  void restoredFromCache
 
   // Mirror view state to localStorage so a refresh-while-offline can restore
   useEffect(() => {
@@ -70,7 +72,41 @@ export default function App() {
   useEffect(() => {
     publicApi.get<Race>('/races/active')
       .then(race => setView({ type: 'auth', race }))
-      .catch(() => setView({ type: 'no-race' }))
+      .catch(() => {
+        const cached = readSession()
+        if (cached) {
+          if (cached.viewType === 'start') {
+            setView({
+              type: 'start',
+              race: cached.race,
+              team: cached.team,
+              pin: cached.pin,
+              nextLeg: cached.nextLeg,
+              nextRunner: cached.nextRunner,
+            })
+          } else {
+            setView({
+              type: 'racing',
+              race: cached.race,
+              team: cached.team,
+              pin: cached.pin,
+              resultId: cached.resultId,
+              leg: cached.leg,
+              startedAt: cached.startedAt,
+              nextHandoff: cached.nextHandoff,
+              currentRunner: cached.currentRunner,
+              raceStartedAt: cached.raceStartedAt,
+              nextRunner: cached.nextRunner,
+              nextLeg: cached.nextLeg,
+              nextRunnerEta: cached.nextRunnerEta,
+              targetPaceSecPerMile: cached.targetPaceSecPerMile,
+            })
+          }
+          setRestoredFromCache(true)
+        } else {
+          setView({ type: 'no-race' })
+        }
+      })
   }, [])
 
   async function handleAuth(team: TeamSummary, pin: string, passedState: CurrentState) {
