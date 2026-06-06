@@ -18,6 +18,12 @@ function fmtMs(ms: number): string {
   return formatTime(new Date(ms).toISOString())
 }
 
+function formatPace(sec: number): string {
+  const m = Math.floor(sec / 60)
+  const s = Math.round(sec % 60)
+  return `${m}:${String(s).padStart(2, '0')}`
+}
+
 function MapPin({ color }: { color: string }) {
   return (
     <svg width="13" height="16" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
@@ -62,7 +68,7 @@ function MapLink({ kind, name, url, dotColor, nameColor, filled }: {
 }
 
 
-function LegRow({ leg, state, isNextUp, isLast, runnerName, startTime, endTime, endLabel }: {
+function LegRow({ leg, state, isNextUp, isLast, runnerName, startTime, endTime, endLabel, pace }: {
   leg: CourseLeg
   state: 'done' | 'now' | 'upcoming'
   isNextUp: boolean
@@ -71,6 +77,7 @@ function LegRow({ leg, state, isNextUp, isLast, runnerName, startTime, endTime, 
   startTime?: string | null
   endTime?: string | null
   endLabel?: 'Finish' | 'ETA'
+  pace?: { actualSecPerMile: number; deltaSecPerMile: number } | null
 }) {
   const isDone = state === 'done'
   const isNow  = state === 'now'
@@ -83,6 +90,33 @@ function LegRow({ leg, state, isNextUp, isLast, runnerName, startTime, endTime, 
   const nameColor    = isNow ? 'var(--accent)' : isDone ? 'var(--mut)' : 'var(--text)'
   const dotColor     = isNow ? 'var(--accent)' : isDone ? 'var(--green)' : 'var(--faint)'
   const mapNameColor = isDone ? 'var(--mut)' : 'var(--text)'
+
+  let paceChipEl: JSX.Element | null = null
+  if (isDone && pace) {
+    const faster = pace.deltaSecPerMile < 0
+    const chipColor = faster ? 'var(--green)' : 'var(--accent)'
+    const chipBg = faster
+      ? 'color-mix(in srgb, var(--green) 13%, transparent)'
+      : 'color-mix(in srgb, var(--accent) 13%, transparent)'
+    const sign = pace.deltaSecPerMile < 0 ? '−' : '+'
+    const absDelta = Math.abs(pace.deltaSecPerMile)
+    paceChipEl = (
+      <span style={{
+        fontFamily: "'Hanken Grotesk', sans-serif",
+        fontWeight: 800,
+        fontSize: 9.5,
+        letterSpacing: '0.04em',
+        color: chipColor,
+        background: chipBg,
+        padding: '4px 8px',
+        borderRadius: 999,
+        whiteSpace: 'nowrap',
+        flexShrink: 0,
+      }}>
+        {formatPace(pace.actualSecPerMile)} {sign}{formatPace(absDelta)}
+      </span>
+    )
+  }
 
   return (
     <div style={{ position: 'relative', display: 'grid',
@@ -129,14 +163,16 @@ function LegRow({ leg, state, isNextUp, isLast, runnerName, startTime, endTime, 
         )}
       </div>
 
-      {/* Cols 2–3, row 1: runner name + difficulty chip */}
+      {/* Cols 2–3, row 1: runner name + pace chip + mileage */}
       <div style={{ gridColumn: '2 / 4', gridRow: 1,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        paddingBottom: 5 }}>
+        gap: 6, paddingBottom: 5 }}>
         <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 14, fontWeight: 800,
-          color: runnerName ? nameColor : 'var(--faint)' }}>
+          color: runnerName ? nameColor : 'var(--faint)',
+          flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {runnerName ?? '—'}
         </span>
+        {paceChipEl}
         <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: 11,
           color: 'var(--faint)', flexShrink: 0 }}>
           {leg.miles} mi
@@ -194,7 +230,13 @@ export function CourseScreen({ currentLegNumber, raceStartedAt, teamName, backLa
 
   void tick
 
-  type LegData = { runnerName: string | null; startTime: string | null; endTime: string | null; endLabel: 'Finish' | 'ETA' }
+  type LegData = {
+    runnerName: string | null
+    startTime: string | null
+    endTime: string | null
+    endLabel: 'Finish' | 'ETA'
+    pace?: { actualSecPerMile: number; deltaSecPerMile: number }
+  }
 
   const legDataMap = useMemo<Map<number, LegData>>(() => {
     const map = new Map<number, LegData>()
@@ -205,11 +247,17 @@ export function CourseScreen({ currentLegNumber, raceStartedAt, teamName, backLa
     for (const item of sorted) {
       const runnerName = item.runner?.name ?? null
       if (item.status === 'completed' && item.result?.startedAt && item.result?.finishedAt) {
+        const elapsedSec = (new Date(item.result.finishedAt).getTime() - new Date(item.result.startedAt).getTime()) / 1000
+        const actualSecPerMile = elapsedSec / item.leg.distanceMiles
+        const pace = item.assignment
+          ? { actualSecPerMile, deltaSecPerMile: actualSecPerMile - item.assignment.targetPaceSecPerMile }
+          : undefined
         map.set(item.leg.legNumber, {
           runnerName,
           startTime: formatTime(item.result.startedAt),
           endTime: formatTime(item.result.finishedAt),
           endLabel: 'Finish',
+          pace,
         })
       } else if (item.status === 'in-progress' && item.result?.startedAt && item.eta?.eta) {
         map.set(item.leg.legNumber, {
@@ -405,6 +453,7 @@ export function CourseScreen({ currentLegNumber, raceStartedAt, teamName, backLa
               startTime={data?.startTime}
               endTime={data?.endTime}
               endLabel={data?.endLabel}
+              pace={data?.pace}
             />
           )
         })}
