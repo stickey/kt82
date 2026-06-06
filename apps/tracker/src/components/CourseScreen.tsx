@@ -19,8 +19,9 @@ function fmtMs(ms: number): string {
 }
 
 function formatPace(sec: number): string {
-  const m = Math.floor(sec / 60)
-  const s = Math.round(sec % 60)
+  const totalS = Math.round(sec)
+  const m = Math.floor(totalS / 60)
+  const s = totalS % 60
   return `${m}:${String(s).padStart(2, '0')}`
 }
 
