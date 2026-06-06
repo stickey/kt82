@@ -1,0 +1,4 @@
+updates to the driver page 
+* in the leg time pill replace the text that shows total leg distance and replace it with the estimated distance completed which should be updated on a frequency. keep the distance to a  2 decimal precision. do this because we already have leg distance visible elsewhere
+* add a pill that shows the estimated time remaining in big text. underneat in smaller text add the estimated distance remaining and update the distance remaining on a frequency. keep the distance to a 2 decimal precision
+* on the when do they arrive screen replace the center line marker that is in the middle of the span with the runner icon we use on the map screen
