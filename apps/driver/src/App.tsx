@@ -8,6 +8,7 @@ import { CourseScreen } from './components/CourseScreen'
 import { LegProgressScreen } from './components/LegProgressScreen'
 import { LegMapScreen } from './components/LegMapScreen'
 import { enqueue, peek, dequeue, type PendingAction } from './pendingActions'
+import { saveSession, clearSession } from './sessionCache'
 import type { Race, TeamSummary, Leg, Handoff, CurrentState, CurrentStateInProgress } from './api'
 
 type View =
@@ -25,6 +26,46 @@ export default function App() {
   const [view, setView] = useState<View>({ type: 'loading' })
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(() => peek())
   const [legMapLastUpdatedMs, setLegMapLastUpdatedMs] = useState<number | undefined>(undefined)
+
+  // Mirror view state to localStorage so a refresh-while-offline can restore
+  useEffect(() => {
+    const v = view
+    if (
+      v.type === 'racing' ||
+      v.type === 'course' ||
+      v.type === 'leg-progress' ||
+      v.type === 'leg-map'
+    ) {
+      saveSession({
+        viewType: 'racing',
+        race: v.race,
+        team: v.team,
+        pin: v.pin,
+        resultId: v.resultId,
+        leg: v.leg,
+        startedAt: v.startedAt,
+        nextHandoff: v.nextHandoff,
+        currentRunner: v.currentRunner,
+        raceStartedAt: v.raceStartedAt,
+        nextRunner: v.nextRunner,
+        nextLeg: v.nextLeg,
+        nextRunnerEta: v.nextRunnerEta,
+        targetPaceSecPerMile: v.targetPaceSecPerMile,
+      })
+    } else if (v.type === 'start') {
+      saveSession({
+        viewType: 'start',
+        race: v.race,
+        team: v.team,
+        pin: v.pin,
+        nextLeg: v.nextLeg,
+        nextRunner: v.nextRunner,
+      })
+    } else if (v.type === 'complete') {
+      clearSession()
+    }
+    // 'loading', 'no-race', 'auth' — do nothing
+  }, [view])
 
   useEffect(() => {
     publicApi.get<Race>('/races/active')
