@@ -44,7 +44,7 @@ export function PreRaceScreen({ teamName, assignedStartTime, timeline }: Props) 
     let ms = assignedStartTime.getTime()
     for (const courseLeg of COURSE_LEGS) {
       const item = timeline.find(t => t.leg.legNumber === courseLeg.legNumber)
-      if (item?.assignment) ms += item.assignment.targetPaceSecPerMile * courseLeg.miles * 1000
+      if (item?.assignment) ms += item.assignment.targetPaceSecPerMile * item.leg.distanceMiles * 1000
     }
     return new Date(ms)
   }, [assignedStartTime, timeline])
