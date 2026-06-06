@@ -1,7 +1,7 @@
 # Driver Session Cache Design
 
 **Date:** 2026-06-05
-**Status:** Draft
+**Status:** Implemented
 **Branch:** feature/offline-session-cache
 
 ## Problem
@@ -133,7 +133,7 @@ When the view is restored from cache (server was unreachable on load), surface a
 ● Offline · Cached
 ```
 
-Styled with `color: var(--mut)`, replaces/joins the existing "Syncing…" pill. The driver knows they're on cached data. Disappears once the next successful API call completes (ETA poll or pending action flush).
+Styled with `color: var(--mut)`, replaces/joins the existing "Syncing…" pill. The driver knows they're on cached data. The badge persists for the remainder of the session — it does not clear automatically when connectivity returns. This is intentional: the driver has a continuous low-key indicator that they started the session from cache.
 
 Pass a boolean `restoredFromCache: boolean` prop to `TimingScreen`; the component decides rendering.
 

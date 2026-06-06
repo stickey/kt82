@@ -22,7 +22,7 @@
 | [Course overview](specs/2026-06-02-course-overview-design.md) | 2026-06-02 | ✅ Implemented | All-18-legs screen in Tracker + Driver with Google Maps links, live clock, difficulty chips, done/active/upcoming status |
 | [Leg progress screen](specs/2026-06-03-leg-progress-design.md) | 2026-06-03 | ✅ Implemented | "When do they arrive?" — pace-swept progress bar + arrival table for live leg in Driver + Tracker |
 | [Pre-race screen](specs/2026-06-04-pre-race-screen-design.md) | 2026-06-04 | ✅ Implemented | Pre-race landing page in Tracker: countdown, ETA schedule, runner assignments; auto-transitions to live view |
-| [Driver session cache](specs/2026-06-05-driver-session-cache-design.md) | 2026-06-05 | 📋 Draft | Persist racing session to localStorage; restore TimingScreen on refresh-while-offline, bypassing login |
+| [Driver session cache](specs/2026-06-05-driver-session-cache-design.md) | 2026-06-05 | ✅ Implemented | Persist racing session to localStorage; restore TimingScreen on refresh-while-offline, bypassing login |
 
 Each spec has a matching implementation plan in `plans/` with the same filename stem.
 
