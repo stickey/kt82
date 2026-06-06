@@ -22,6 +22,7 @@ interface Props {
   onViewLegProgress: (() => void) | null
   onViewLegMap: (() => void) | null
   targetPaceSecPerMile: number | null
+  restoredFromCache: boolean
 }
 
 function initials(name: string): string {
@@ -37,7 +38,7 @@ function fmtRemain(sec: number): string {
   return h > 0 ? `${h}:${mm}:${ss}` : `${m}:${ss}`
 }
 
-export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff, currentRunner, raceStartedAt, onLapPress, onComplete, nextRunner, nextLeg, nextRunnerEta, onViewCourse, onViewLegProgress, onViewLegMap, targetPaceSecPerMile }: Props) {
+export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff, currentRunner, raceStartedAt, onLapPress, onComplete, nextRunner, nextLeg, nextRunnerEta, onViewCourse, onViewLegProgress, onViewLegMap, targetPaceSecPerMile, restoredFromCache }: Props) {
   const [elapsed, setElapsed] = useState(0)
   const [raceElapsed, setRaceElapsed] = useState(0)
   const [eta, setEta]         = useState<{ eta: string; secondsRemaining: number; status: 'on-pace' | 'ahead' | 'overdue' } | null>(null)
@@ -125,10 +126,10 @@ export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff,
             {team.name}
           </span>
         </div>
-        {!resultId && (
+        {(restoredFromCache || !resultId) && (
           <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 11, color: 'var(--mut)', display: 'flex', alignItems: 'center', gap: 5 }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--mut)', flexShrink: 0, display: 'inline-block' }} />
-            Syncing…
+            {restoredFromCache ? 'Offline · Cached' : 'Syncing…'}
           </span>
         )}
         <span className="font-mono" style={{ fontSize: 12, color: 'var(--mut)' }}>

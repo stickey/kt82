@@ -27,7 +27,6 @@ export default function App() {
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(() => peek())
   const [legMapLastUpdatedMs, setLegMapLastUpdatedMs] = useState<number | undefined>(undefined)
   const [restoredFromCache, setRestoredFromCache] = useState(false)
-  void restoredFromCache
 
   // Mirror view state to localStorage so a refresh-while-offline can restore
   useEffect(() => {
@@ -372,6 +371,7 @@ export default function App() {
       onViewLegProgress={view.targetPaceSecPerMile !== null ? handleViewLegProgress : null}
       onViewLegMap={view.targetPaceSecPerMile !== null ? handleViewLegMapFromRacing : null}
       targetPaceSecPerMile={view.targetPaceSecPerMile}
+      restoredFromCache={restoredFromCache}
     />
   )
   if (view.type === 'course') return (
