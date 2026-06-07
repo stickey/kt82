@@ -1,6 +1,6 @@
 ---
 title: Course Screen — Completed Leg Pace Chip
-status: Proposed
+status: Implemented
 date: 2026-06-06
 ---
 

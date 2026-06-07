@@ -23,6 +23,7 @@
 | [Leg progress screen](specs/2026-06-03-leg-progress-design.md) | 2026-06-03 | ✅ Implemented | "When do they arrive?" — pace-swept progress bar + arrival table for live leg in Driver + Tracker |
 | [Pre-race screen](specs/2026-06-04-pre-race-screen-design.md) | 2026-06-04 | ✅ Implemented | Pre-race landing page in Tracker: countdown, ETA schedule, runner assignments; auto-transitions to live view |
 | [Driver session cache](specs/2026-06-05-driver-session-cache-design.md) | 2026-06-05 | ✅ Implemented | Persist racing session to localStorage; restore TimingScreen on refresh-while-offline, bypassing login |
+| [Course leg pace chip](specs/2026-06-06-course-leg-pace-chip-design.md) | 2026-06-06 | ✅ Implemented | Inline pace chip on completed leg rows in CourseScreen (tracker + driver): actual pace + delta vs target, color-coded |
 
 Each spec has a matching implementation plan in `plans/` with the same filename stem.
 

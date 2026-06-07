@@ -13,3 +13,4 @@ public/
 .agents/
 .copilot/
 .DS_Store
+.verify-pw/
