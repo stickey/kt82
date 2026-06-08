@@ -3,6 +3,8 @@ import { COURSE_LEGS, TOTAL_COURSE_MILES, mapPoint } from '@kt82/shared'
 import type { CourseLeg } from '@kt82/shared'
 import { publicApi, formatRaceTime, formatTime } from '../api'
 import type { LegTimelineItem } from '../api'
+import { setCache, getCache } from '../cache'
+import { OfflineBanner } from './OfflineBanner'
 
 interface CourseScreenProps {
   currentLegNumber: number   // 0 = not started; >18 = all done
@@ -223,6 +225,7 @@ function LegRow({ leg, state, isNextUp, isLast, runnerName, startTime, endTime, 
 export function CourseScreen({ currentLegNumber, raceStartedAt, teamName, teamId, raceDate, backLabel, onBack }: CourseScreenProps) {
   const [tick, setTick] = useState(0)
   const [timeline, setTimeline] = useState<LegTimelineItem[]>([])
+  const [bannerMessage, setBannerMessage] = useState<string | null>(null)
 
   useEffect(() => {
     if (!raceStartedAt) return
@@ -231,9 +234,37 @@ export function CourseScreen({ currentLegNumber, raceStartedAt, teamName, teamId
   }, [raceStartedAt])
 
   useEffect(() => {
-    publicApi.get<LegTimelineItem[]>(`/teams/${teamId}/timeline`)
-      .then(setTimeline)
-      .catch(() => {})
+    const cacheKey = `kt82_timeline_${teamId}`
+
+    const cached = getCache<LegTimelineItem[]>(cacheKey)
+    if (cached) {
+      setTimeline(cached.data)
+      if (cached.ageMs > 60_000) {
+        const mins = Math.max(1, Math.round(cached.ageMs / 60_000))
+        setBannerMessage(`NO CONNECTION · Timing data from ${mins} min ago`)
+      }
+    }
+
+    async function fetchTimeline() {
+      try {
+        const data = await publicApi.get<LegTimelineItem[]>(`/teams/${teamId}/timeline`)
+        setTimeline(data)
+        setCache(cacheKey, data)
+        setBannerMessage(null)
+      } catch {
+        const stale = getCache<LegTimelineItem[]>(cacheKey)
+        if (stale) {
+          const mins = Math.max(1, Math.round(stale.ageMs / 60_000))
+          setBannerMessage(`NO CONNECTION · Timing data from ${mins} min ago`)
+        } else {
+          setBannerMessage('NO CONNECTION · No cached data available')
+        }
+      }
+    }
+
+    fetchTimeline()
+    const id = setInterval(fetchTimeline, 30_000)
+    return () => clearInterval(id)
   }, [teamId])
 
   void tick
@@ -317,6 +348,8 @@ export function CourseScreen({ currentLegNumber, raceStartedAt, teamName, teamId
           </div>
         )}
       </div>
+
+      <OfflineBanner message={bannerMessage} />
 
       {/* Title */}
       <div style={{ padding: '4px 18px 0' }}>
