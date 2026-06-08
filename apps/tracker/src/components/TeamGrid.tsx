@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { api, formatTime } from '../api'
 import type { Race, TeamStatus } from '../api'
+import { setCache, getCache } from '../cache'
+import { OfflineBanner } from './OfflineBanner'
 
 interface Props {
   race: Race
@@ -20,18 +22,35 @@ export function TeamGrid({ race, onTeamClick }: Props) {
   const [statuses, setStatuses] = useState<TeamStatus[]>([])
   const [pollError, setPollError] = useState(false)
   const [secondsSinceUpdate, setSecondsSinceUpdate] = useState<number | null>(null)
+  const [bannerMessage, setBannerMessage] = useState<string | null>(null)
   const lastUpdatedRef = useRef<Date | null>(null)
 
   useEffect(() => {
+    const cacheKey = `kt82_race_status_${race.id}`
+
+    const cached = getCache<TeamStatus[]>(cacheKey)
+    if (cached) {
+      setStatuses(cached.data)
+    }
+
     async function poll() {
       try {
         const data = await api.get<TeamStatus[]>(`/races/${race.id}/status`)
         setStatuses(data)
+        setCache(cacheKey, data)
         lastUpdatedRef.current = new Date()
         setSecondsSinceUpdate(0)
         setPollError(false)
+        setBannerMessage(null)
       } catch {
         setPollError(true)
+        const stale = getCache<TeamStatus[]>(cacheKey)
+        if (stale) {
+          const mins = Math.max(1, Math.round(stale.ageMs / 60_000))
+          setBannerMessage(`NO CONNECTION · Data from ${mins} min ago`)
+        } else {
+          setBannerMessage('NO CONNECTION · No cached data available')
+        }
       }
     }
     poll()
@@ -59,6 +78,8 @@ export function TeamGrid({ race, onTeamClick }: Props) {
   })
 
   return (
+    <>
+    <OfflineBanner message={bannerMessage} />
     <div className="min-h-screen" style={{ background: 'var(--bg)', color: 'var(--text)' }}>
       <div className="max-w-2xl mx-auto px-[18px] pt-[18px] pb-8">
 
@@ -74,19 +95,17 @@ export function TeamGrid({ race, onTeamClick }: Props) {
             <span className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', color: 'var(--mut)' }}>
               {statuses.length} Teams on Course
             </span>
-            {pollError ? (
-              <span style={{ fontSize: 11, color: 'var(--amber)' }}>⚠ Unable to refresh</span>
-            ) : (
-              <div className="flex items-center gap-1.5">
-                <span className="live-dot inline-block flex-shrink-0" style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--green)' }} />
-                <span className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', color: 'var(--green)' }}>Live</span>
-                {secondsSinceUpdate !== null && secondsSinceUpdate > 0 && (
-                  <span className="font-mono" style={{ fontSize: 11, color: 'var(--faint)' }}>
-                    · {secondsSinceUpdate}s ago
-                  </span>
-                )}
-              </div>
-            )}
+            <div className="flex items-center gap-1.5">
+              <span className="live-dot inline-block flex-shrink-0" style={{ width: 8, height: 8, borderRadius: '50%', background: pollError ? 'var(--accent)' : 'var(--green)' }} />
+              <span className="uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', color: pollError ? 'var(--accent)' : 'var(--green)' }}>
+                {pollError ? 'Offline' : 'Live'}
+              </span>
+              {secondsSinceUpdate !== null && secondsSinceUpdate > 0 && (
+                <span className="font-mono" style={{ fontSize: 11, color: 'var(--faint)' }}>
+                  · {secondsSinceUpdate}s ago
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -176,5 +195,6 @@ export function TeamGrid({ race, onTeamClick }: Props) {
         )}
       </div>
     </div>
+    </>
   )
 }
