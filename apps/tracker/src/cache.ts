@@ -7,6 +7,7 @@ export function getCache<T>(key: string): { data: T; ageMs: number } | null {
   if (!raw) return null
   try {
     const { data, savedAt } = JSON.parse(raw)
+    if (typeof savedAt !== 'number') return null
     return { data: data as T, ageMs: Date.now() - savedAt }
   } catch {
     return null
