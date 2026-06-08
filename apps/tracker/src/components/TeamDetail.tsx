@@ -4,6 +4,8 @@ import type { LegTimelineItem } from '../api'
 import { CourseScreen } from './CourseScreen'
 import { LegMapScreen } from './LegMapScreen'
 import { PreRaceScreen } from './PreRaceScreen'
+import { setCache, getCache } from '../cache'
+import { OfflineBanner } from './OfflineBanner'
 
 interface Props {
   teamId: string
@@ -22,6 +24,7 @@ export function TeamDetail({ teamId, teamName, raceDate, onBack }: Props) {
   const [pollError, setPollError] = useState(false)
   const [notFound, setNotFound] = useState(false)
   const [secondsSinceUpdate, setSecondsSinceUpdate] = useState<number | null>(null)
+  const [bannerMessage, setBannerMessage] = useState<string | null>(null)
   const [tick, setTick] = useState(0)
   const lastUpdatedRef = useRef<Date | null>(null)
   const notFoundRef = useRef(false)
@@ -38,18 +41,35 @@ export function TeamDetail({ teamId, teamName, raceDate, onBack }: Props) {
   }, [startOffsetMs, raceDate])
 
   useEffect(() => {
+    const cacheKey = `kt82_team_detail_${teamId}`
+
+    const cached = getCache<LegTimelineItem[]>(cacheKey)
+    if (cached) {
+      setTimeline(cached.data)
+    }
+
     async function poll() {
-      if (notFoundRef.current) return
       try {
         const data = await api.get<LegTimelineItem[]>(`/teams/${teamId}/timeline`)
         setTimeline(data)
+        setCache(cacheKey, data)
         lastUpdatedRef.current = new Date()
         setSecondsSinceUpdate(0)
         setPollError(false)
+        setBannerMessage(null)
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : ''
         if (msg.includes('→ 404')) { notFoundRef.current = true; setNotFound(true) }
-        else setPollError(true)
+        else {
+          setPollError(true)
+          const stale = getCache<LegTimelineItem[]>(cacheKey)
+          if (stale) {
+            const mins = Math.max(1, Math.round(stale.ageMs / 60_000))
+            setBannerMessage(`NO CONNECTION · Timing data from ${mins} min ago`)
+          } else {
+            setBannerMessage('NO CONNECTION · No cached data available')
+          }
+        }
       }
     }
     poll()
@@ -164,16 +184,13 @@ export function TeamDetail({ teamId, teamName, raceDate, onBack }: Props) {
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg)', color: 'var(--text)' }}>
+      <OfflineBanner message={bannerMessage} />
 
       {/* Top bar */}
       <div className="flex items-center justify-between px-[18px] py-3" style={{ borderBottom: '1px solid var(--line)' }}>
         <button onClick={onBack} className="flex items-center min-h-[44px] uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', color: 'var(--mut)' }}>
           ← All Teams
         </button>
-        {pollError && <span style={{ fontSize: 11, color: 'var(--amber)' }}>⚠ Unable to refresh</span>}
-        {!pollError && secondsSinceUpdate !== null && secondsSinceUpdate > 0 && (
-          <span className="font-mono" style={{ fontSize: 11, color: 'var(--faint)' }}>{secondsSinceUpdate}s ago</span>
-        )}
         <button onClick={handleShare} className="flex items-center min-h-[44px] uppercase" style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', color: 'var(--mut)' }}>
           Share ↗
         </button>
