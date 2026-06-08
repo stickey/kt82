@@ -275,6 +275,7 @@ export default function App() {
       try {
         const state = await api.get<CurrentState>(`/teams/${team.id}/current`)
         setLegMapLastUpdatedMs(Date.now())
+        setRestoredFromCache(false)
         if (state.status === 'not-started') {
           if (!state.nextLeg) return
           setView({ type: 'start', race, team, pin, nextLeg: state.nextLeg, nextRunner: state.nextRunner?.name ?? null })
@@ -317,6 +318,7 @@ export default function App() {
         if (lapResult.next === null) {
           dequeue()
           setPendingAction(null)
+          setRestoredFromCache(false)
           setView(prev => prev.type === 'racing'
             ? { type: 'complete', race: prev.race, team: prev.team, pin: prev.pin }
             : prev)
@@ -328,6 +330,7 @@ export default function App() {
           })
           dequeue()
           setPendingAction(null)
+          setRestoredFromCache(false)
           try {
             const state = await api.get<CurrentStateInProgress>(`/teams/${teamId}/current`)
             setView(prev => prev.type !== 'racing' ? prev : {
@@ -345,6 +348,17 @@ export default function App() {
 
     return () => clearInterval(id)
   }, [!!pendingAction, view.type]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Clear OFFLINE banner once connectivity returns
+  useEffect(() => {
+    if (!restoredFromCache) return
+    if (view.type !== 'racing' && view.type !== 'start') return
+    let cancelled = false
+    publicApi.get<unknown>('/races/active').then(() => {
+      if (!cancelled) setRestoredFromCache(false)
+    }).catch(() => {})
+    return () => { cancelled = true }
+  }, [restoredFromCache, view.type]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (view.type === 'loading') return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg)' }}>
