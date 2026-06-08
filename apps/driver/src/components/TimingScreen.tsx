@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { createDriverApi, buildNavUrl, formatElapsed, formatRaceTime, formatTime } from '../api'
 import { lpEstimates } from '@kt82/shared'
 import { LongPressButton } from './LongPressButton'
+import { OfflineBanner } from './OfflineBanner'
 import type { TeamSummary, Leg, Handoff, CurrentStateInProgress } from '../api'
 
 interface Props {
@@ -23,6 +24,7 @@ interface Props {
   onViewLegMap: (() => void) | null
   targetPaceSecPerMile: number | null
   restoredFromCache: boolean
+  pendingAction: boolean
 }
 
 function initials(name: string): string {
@@ -38,7 +40,7 @@ function fmtRemain(sec: number): string {
   return h > 0 ? `${h}:${mm}:${ss}` : `${m}:${ss}`
 }
 
-export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff, currentRunner, raceStartedAt, onLapPress, onComplete, nextRunner, nextLeg, nextRunnerEta, onViewCourse, onViewLegProgress, onViewLegMap, targetPaceSecPerMile, restoredFromCache }: Props) {
+export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff, currentRunner, raceStartedAt, onLapPress, onComplete, nextRunner, nextLeg, nextRunnerEta, onViewCourse, onViewLegProgress, onViewLegMap, targetPaceSecPerMile, restoredFromCache, pendingAction }: Props) {
   const [elapsed, setElapsed] = useState(0)
   const [raceElapsed, setRaceElapsed] = useState(0)
   const [eta, setEta]         = useState<{ eta: string; secondsRemaining: number; status: 'on-pace' | 'ahead' | 'overdue' } | null>(null)
@@ -126,16 +128,18 @@ export function TimingScreen({ team, pin, resultId, leg, startedAt, nextHandoff,
             {team.name}
           </span>
         </div>
-        {(restoredFromCache || !resultId) && (
-          <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 11, color: 'var(--mut)', display: 'flex', alignItems: 'center', gap: 5 }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--mut)', flexShrink: 0, display: 'inline-block' }} />
-            {restoredFromCache ? 'Offline · Cached' : 'Syncing…'}
-          </span>
-        )}
         <span className="font-mono" style={{ fontSize: 12, color: 'var(--mut)' }}>
           Race {formatRaceTime(raceElapsed)}
         </span>
       </div>
+
+      <OfflineBanner message={
+        pendingAction
+          ? 'LAP QUEUED · Will sync when signal returns'
+          : restoredFromCache
+            ? 'OFFLINE · Loaded from saved session'
+            : null
+      } />
 
       {/* Body */}
       <div className="flex-1 flex flex-col px-[18px] pt-5 pb-6 gap-4">

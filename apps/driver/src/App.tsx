@@ -386,6 +386,7 @@ export default function App() {
       onViewLegMap={view.targetPaceSecPerMile !== null ? handleViewLegMapFromRacing : null}
       targetPaceSecPerMile={view.targetPaceSecPerMile}
       restoredFromCache={restoredFromCache}
+      pendingAction={pendingAction !== null}
     />
   )
   if (view.type === 'course') return (
