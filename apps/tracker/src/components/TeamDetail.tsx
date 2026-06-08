@@ -21,9 +21,7 @@ function initials(name: string): string {
 
 export function TeamDetail({ teamId, teamName, raceDate, onBack }: Props) {
   const [timeline, setTimeline] = useState<LegTimelineItem[]>([])
-  const [pollError, setPollError] = useState(false)
   const [notFound, setNotFound] = useState(false)
-  const [secondsSinceUpdate, setSecondsSinceUpdate] = useState<number | null>(null)
   const [bannerMessage, setBannerMessage] = useState<string | null>(null)
   const [tick, setTick] = useState(0)
   const lastUpdatedRef = useRef<Date | null>(null)
@@ -54,14 +52,11 @@ export function TeamDetail({ teamId, teamName, raceDate, onBack }: Props) {
         setTimeline(data)
         setCache(cacheKey, data)
         lastUpdatedRef.current = new Date()
-        setSecondsSinceUpdate(0)
-        setPollError(false)
         setBannerMessage(null)
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : ''
         if (msg.includes('→ 404')) { notFoundRef.current = true; setNotFound(true) }
         else {
-          setPollError(true)
           const stale = getCache<LegTimelineItem[]>(cacheKey)
           if (stale) {
             const mins = Math.max(1, Math.round(stale.ageMs / 60_000))
@@ -75,9 +70,6 @@ export function TeamDetail({ teamId, teamName, raceDate, onBack }: Props) {
     poll()
     const pollId = setInterval(poll, 30_000)
     const tickId = setInterval(() => {
-      if (lastUpdatedRef.current) {
-        setSecondsSinceUpdate(Math.floor((Date.now() - lastUpdatedRef.current.getTime()) / 1000))
-      }
       setTick(t => t + 1)
     }, 1_000)
     return () => { clearInterval(pollId); clearInterval(tickId) }
