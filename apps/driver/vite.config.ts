@@ -9,17 +9,18 @@ export default defineConfig({
       registerType: 'autoUpdate',
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,woff2}'],
+        globIgnores: ['**/favicon.svg'],
       },
       manifest: {
         name: 'KT82 Driver',
-        short_name: 'KT82',
+        short_name: 'KT82 Driver',
         theme_color: '#13110a',
         background_color: '#13110a',
         display: 'standalone',
-        start_url: '/driver',
-        scope: '/driver',
+        start_url: '/driver/',
+        scope: '/driver/',
         icons: [
-          { src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml' },
+          { src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml' },
         ],
       },
     }),
