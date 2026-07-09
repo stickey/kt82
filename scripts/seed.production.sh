@@ -14,9 +14,11 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-# Load production DATABASE_URL
+# Load production DATABASE_URL (set -a exports vars so the pnpm subprocess sees them)
 # shellcheck source=../server/.env.supabase
+set -a
 source "$REPO_ROOT/server/.env.supabase"
+set +a
 
 export PATH="$HOME/.nvm/versions/node/v20.11.0/bin:$PATH"
 
