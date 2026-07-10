@@ -24,6 +24,7 @@
 | [Pre-race screen](specs/2026-06-04-pre-race-screen-design.md) | 2026-06-04 | ✅ Implemented | Pre-race landing page in Tracker: countdown, ETA schedule, runner assignments; auto-transitions to live view |
 | [Driver session cache](specs/2026-06-05-driver-session-cache-design.md) | 2026-06-05 | ✅ Implemented | Persist racing session to localStorage; restore TimingScreen on refresh-while-offline, bypassing login |
 | [Course leg pace chip](specs/2026-06-06-course-leg-pace-chip-design.md) | 2026-06-06 | ✅ Implemented | Inline pace chip on completed leg rows in CourseScreen (tracker + driver): actual pace + delta vs target, color-coded |
+| [Justin "Boo, Hiss!!" banner](specs/2026-07-09-justin-boo-banner-design.md) | 2026-07-09 | ✅ Implemented | Cosmetic easter-egg banner on Tracker TeamDetail when Justin is the active runner for Team MA |
 
 Each spec has a matching implementation plan in `plans/` with the same filename stem.
 
