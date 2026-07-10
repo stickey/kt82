@@ -6,6 +6,7 @@ import { LegMapScreen } from './LegMapScreen'
 import { PreRaceScreen } from './PreRaceScreen'
 import { setCache, getCache } from '../cache'
 import { OfflineBanner } from './OfflineBanner'
+import { JustinBanner } from './JustinBanner'
 
 interface Props {
   teamId: string
@@ -97,6 +98,7 @@ export function TeamDetail({ teamId, teamName, raceDate, onBack }: Props) {
   }
 
   const activeItem = timeline.find(t => t.status === 'in-progress')
+  const showJustinBanner = teamId === 'cmrd0be290001fn7qgi8sadky' && activeItem?.runner?.name === 'Justin'
   const sorted     = [...timeline].sort((a, b) => a.leg.legNumber - b.leg.legNumber)
 
   // Auto-exit map/progress views when the active leg changes
@@ -176,6 +178,7 @@ export function TeamDetail({ teamId, teamName, raceDate, onBack }: Props) {
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg)', color: 'var(--text)' }}>
+      <JustinBanner show={showJustinBanner} />
       <OfflineBanner message={bannerMessage} />
 
       {/* Top bar */}
