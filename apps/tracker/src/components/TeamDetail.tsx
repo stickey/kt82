@@ -98,6 +98,7 @@ export function TeamDetail({ teamId, teamName, raceDate, onBack }: Props) {
   }
 
   const activeItem = timeline.find(t => t.status === 'in-progress')
+  // Team MA running joke — not general logic, see docs/backlog/justin-boo-banner.md
   const showJustinBanner = teamId === 'cmrd0be290001fn7qgi8sadky' && activeItem?.runner?.name === 'Justin'
   const sorted     = [...timeline].sort((a, b) => a.leg.legNumber - b.leg.legNumber)
 
